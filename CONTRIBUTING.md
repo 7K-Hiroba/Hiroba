@@ -53,10 +53,18 @@ Thank you for your interest in contributing to the 7KGroup Hiroba project! This 
 
 ### Commits
 
-- Write clear, descriptive commit messages
-- Use conventional commit format: `type(scope): description`
-  - Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`
-  - Example: `feat(helm): add Redis cluster chart template`
+We use [Conventional Commits](https://www.conventionalcommits.org/) — this is required because [release-please](https://github.com/googleapis/release-please) reads commit messages to automate versioning and changelogs.
+
+- **Format:** `type(scope): description`
+- **Types:** `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`
+- **Scope** should match the stack being changed:
+  - `feat(app): add health endpoint`
+  - `fix(helm-base): correct service port`
+  - `feat(helm-platform): add Redis support`
+  - `docs: update getting started guide`
+  - `fix(crossplane): correct XRD schema`
+- **Breaking changes** — append `!` after the scope: `feat(helm-platform)!: rename values structure`
+- `feat` → minor version bump, `fix` → patch bump, `!` → major bump
 
 ## Development Setup
 

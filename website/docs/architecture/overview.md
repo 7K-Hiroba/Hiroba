@@ -51,7 +51,7 @@ Each scaffolded app includes a `crossplane/` directory for hosting compositions 
 
 ### Workflow Library
 
-A separate repository (`7KGroup/workflow-library`) containing reusable GitHub Actions workflows. Scaffolded apps reference these via `uses:` rather than duplicating CI/CD logic.
+A separate repository (`7K-Hiroba/workflows-library`) containing reusable GitHub Actions workflows. Scaffolded apps reference these via `uses:` rather than duplicating CI/CD logic.
 
 ## Design Principles
 

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "app": {
+      "component": "app",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        "Dockerfile"
+      ]
+    },
+    "helm/base": {
+      "component": "helm-base",
+      "release-type": "helm",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "helm/platform": {
+      "component": "helm-platform",
+      "release-type": "helm",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "docs": {
+      "component": "docs",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "crossplane": {
+      "component": "crossplane",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "separate-pull-requests": true,
+  "changelog-type": "github",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true
+}

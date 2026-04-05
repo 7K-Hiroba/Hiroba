@@ -1,0 +1,7 @@
+{
+  "app": "0.0.0",
+  "helm/base": "0.0.0",
+  "helm/platform": "0.0.0",
+  "docs": "0.0.0",
+  "crossplane": "0.0.0"
+}

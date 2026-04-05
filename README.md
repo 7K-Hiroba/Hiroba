@@ -31,7 +31,7 @@ hiroba/
 │   │       ├── gitops/
 │   │       │   ├── argocd/            # ArgoCD Application manifests
 │   │       │   └── fluxcd/            # FluxCD Kustomization manifests
-│   │       ├── .github/workflows/     # CI/CD referencing 7KGroup/workflow-library
+│   │       ├── .github/workflows/     # CI/CD referencing 7K-Hiroba/workflows-library
 │   │       ├── docs/                  # TechDocs content
 │   │       └── catalog-info.yaml      # Backstage catalog entry
 ├── website/                           # Docusaurus documentation site
@@ -80,4 +80,4 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
-**Part of the [7KGroup](https://github.com/7KGroup) open-source ecosystem.**
+**Part of the [7K-Group](https://7kgroup.org/) open-source effort.**

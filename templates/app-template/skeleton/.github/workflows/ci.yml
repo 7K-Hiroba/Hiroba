@@ -7,19 +7,55 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    uses: 7KGroup/workflow-library/.github/workflows/build.yml@v1
+  app:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'Dockerfile') ||
+      contains(toJSON(github.event.commits.*.modified), 'src/')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
+      stack: app
       image-name: ghcr.io/7kgroup/${{ values.name }}
-      dockerfile: ./Dockerfile
+      path: .
     secrets: inherit
 
-  lint-helm:
-    uses: 7KGroup/workflow-library/.github/workflows/helm-lint.yml@v1
+  helm-base:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'helm/base/')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
-      chart-path: helm/base
+      stack: helm
+      path: helm/base
     secrets: inherit
 
-  test:
-    uses: 7KGroup/workflow-library/.github/workflows/test.yml@v1
+  helm-platform:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'helm/platform/')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
+    with:
+      stack: helm
+      path: helm/platform
+    secrets: inherit
+
+  docs:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'docs/') ||
+      contains(toJSON(github.event.commits.*.modified), 'mkdocs.yml')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
+    with:
+      stack: docs
+      path: docs
+    secrets: inherit
+
+  crossplane:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'crossplane/')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
+    with:
+      stack: crossplane
+      path: crossplane
     secrets: inherit

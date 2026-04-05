@@ -60,12 +60,12 @@ To add a new template variant (e.g., a worker/queue consumer that doesn't need I
 
 ## CI/CD Integration
 
-Scaffolded workflows reference the centralized `7KGroup/workflow-library`:
+Scaffolded workflows reference the centralized `7K-Hiroba/workflows-library`:
 
 ```yaml
 jobs:
   build:
-    uses: 7KGroup/workflow-library/.github/workflows/build.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/build.yml@v1
     with:
       image-name: ghcr.io/7kgroup/my-app
     secrets: inherit

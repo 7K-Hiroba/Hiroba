@@ -13,7 +13,7 @@ ${{ values.description }}
 │   ├── argocd/         # ArgoCD Application manifests
 │   └── fluxcd/         # FluxCD Kustomization manifests
 ├── docs/               # TechDocs content
-├── .github/workflows/  # CI/CD (references 7KGroup/workflow-library)
+├── .github/workflows/  # CI/CD (references 7K-Hiroba/workflows-library)
 ├── Dockerfile
 ├── catalog-info.yaml   # Backstage catalog entry
 └── mkdocs.yml          # TechDocs configuration

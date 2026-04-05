@@ -33,7 +33,7 @@ This project follows a **near-native** approach. We prefer upstream, official so
 │   ├── argocd/                        # ArgoCD Application manifests
 │   └── fluxcd/                        # FluxCD Kustomization manifests
 ├── docs/                              # TechDocs content (published via Backstage)
-├── .github/workflows/                 # CI/CD — references 7KGroup/workflow-library
+├── .github/workflows/                 # CI/CD — references 7K-Hiroba/workflows-library
 ├── Dockerfile                         # Only if a custom image is maintained
 ├── catalog-info.yaml                  # Backstage catalog registration
 └── mkdocs.yml                         # TechDocs configuration
@@ -78,7 +78,30 @@ All docs go under `docs/` and are published through Backstage TechDocs via `mkdo
 
 ### CI/CD workflows
 
-Workflows reference reusable workflows from `7KGroup/workflow-library`. Do not inline CI/CD logic — add new reusable workflows to the library repo instead. The local `.github/workflows/` files should only contain `uses:` references with `with:` parameters.
+There are two workflow files — `ci.yml` and `release-please.yml` — each calling a **single reusable workflow** from `7K-Hiroba/workflows-library` with a `stack` parameter to differentiate behavior. Do not inline CI/CD logic — add capabilities to the library workflow instead.
+
+| Stack | `stack` param | CI trigger (path) | Release tag | release-please type |
+|---|---|---|---|---|
+| App (Dockerfile) | `app` | `Dockerfile`, `src/` | `app/v*` | `simple` |
+| Helm Base | `helm` | `helm/base/` | `helm-base/v*` | `helm` (bumps Chart.yaml) |
+| Helm Platform | `helm` | `helm/platform/` | `helm-platform/v*` | `helm` (bumps Chart.yaml) |
+| Docs | `docs` | `docs/`, `mkdocs.yml` | `docs/v*` | `simple` |
+| Crossplane | `crossplane` | `crossplane/` | `crossplane/v*` | `simple` |
+
+**CI** (`ci.yml`) — jobs run conditionally based on which paths changed. The library workflow decides what to do based on `stack`: lint+template+test for `helm`, build+scan for `app`, validate for `crossplane`, etc.
+
+**Releases** (`release-please.yml`) — fully automated via [release-please](https://github.com/googleapis/release-please). On every push to `main`, release-please reads conventional commits, determines which stacks need a release, and opens separate release PRs per component. When a release PR is merged, it creates the tag + GitHub Release and triggers the publish job for that stack.
+
+**Commit messages drive versioning** — use [Conventional Commits](https://www.conventionalcommits.org/):
+- `fix(helm-base): correct probe path` → patch bump
+- `feat(app): add health endpoint` → minor bump
+- `feat(helm-platform)!: change CNPG API version` → major bump (breaking `!`)
+
+The scope in the commit message should match the component path or name. Release-please uses path-based detection to assign commits to components.
+
+**Configuration files:**
+- `release-please-config.json` — component definitions, release types, changelog settings
+- `.release-please-manifest.json` — tracks current version per component (committed by release-please)
 
 ## Technical Specifics
 

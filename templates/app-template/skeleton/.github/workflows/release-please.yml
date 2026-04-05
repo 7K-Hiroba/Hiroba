@@ -1,0 +1,85 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      app--release_created: ${{ steps.release.outputs['app--release_created'] }}
+      app--tag_name: ${{ steps.release.outputs['app--tag_name'] }}
+      app--version: ${{ steps.release.outputs['app--version'] }}
+      helm-base--release_created: ${{ steps.release.outputs['helm-base--release_created'] }}
+      helm-base--tag_name: ${{ steps.release.outputs['helm-base--tag_name'] }}
+      helm-base--version: ${{ steps.release.outputs['helm-base--version'] }}
+      helm-platform--release_created: ${{ steps.release.outputs['helm-platform--release_created'] }}
+      helm-platform--tag_name: ${{ steps.release.outputs['helm-platform--tag_name'] }}
+      helm-platform--version: ${{ steps.release.outputs['helm-platform--version'] }}
+      docs--release_created: ${{ steps.release.outputs['docs--release_created'] }}
+      docs--tag_name: ${{ steps.release.outputs['docs--tag_name'] }}
+      docs--version: ${{ steps.release.outputs['docs--version'] }}
+      crossplane--release_created: ${{ steps.release.outputs['crossplane--release_created'] }}
+      crossplane--tag_name: ${{ steps.release.outputs['crossplane--tag_name'] }}
+      crossplane--version: ${{ steps.release.outputs['crossplane--version'] }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-app:
+    needs: release-please
+    if: needs.release-please.outputs.app--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    with:
+      stack: app
+      image-name: ghcr.io/7kgroup/${{ values.name }}
+      path: .
+      version: ${{ needs.release-please.outputs.app--version }}
+    secrets: inherit
+
+  publish-helm-base:
+    needs: release-please
+    if: needs.release-please.outputs.helm-base--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    with:
+      stack: helm
+      path: helm/base
+      version: ${{ needs.release-please.outputs.helm-base--version }}
+    secrets: inherit
+
+  publish-helm-platform:
+    needs: release-please
+    if: needs.release-please.outputs.helm-platform--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    with:
+      stack: helm
+      path: helm/platform
+      version: ${{ needs.release-please.outputs.helm-platform--version }}
+    secrets: inherit
+
+  publish-docs:
+    needs: release-please
+    if: needs.release-please.outputs.docs--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    with:
+      stack: docs
+      path: docs
+      version: ${{ needs.release-please.outputs.docs--version }}
+    secrets: inherit
+
+  publish-crossplane:
+    needs: release-please
+    if: needs.release-please.outputs.crossplane--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    with:
+      stack: crossplane
+      path: crossplane
+      version: ${{ needs.release-please.outputs.crossplane--version }}
+    secrets: inherit
