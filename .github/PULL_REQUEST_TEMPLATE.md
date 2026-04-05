@@ -23,7 +23,6 @@
 
 - [ ] Helm lint passes
 - [ ] Template renders correctly (`helm template`)
-- [ ] Deployed and tested on a cluster
 - [ ] Documentation reviewed for accuracy
 - [ ] N/A
 
