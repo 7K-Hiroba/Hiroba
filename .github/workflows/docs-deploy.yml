@@ -35,8 +35,8 @@ jobs:
           RCLONE_CONFIG_APPDOCS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
           RCLONE_CONFIG_APPDOCS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
         run: |
-          for app in $(rclone lsf "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/" --dirs-only --s3-region --s3-sign-accept-encoding=false | tr -d '/'); do
-            rclone sync --s3-region --s3-sign-accept-encoding=false garage "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/" "docs/apps/${app}/" 
+          for app in $(rclone lsf "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/" --dirs-only --s3-region garage --s3-sign-accept-encoding=false | tr -d '/'); do
+            rclone sync --s3-region garage --s3-sign-accept-encoding=false garage "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/" "docs/apps/${app}/" 
           done
 
       - name: Install dependencies
