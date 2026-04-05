@@ -57,5 +57,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: garage
         run: | 
-          s5cmd 
-          s5cmd sync 'website/build/' 's3://${{ secrets.DOCS_S3_BUCKET }}' --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }}
+        
+          s5cmd sync --delete 'website/build/' 's3://${{ secrets.DOCS_S3_BUCKET }}' --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }}
