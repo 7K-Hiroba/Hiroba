@@ -31,17 +31,15 @@ jobs:
       
 
 
-      #- name: Sync app docs from S3
-      #  env:
-      #    RCLONE_CONFIG_APPDOCS_TYPE: s3
-      #    RCLONE_CONFIG_APPDOCS_PROVIDER: Other
-      #    RCLONE_CONFIG_APPDOCS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
-      #    RCLONE_CONFIG_APPDOCS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
-      #    RCLONE_CONFIG_APPDOCS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
-      #  run: |
-      #    for app in $(rclone lsf "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/" --dirs-only --s3-region garage --s3-sign-accept-encoding=false | tr -d '/'); do
-      #      rclone sync --s3-region=garage --s3-sign-accept-encoding=false garage "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/" "docs/apps/${app}/" 
-      #    done
+      - name: Sync app docs from S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: garage
+        run: |
+          for app in $(s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} ls "s3://${{ secrets.APPDOCS_S3_BUCKET }}/" | awk '{print $NF}' | sed 's|s3://${{ secrets.APPDOCS_S3_BUCKET }}/||' | tr -d '/'); do
+            s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync "s3://${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/*" "docs/apps/${app}/"
+          done
 
       - name: Install dependencies
         working-directory: website
@@ -56,7 +54,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: garage
-          AWS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
         run: | 
         
           s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}
