@@ -6,8 +6,8 @@ const config = {
   tagline: 'Open-source Kubernetes platform solutions by 7KGroup',
   favicon: 'img/favicon.ico',
 
-  url: 'https://7kgroup.github.io',
-  baseUrl: '/hiroba/',
+  url: 'https://hiroba.7kgroup.org',
+  baseUrl: '/docs/',
 
   organizationName: '7KGroup',
   projectName: 'hiroba',
