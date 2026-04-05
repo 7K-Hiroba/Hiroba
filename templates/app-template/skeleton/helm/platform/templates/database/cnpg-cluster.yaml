@@ -1,0 +1,39 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "platform.name" . }}-pg
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.postgres.instances }}
+  imageName: {{ .Values.postgres.imageName }}
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.postgres.database }}
+      owner: {{ .Values.postgres.owner }}
+
+  storage:
+    size: {{ .Values.postgres.storage.size }}
+    {{- if .Values.postgres.storage.storageClass }}
+    storageClass: {{ .Values.postgres.storage.storageClass }}
+    {{- end }}
+
+  resources:
+    {{- toYaml .Values.postgres.resources | nindent 4 }}
+
+  {{- if .Values.postgres.backup.enabled }}
+  backup:
+    barmanObjectStore:
+      destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
+      s3Credentials:
+        accessKeyId:
+          name: {{ include "platform.name" . }}-pg-backup-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: {{ include "platform.name" . }}-pg-backup-creds
+          key: ACCESS_SECRET_KEY
+    retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
+  {{- end }}
+{{- end }}

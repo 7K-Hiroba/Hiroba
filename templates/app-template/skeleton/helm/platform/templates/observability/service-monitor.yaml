@@ -1,0 +1,27 @@
+{{- if .Values.observability.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "platform.name" . }}
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+    {{- with .Values.observability.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "platform.name" . }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: {{ .Values.observability.serviceMonitor.port }}
+      {{- with .Values.observability.serviceMonitor.path }}
+      path: {{ . }}
+      {{- end }}
+      interval: {{ .Values.observability.serviceMonitor.interval }}
+      {{- with .Values.observability.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+{{- end }}

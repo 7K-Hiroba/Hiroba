@@ -1,0 +1,95 @@
+# Default values for ${{ values.name }}
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/7kgroup/${{ values.name }}
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: ${{ values.port }}
+
+gateway:
+  enabled: ${{ values.enableIngress }}
+  annotations: {}
+  # -- Parent Gateway references
+  parentRefs:
+    - name: default-gateway
+      # namespace: gateway-system
+      # sectionName: https
+  # -- Hostnames to match
+  hostnames:
+    - ${{ values.hostname | default('app.example.com') }}
+  # -- Routing rules (omit for a simple catch-all route to the service)
+  rules: []
+  #  - matches:
+  #      - path:
+  #          type: PathPrefix
+  #          value: /api
+  #    filters:
+  #      - type: RequestHeaderModifier
+  #        requestHeaderModifier:
+  #          add:
+  #            - name: X-Forwarded-Prefix
+  #              value: /api
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+env: []
+extraVolumes: []
+extraVolumeMounts: []

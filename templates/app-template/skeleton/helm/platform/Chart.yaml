@@ -1,0 +1,16 @@
+apiVersion: v2
+name: ${{ values.name }}-platform
+description: Platform dependencies for ${{ values.name }} — provisions databases, storage, and identity resources
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: ${{ values.owner }}
+keywords:
+  - platform
+  - crossplane
+  - cnpg
+  - hiroba
+home: https://github.com/7KGroup/${{ values.name }}
+sources:
+  - https://github.com/7KGroup/${{ values.name }}

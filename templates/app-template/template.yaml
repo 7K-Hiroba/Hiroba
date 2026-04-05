@@ -1,0 +1,140 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: app-template
+  title: Application Template
+  description: Scaffold a new Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
+  tags:
+    - kubernetes
+    - helm
+    - recommended
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: group:platform-team
+  type: service
+
+  parameters:
+    - title: Application Info
+      required:
+        - name
+        - description
+        - owner
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name of the application
+          ui:autofocus: true
+          ui:options:
+            rows: 1
+        description:
+          title: Description
+          type: string
+          description: What does this application do?
+        owner:
+          title: Owner
+          type: string
+          description: Team that owns this application
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Deployment Configuration
+      required:
+        - port
+      properties:
+        port:
+          title: Container Port
+          type: number
+          default: 8080
+          description: The port your application listens on
+        enableIngress:
+          title: Enable HTTPRoute
+          type: boolean
+          default: true
+          description: Create a Gateway API HTTPRoute for external access
+        hostname:
+          title: Hostname
+          type: string
+          description: HTTPRoute hostname (e.g., myapp.example.com)
+          ui:options:
+            rows: 1
+
+    - title: Platform Dependencies
+      description: Select platform resources to provision alongside your application
+      properties:
+        enablePlatform:
+          title: Enable Platform Chart
+          type: boolean
+          default: false
+          description: Include platform dependencies (database, object storage, etc.)
+        enablePostgres:
+          title: PostgreSQL (CNPG)
+          type: boolean
+          default: false
+          description: Provision a CloudNativePG PostgreSQL cluster
+          ui:widget: checkbox
+        enableS3:
+          title: S3 Bucket
+          type: boolean
+          default: false
+          description: Provision an S3-compatible object storage bucket via Crossplane
+          ui:widget: checkbox
+
+    - title: Repository
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+            allowedOwners:
+              - 7KGroup
+
+  steps:
+    - id: fetch-skeleton
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          port: ${{ parameters.port }}
+          enableIngress: ${{ parameters.enableIngress }}
+          hostname: ${{ parameters.hostname }}
+          enablePlatform: ${{ parameters.enablePlatform }}
+          enablePostgres: ${{ parameters.enablePostgres }}
+          enableS3: ${{ parameters.enableS3 }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: public
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

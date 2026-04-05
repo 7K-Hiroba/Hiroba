@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/7KGroup/${{ values.name }}.git
+    targetRevision: main
+    path: helm/base
+    helm:
+      valueFiles:
+        - values.yaml
+        # - values-production.yaml  # Uncomment for env-specific overrides
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

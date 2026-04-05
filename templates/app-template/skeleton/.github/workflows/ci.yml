@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    uses: 7KGroup/workflow-library/.github/workflows/build.yml@v1
+    with:
+      image-name: ghcr.io/7kgroup/${{ values.name }}
+      dockerfile: ./Dockerfile
+    secrets: inherit
+
+  lint-helm:
+    uses: 7KGroup/workflow-library/.github/workflows/helm-lint.yml@v1
+    with:
+      chart-path: helm/base
+    secrets: inherit
+
+  test:
+    uses: 7KGroup/workflow-library/.github/workflows/test.yml@v1
+    secrets: inherit

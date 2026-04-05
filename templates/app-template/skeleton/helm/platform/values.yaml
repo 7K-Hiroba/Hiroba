@@ -1,0 +1,126 @@
+# Platform dependencies for ${{ values.name }}
+# These resources are managed by cluster operators (CNPG, Crossplane, etc.)
+# and provide plug-and-play infrastructure alongside the base application.
+#
+# Each resource supports a `provider` switch to select the backend implementation.
+# Available providers are listed per resource — add your own by creating a
+# matching template file in templates/<category>/<resource>-<provider>.yaml
+#
+# Templates are organized into subdirectories:
+#   database/    — Database resources (CNPG, etc.)
+#   storage/     — Object storage (Crossplane, Garage, etc.)
+#   secrets/     — External secrets management
+#   observability/ — ServiceMonitors, Grafana dashboards, PrometheusRules
+
+global:
+  # -- Application name, used as prefix for all platform resources
+  appName: ${{ values.name }}
+
+# -- PostgreSQL database
+postgres:
+  enabled: ${{ values.enablePostgres }}
+  # -- Provider: "cnpg" (CloudNativePG operator)
+  provider: cnpg
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  # -- PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  # -- Database name to create
+  database: app
+  # -- Database owner
+  owner: app
+  # -- Backup configuration (optional)
+  backup:
+    enabled: false
+    schedule: "0 2 * * *"
+    retentionPolicy: "7d"
+
+# -- S3-compatible object storage
+s3:
+  enabled: ${{ values.enableS3 }}
+  # -- Provider: "crossplane" | "garage"
+  provider: crossplane
+  # -- Bucket name (will be prefixed with app name)
+  bucketName: assets
+  # -- Access control
+  acl: private
+
+  # -- Crossplane-specific settings (provider: crossplane)
+  crossplane:
+    region: us-east-1
+    providerConfigRef: aws-provider
+    lifecycle:
+      enabled: false
+      expirationDays: 90
+
+  # -- Garage-specific settings (provider: garage)
+  garage:
+    # -- Garage API endpoint
+    endpoint: "http://garage.garage.svc.cluster.local:3900"
+    # -- Garage access key Secret reference
+    accessKeySecret:
+      name: ""
+      key: accessKey
+    # -- Garage secret key Secret reference
+    secretKeySecret:
+      name: ""
+      key: secretKey
+    # -- Number of data/parity replicas in Garage
+    replicationFactor: 3
+
+# -- External Secrets (external-secrets.io)
+externalSecrets:
+  enabled: false
+  # -- How often to sync secrets
+  refreshInterval: 1h
+  # -- SecretStore or ClusterSecretStore reference
+  storeRef:
+    name: cluster-secret-store
+    kind: ClusterSecretStore
+  # -- Individual secret mappings
+  data: []
+  #  - secretKey: DATABASE_URL
+  #    remoteKey: myapp/database
+  #    property: url
+  #  - secretKey: API_KEY
+  #    remoteKey: myapp/api
+  #    property: key
+  # -- Pull all keys from a remote path
+  dataFrom: []
+  #  - extract:
+  #      key: myapp/config
+
+# -- Observability resources
+observability:
+  # -- Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: false
+    # -- Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack)
+    additionalLabels: {}
+    # -- Service port name to scrape
+    port: http
+    # -- Metrics endpoint path
+    path: /metrics
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    scrapeTimeout: 10s
+
+  # -- Grafana dashboard (deployed as ConfigMap with sidecar label)
+  grafanaDashboard:
+    enabled: false
+    # -- Grafana folder label
+    folderLabel: ""
+
+  # -- PrometheusRule alerts
+  prometheusRules:
+    enabled: false
