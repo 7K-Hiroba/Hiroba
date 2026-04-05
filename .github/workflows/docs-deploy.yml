@@ -58,4 +58,4 @@ jobs:
           AWS_DEFAULT_REGION: garage
         run: | 
         
-          s5cmd sync --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}
+          s5cmd sync --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}
