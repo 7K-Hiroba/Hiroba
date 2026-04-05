@@ -36,7 +36,7 @@ jobs:
           RCLONE_CONFIG_APPDOCS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
         run: |
           for app in $(rclone lsf "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/" --dirs-only | tr -d '/'); do
-            rclone sync "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/" "docs/apps/${app}/"
+            rclone sync "appdocs:${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/" "docs/apps/${app}/" --s3-region eu-west-1
           done
 
       - name: Install dependencies
