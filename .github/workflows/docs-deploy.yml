@@ -24,6 +24,9 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
 
+      - name: Install rclone
+        run: curl -sSL https://rclone.org/install.sh | sudo bash
+
       - name: Sync app docs from S3
         env:
           RCLONE_CONFIG_APPDOCS_TYPE: s3
