@@ -27,6 +27,7 @@ const config = {
       ({
         docs: {
           path: '../docs',
+          routeBasePath: '/',
           sidebarPath: './sidebars.js',
           editUrl: 'https://github.com/7KGroup/hiroba/tree/main/website/',
         },
@@ -51,7 +52,7 @@ const config = {
             label: 'Documentation',
           },
           {
-            to: '/docs/roadmap',
+            to: '/roadmap',
             label: 'Roadmap',
             position: 'left',
           },
@@ -68,9 +69,9 @@ const config = {
           {
             title: 'Docs',
             items: [
-              { label: 'Getting Started', to: '/docs/intro' },
-              { label: 'Mission', to: '/docs/mission' },
-              { label: 'Roadmap', to: '/docs/roadmap' },
+              { label: 'Getting Started', to: '/intro' },
+              { label: 'Mission', to: '/mission' },
+              { label: 'Roadmap', to: '/roadmap' },
             ],
           },
           {
