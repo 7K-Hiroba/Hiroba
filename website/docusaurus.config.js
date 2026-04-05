@@ -6,8 +6,8 @@ const config = {
   tagline: 'Open-source Kubernetes platform solutions by 7KGroup',
   favicon: 'img/favicon.ico',
 
-  url: 'https://7kgroup.github.io',
-  baseUrl: '/hiroba/',
+  url: 'https://hiroba.7kgroup.org',
+  baseUrl: '/docs/',
 
   organizationName: '7KGroup',
   projectName: 'hiroba',
@@ -26,6 +26,8 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          path: '../docs',
+          routeBasePath: '/',
           sidebarPath: './sidebars.js',
           editUrl: 'https://github.com/7KGroup/hiroba/tree/main/website/',
         },
@@ -50,7 +52,7 @@ const config = {
             label: 'Documentation',
           },
           {
-            to: '/docs/roadmap',
+            to: '/roadmap',
             label: 'Roadmap',
             position: 'left',
           },
@@ -67,9 +69,9 @@ const config = {
           {
             title: 'Docs',
             items: [
-              { label: 'Getting Started', to: '/docs/intro' },
-              { label: 'Mission', to: '/docs/mission' },
-              { label: 'Roadmap', to: '/docs/roadmap' },
+              { label: 'Getting Started', to: '/intro' },
+              { label: 'Mission', to: '/mission' },
+              { label: 'Roadmap', to: '/roadmap' },
             ],
           },
           {
