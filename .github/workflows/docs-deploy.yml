@@ -59,4 +59,4 @@ jobs:
           AWS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
         run: | 
         
-          s5cmd sync -endpoint-url ${{ secrets.DOCS_S3_ENDPOINT_URL }} --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}
+          s5cmd sync --endpoint-url=https://s3.7kgroup.org/ --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}
