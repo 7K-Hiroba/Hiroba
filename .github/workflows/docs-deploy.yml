@@ -54,4 +54,4 @@ jobs:
           RCLONE_CONFIG_DOCS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
           RCLONE_CONFIG_DOCS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
           RCLONE_CONFIG_DOCS_ENDPOINT: ${{ secrets.DOCS_S3_ENDPOINT_URL }}
-        run: rclone sync website/build/ "docs:${{ secrets.DOCS_S3_BUCKET }}/" --s3-region=garage --s3-sign-accept-encoding=false --s3-force-path-style=false --s3-acl=private --s3-bucket-acl=private
+        run: rclone sync website/build/ "docs:${{ secrets.DOCS_S3_BUCKET }}/" --s3-region=garage --s3-sign-accept-encoding=false --s3-force-path-style=true --s3-acl=private --s3-bucket-acl=private
