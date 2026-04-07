@@ -10,22 +10,23 @@ Hiroba is built around a layered architecture that separates concerns cleanly. E
 
 ```
 ┌─────────────────────────────────────────┐
-│       GitHub Issue (Chart Request)      │  Community requests new apps
+│   GitOps Orchestration + Operators      │  App-of-Apps, ApplicationSets
+│     (separate repos, coming soon)       │  Deploys apps AND operators
 ├─────────────────────────────────────────┤
-│   Backstage Templates (7KGroup-internal)│  Maintainers scaffold repos
+│         GitOps Application Refs         │  Per-app ArgoCD/FluxCD manifests
+│           (gitops/ in each app)         │  References base + platform charts
+├─────────────────────────────────────────┤
+│              TechDocs                   │  Docusaurus site + per-app docs
 ├──────────────────┬──────────────────────┤
 │   Base Chart     │   Platform Chart     │  Helm charts per app
-│  (k8s native)    │  (operators + CRDs)  │
+│ (upstream / CRs) │   (always custom)    │
 ├──────────────────┴──────────────────────┤
 │   App-specific Crossplane Compositions  │  Apps publish XRDs for others
 │   (e.g. Keycloak → realm provisioning)  │  to consume via Claims
-├─────────────────────────────────────────┤
-│     Kubernetes + Operators              │  CNPG, Crossplane, etc.
-│     (CNPG, Crossplane, Keycloak)        │
 └─────────────────────────────────────────┘
 ```
 
-The **Platform Chart** is where Hiroba focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart used as-is.
+The **Platform Chart** is where Hiroba focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart or operator CRs. **GitOps** connects everything: application-level refs in each repo, and orchestration repos that assemble apps into a complete platform. **TechDocs** ties it all together with documentation for every app.
 
 ## Component Responsibilities
 
@@ -47,9 +48,15 @@ The base chart follows the **near-native** principle: if the app has an official
 
 The base chart works on any cluster — even a single-node k3s or kind setup.
 
+### GitOps
+
+GitOps is split into two layers. The **application layer** lives in each app repo (`gitops/` directory) — it contains ArgoCD Application and FluxCD Kustomization manifests that reference the app's base and platform charts. The **orchestration layer** lives in separate repositories and assembles individual apps into a complete platform using patterns like App-of-Apps or ApplicationSets. Orchestration repos with fully built and tested examples are coming soon.
+
+[Learn more about the GitOps architecture](gitops)
+
 ### Chart Request Flow
 
-New charts are requested by the community via [GitHub Issues](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md). A 7KGroup maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
+New charts are requested by the community via [GitHub Issues](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md). A 7K-Hiroba maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
 
 ### Crossplane Compositions (per-app, Optional)
 

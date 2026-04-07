@@ -18,28 +18,31 @@ Hiroba separates these concerns. This matters just as much on a homelab as anywh
 
 ## Platform Chart (`helm/platform/`) — Hiroba's Focus
 
-The platform chart is **always custom** — this is where Hiroba adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
+The platform chart is **always custom** — this is where 7K-Hiroba adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
 
-It contains third-party CRD resources organized into subdirectories:
+It contains third-party CRs organized into subdirectories:
 
 | Category | Examples | Operators |
 |---|---|---|
-| `database/` | CNPG Cluster | CloudNativePG |
-| `storage/` | S3 Bucket | Crossplane (AWS), Garage |
-| `secrets/` | ExternalSecret | external-secrets-operator |
-| `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule | prometheus-operator, Grafana sidecar |
+| `database/` | CNPG Cluster |
+| `storage/` | S3 Bucket | Crossplane (AWS) | GarageBucket |
+| `secrets/` | ExternalSecret | 
+| `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule |
 
-The platform chart requires the relevant operators to be installed on the cluster. It provides **plug-and-play infrastructure** — enable Postgres in one toggle and get a managed database without manually deploying StatefulSets.
+**Important:** The platform chart **does not deploy or manage operators** — it creates CRs (Custom Resources) that existing operators reconcile. Operator lifecycle (installation, upgrades, CRD management) is your responsibility. We list required operators as dependencies in the documentation, but the platform chart only consumes them.
 
-Resources with multiple backends support a **provider switch** (e.g., `s3.provider: crossplane` vs `s3.provider: garage`). This is particularly useful for homelab setups where you might use [Garage](https://garagehq.deuxfleurs.fr/) for S3-compatible storage instead of AWS.
+With the right operators running on your cluster, the platform chart provides **plug-and-play infrastructure** — enable Postgres in one toggle and get a managed database without manually deploying StatefulSets.
+
+Resources with multiple backends support a **provider switch** (e.g., `s3.provider: crossplane` vs `s3.provider: garage`).
 
 ## Base Chart (`helm/base/`)
 
-The base chart follows the **near-native** principle: if the application has an official upstream Helm chart, we use it rather than writing our own. The base chart may be:
+The base chart follows the **near-native** principle: if the application has an official upstream Helm chart/Operator, we use it rather than writing our own. The base chart may be:
 
 - **The upstream chart as a dependency** — `Chart.yaml` declares it, `values.yaml` overrides what's needed
 - **A thin wrapper** — Minimal custom templates that extend the upstream chart
-- **A from-scratch chart** — Only when no adequate upstream chart exists
+- **Operator CRs** — Direct references to CRs from a supported operator (e.g., a `Keycloak` CR for the Keycloak operator)
+- **A from-scratch chart** — Only when no adequate upstream chart or operator exists
 
 In most cases the base chart is just an upstream third-party chart. Hiroba doesn't rewrite what already works — the upstream maintainers know their app best.
 

@@ -31,6 +31,7 @@ sidebar_position: 3
 
 ## Future
 
+- GitOps orchestration repositories — fully built and tested App-of-Apps / ApplicationSet examples you can fork for your own cluster
 - GitOps integration guides (Flux, ArgoCD)
 - ARM64 support for all charts and images (Raspberry Pi, Apple Silicon)
 - Observability stack blueprints (Prometheus, Grafana, Loki)
