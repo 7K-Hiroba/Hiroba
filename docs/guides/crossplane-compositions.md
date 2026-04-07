@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Crossplane Compositions
 
-Every scaffolded application includes a `crossplane/` directory for hosting **app-specific** Crossplane Composite Resource Definitions (XRDs) and Compositions.
+Every Hiroba application includes a `crossplane/` directory for hosting **app-specific** Crossplane Composite Resource Definitions (XRDs) and Compositions.
 
 ## What Goes Here?
 
@@ -12,7 +12,7 @@ This directory is for compositions that your application **provides to the platf
 
 ### Example: Keycloak
 
-You scaffold a Keycloak application using the Hiroba template. The `crossplane/` directory starts empty. Your team then adds:
+Say you have a Keycloak application created from the Hiroba template. The `crossplane/` directory starts empty. You then add:
 
 - `xrd-realm.yaml` — Defines a `KeycloakRealmClaim` API
 - `composition-realm.yaml` — Maps the claim to Keycloak API resources

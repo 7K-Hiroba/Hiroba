@@ -10,13 +10,13 @@ sidebar_position: 3
 - [x] Base Helm chart template
 - [x] Dockerfile template with best practices
 - [x] Docusaurus documentation site
-- [ ] CI/CD pipeline (lint, validate, deploy docs)
-- [ ] First community charts (candidates: Redis, PostgreSQL, Gitea)
+- [x] CI/CD pipeline (lint, validate, deploy docs)
+- [ ] First community charts (candidates: Keycloak)
 - [ ] Container image build pipeline (GitHub Actions + GHCR)
 
 ## 2026 Q3 — Expansion
 
-- [ ] 5+ community-maintained Helm charts
+- [ ] 5+ community-maintained Helm charts for popular self-hosted apps
 - [ ] Kustomize overlay examples for multi-environment deployments
 - [ ] Security scanning integration (Trivy, Grype)
 - [ ] Chart testing framework (ct, kind)
@@ -26,15 +26,16 @@ sidebar_position: 3
 
 - [ ] Chart repository (OCI-based via GHCR)
 - [ ] Automated release pipeline for charts
-- [ ] Platform blueprints (opinionated stacks for common use cases)
-- [ ] Community showcase — who's using Hiroba charts in production
+- [ ] Homelab blueprints — opinionated stacks for common setups (media server, dev tools, home automation)
+- [ ] Community showcase — who's running Hiroba charts on their homelab
 
 ## Future
 
-- Multi-cluster deployment patterns
 - GitOps integration guides (Flux, ArgoCD)
-- Operator templates for complex applications
+- ARM64 support for all charts and images (Raspberry Pi, Apple Silicon)
 - Observability stack blueprints (Prometheus, Grafana, Loki)
+- Single-node optimization guides
+- Backup and restore patterns for self-hosted data
 
 ---
 

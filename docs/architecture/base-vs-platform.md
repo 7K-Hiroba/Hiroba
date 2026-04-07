@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Base vs Platform Charts
 
-This is a core architectural decision in Hiroba: every application gets **two separate Helm charts**.
+This is a core architectural decision in Hiroba: every application gets **two separate Helm charts**. The platform chart is Hiroba's main focus.
 
 ## Why Two Charts?
 
@@ -14,7 +14,24 @@ Most Helm charts in the ecosystem bundle everything together. A "PostgreSQL-back
 - **Lifecycle mismatch** — Apps deploy frequently; databases rarely change
 - **Portability loss** — The chart only works if you run Postgres the same way
 
-Hiroba separates these concerns.
+Hiroba separates these concerns. This matters just as much on a homelab as anywhere else — when your single-node cluster restarts at 3 AM, you want the app and database to recover independently.
+
+## Platform Chart (`helm/platform/`) — Hiroba's Focus
+
+The platform chart is **always custom** — this is where Hiroba adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
+
+It contains third-party CRD resources organized into subdirectories:
+
+| Category | Examples | Operators |
+|---|---|---|
+| `database/` | CNPG Cluster | CloudNativePG |
+| `storage/` | S3 Bucket | Crossplane (AWS), Garage |
+| `secrets/` | ExternalSecret | external-secrets-operator |
+| `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule | prometheus-operator, Grafana sidecar |
+
+The platform chart requires the relevant operators to be installed on the cluster. It provides **plug-and-play infrastructure** — enable Postgres in one toggle and get a managed database without manually deploying StatefulSets.
+
+Resources with multiple backends support a **provider switch** (e.g., `s3.provider: crossplane` vs `s3.provider: garage`). This is particularly useful for homelab setups where you might use [Garage](https://garagehq.deuxfleurs.fr/) for S3-compatible storage instead of AWS.
 
 ## Base Chart (`helm/base/`)
 
@@ -24,55 +41,26 @@ The base chart follows the **near-native** principle: if the application has an 
 - **A thin wrapper** — Minimal custom templates that extend the upstream chart
 - **A from-scratch chart** — Only when no adequate upstream chart exists
 
-When using an upstream chart, the base directory contains standard Kubernetes resources:
+In most cases the base chart is just an upstream third-party chart. Hiroba doesn't rewrite what already works — the upstream maintainers know their app best.
 
-| Resource | Purpose |
-|---|---|
-| Deployment | Run the application containers |
-| Service | Internal network exposure |
-| HTTPRoute | External access via Gateway API |
-| ServiceAccount | Pod identity |
-| HPA | Autoscaling |
-
-The base chart works on **any Kubernetes cluster** with no special operators installed (beyond a Gateway API implementation if HTTPRoutes are enabled).
-
-## Platform Chart (`helm/platform/`)
-
-Unlike the base chart, the platform chart is **always custom** — this is where Hiroba adds its value. It contains third-party CRD resources managed by cluster operators, organized into subdirectories:
-
-| Category | Examples | Operators |
-|---|---|---|
-| `database/` | CNPG Cluster | CloudNativePG |
-| `storage/` | S3 Bucket | Crossplane (AWS), Garage |
-| `secrets/` | ExternalSecret | external-secrets-operator |
-| `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule | prometheus-operator, Grafana sidecar |
-
-The platform chart requires the relevant operators to be installed on the cluster. It provides **plug-and-play infrastructure** — enable Postgres in one toggle and get a fully managed database cluster.
-
-Resources with multiple backends support a **provider switch** (e.g., `s3.provider: crossplane` vs `s3.provider: garage`).
+The base chart works on **any Kubernetes cluster** — including single-node k3s, kind, or microk8s — with no special operators installed (beyond a Gateway API implementation if HTTPRoutes are enabled).
 
 ## Deployment Flow
 
 ```bash
-# Always deploy base first
+# Deploy the application (often just the upstream chart)
 helm install myapp ./helm/base
 
-# Optionally deploy platform dependencies
+# Deploy the platform layer — databases, storage, auth
 helm install myapp-platform ./helm/platform
 ```
 
 The base chart does not depend on the platform chart. If platform resources are provisioned, the application discovers them through well-known Secret names and environment variables injected by the operators.
 
-## When to Use Platform
+## When to Skip Platform
 
-Use the platform chart when your application needs:
+The platform chart is the default for Hiroba apps. You'd skip it when:
 
-- A **dedicated database** (not a shared one)
-- **Object storage** provisioned alongside the app
-- **Identity/auth** resources that should live with the app's lifecycle
-
-Skip it when:
-
-- You're connecting to existing shared infrastructure
-- The cluster doesn't have the required operators
-- You're doing local development with mocked dependencies
+- You're connecting to an existing database you already run
+- The cluster doesn't have the required operators installed yet
+- You're doing local development or just testing things out

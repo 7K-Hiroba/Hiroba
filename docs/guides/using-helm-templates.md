@@ -19,8 +19,7 @@ app-template/
     ├── deployment.yaml # Application deployment
     ├── service.yaml    # Service exposure
     ├── ingress.yaml    # Ingress (optional)
-    ├── serviceaccount.yaml
-    └── hpa.yaml        # Horizontal Pod Autoscaler (optional)
+    └── serviceaccount.yaml
 ```
 
 ## Customizing Values
@@ -38,14 +37,16 @@ image:
 
 ### Resource Limits
 
+Keep these reasonable for homelab hardware. These defaults work well on a Raspberry Pi or mini PC:
+
 ```yaml
 resources:
   limits:
     cpu: 500m
     memory: 256Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 50m
+    memory: 64Mi
 ```
 
 ### Enabling Ingress
@@ -57,24 +58,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: app.example.com
+    - host: app.home.lab
       paths:
         - path: /
           pathType: Prefix
   tls:
     - secretName: app-tls
       hosts:
-        - app.example.com
-```
-
-### Autoscaling
-
-```yaml
-autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
+        - app.home.lab
 ```
 
 ## Extending the Template
