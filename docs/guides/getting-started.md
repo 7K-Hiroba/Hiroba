@@ -4,37 +4,21 @@ sidebar_position: 1
 
 # Getting Started
 
-This guide walks you through creating your first application using Hiroba's Backstage templates.
+This guide walks you through deploying your first application using Hiroba's Helm chart templates.
 
 ## Prerequisites
 
-- Access to a Backstage instance with Hiroba templates registered
-- A running Kubernetes cluster
+- A running Kubernetes cluster (k3s, kind, microk8s, or any distribution)
 - [Helm](https://helm.sh/) v3.x installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) configured for your cluster
 
-## Option A: Scaffold via Backstage (Recommended)
+:::tip New to Kubernetes?
+For homelab setups, [k3s](https://k3s.io/) is a great starting point — it runs on a single node with minimal resources and includes an Ingress controller and load balancer out of the box.
+:::
 
-1. Open your Backstage portal
-2. Navigate to **Create** and select **Application Template**
-3. Fill in the parameters:
-   - **Name**: your application name
-   - **Description**: what it does
-   - **Owner**: your team
-   - **Port**: container port (default 8080)
-   - **Platform dependencies**: toggle Postgres, S3, Keycloak as needed
-   - **Repository**: select where to publish
-4. Click **Create** — Backstage scaffolds and publishes your repo
+## Deploy from the Template
 
-Your new repo includes:
-- `helm/base/` — Ready-to-deploy Helm chart
-- `helm/platform/` — Platform dependencies (if enabled)
-- `Dockerfile` — Multi-stage container build
-- `.github/workflows/` — CI/CD referencing the workflow-library
-- `docs/` + `mkdocs.yml` — TechDocs
-- `catalog-info.yaml` — Backstage catalog registration
-
-## Option B: Manual Setup
+1. Clone the repo and copy the app skeleton:
 
 ```bash
 git clone https://github.com/7KGroup/hiroba.git
@@ -42,13 +26,17 @@ cp -r hiroba/templates/app-template/skeleton ./my-app
 cd my-app
 ```
 
-Replace all `${{ values.* }}` placeholders with your actual values, then:
+2. Replace all `${{ values.* }}` placeholders with your actual values (app name, image, port, etc.)
+
+3. Deploy the base application:
 
 ```bash
-# Deploy the base application
 helm install my-app ./helm/base
+```
 
-# Optionally deploy platform dependencies
+4. Optionally deploy platform dependencies (requires the relevant operators on your cluster):
+
+```bash
 helm install my-app-platform ./helm/platform
 ```
 
@@ -58,6 +46,10 @@ helm install my-app-platform ./helm/platform
 kubectl get pods -l app.kubernetes.io/name=my-app
 kubectl get svc my-app
 ```
+
+## Requesting a New Chart
+
+Want Hiroba to package an app we don't cover yet? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request and scaffold a new app repository for the community.
 
 ## Next Steps
 

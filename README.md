@@ -1,28 +1,28 @@
 # Hiroba
 
-**The community hub for 7KGroup's open-source Kubernetes platform initiative.**
+**Kubernetes packaging for self-hosters and homelab enthusiasts.**
 
-Hiroba (広場, "public square") is the central repository for the 7KGroup community effort to standardize open-source solutions into production-ready, containerized, Kubernetes-native applications — delivered as Helm charts, platform manifests, and curated container images.
+Hiroba (広場, "public square") is a 7KGroup community project that packages open-source applications into ready-to-deploy Helm charts, container images, and platform manifests — designed for people running Kubernetes at home or on their own infrastructure.
 
 ---
 
 ## Mission
 
-We believe great open-source software deserves great packaging. Our goal is to:
+Great open-source software deserves packaging that just works on a single-node cluster or a small homelab. Our goal is to:
 
-- **Standardize** — Establish consistent patterns for deploying OSS on Kubernetes
-- **Containerize** — Provide well-maintained, secure container images for popular applications
-- **Platform** — Deliver opinionated but flexible Helm charts and manifests that work out of the box
-- **Document** — Maintain comprehensive, community-driven documentation for every solution we ship
+- **Standardize** — Consistent patterns for deploying self-hosted apps on Kubernetes
+- **Containerize** — Lean, secure container images you can trust on your own hardware
+- **Platform** — Opinionated Helm charts that wire up databases, storage, and auth with minimal fuss
+- **Document** — Clear guides written for real people, not enterprise consultants
 
 ## Repository Structure
 
 ```
 hiroba/
 ├── templates/
-│   ├── app-template/                  # Backstage Software Template
+│   ├── app-template/                  # Application template
 │   │   ├── template.yaml              # Template definition (parameters, steps)
-│   │   └── skeleton/                  # Scaffolded app repo structure
+│   │   └── skeleton/                  # App repo structure
 │   │       ├── helm/
 │   │       │   ├── base/              # Core k8s resources (Deployment, Service, Ingress)
 │   │       │   └── platform/          # Platform deps (CNPG, S3, Keycloak via Crossplane)
@@ -32,8 +32,7 @@ hiroba/
 │   │       │   ├── argocd/            # ArgoCD Application manifests
 │   │       │   └── fluxcd/            # FluxCD Kustomization manifests
 │   │       ├── .github/workflows/     # CI/CD referencing 7K-Hiroba/workflows-library
-│   │       ├── docs/                  # TechDocs content
-│   │       └── catalog-info.yaml      # Backstage catalog entry
+│   │       └── docs/                  # Documentation
 ├── website/                           # Docusaurus documentation site
 ├── docs/                              # Project-level docs & ADRs
 └── .github/                           # CI/CD workflows & issue templates
@@ -41,16 +40,32 @@ hiroba/
 
 ### Base vs Platform Charts
 
-- **Base chart** (`helm/base/`) — Standard Kubernetes resources: Deployment, Service, Ingress, ServiceAccount, HPA. Everything needed to run the application.
-- **Platform chart** (`helm/platform/`) — Third-party operator and Crossplane resources: CNPG PostgreSQL clusters, S3 buckets, Keycloak realms. Plug-and-play infrastructure that extends the application with managed dependencies.
+- **Platform chart** (`helm/platform/`) — Hiroba's focus. Always custom. Wires in databases (CNPG), storage (S3), auth (Keycloak), and observability using cluster operators — plug-and-play infrastructure without manual setup.
+- **Base chart** (`helm/base/`) — The application itself. Often just an upstream third-party Helm chart used as a dependency — Hiroba doesn't rewrite what already works.
 
 ## Quick Start
 
-### Scaffold a New Application (via Backstage)
+### Clone and Deploy
 
-1. Open Backstage and navigate to **Create > Application Template**
-2. Fill in application details, deployment config, and platform dependencies
-3. Backstage scaffolds a full repo with Helm charts, Dockerfile, TechDocs, and CI/CD
+```bash
+git clone https://github.com/7KGroup/hiroba.git
+cp -r hiroba/templates/app-template/skeleton ./my-app
+cd my-app
+```
+
+Replace the `${{ values.* }}` placeholders with your values, then deploy:
+
+```bash
+# Deploy the application
+helm install my-app ./helm/base
+
+# Optionally add platform dependencies (Postgres, S3, etc.)
+helm install my-app-platform ./helm/platform
+```
+
+### Request a New Chart
+
+Want a chart for an app we don't cover yet? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) — a 7KGroup maintainer will scaffold and publish the new repo.
 
 ### Browse the Documentation
 

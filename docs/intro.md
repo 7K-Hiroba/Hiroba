@@ -5,27 +5,25 @@ slug: /intro
 
 # Introduction
 
-Welcome to **Hiroba** — the community hub for standardizing open-source solutions into production-ready Kubernetes applications.
+Welcome to **Hiroba** — Kubernetes packaging for self-hosters and homelab enthusiasts.
 
 ## What is Hiroba?
 
-Hiroba (広場, "public square") is a 7KGroup initiative to bridge the gap between great open-source software and production-grade Kubernetes deployments.
+Hiroba (広場, "public square") is a 7KGroup community project that bridges the gap between great open-source software and actually running it on your own Kubernetes cluster.
 
-We provide **Backstage Software Templates** that scaffold complete application repositories with:
+We provide ready-to-use Helm charts and templates for self-hosted applications, each with:
 
-- **Base Helm charts** — Standard Kubernetes resources (Deployment, Service, Ingress, HPA)
-- **Platform Helm charts** — Third-party infrastructure (CNPG Postgres, S3 via Crossplane, Keycloak realms)
-- **Dockerfiles** — Security-first, multi-stage container builds
+- **Platform Helm charts** — Hiroba's core value: wiring in databases (CNPG Postgres), storage (S3), auth (Keycloak), and observability alongside your app
+- **Base Helm charts** — The application itself, often just an upstream third-party chart used as a dependency
+- **Dockerfiles** — Lean, secure, multi-stage container builds
 - **CI/CD workflows** — Referencing a centralized workflow-library for consistency
-- **TechDocs** — Backstage-native documentation out of the box
-- **Catalog integration** — Every scaffolded app registers in the Backstage catalog
 
 ## Who is this for?
 
-- **Platform engineers** building internal developer platforms on Kubernetes
-- **DevOps teams** who want standardized, battle-tested deployment patterns
-- **Developers** who want to go from idea to deployed application in minutes
-- **Organizations** adopting Backstage and Kubernetes together
+- **Homelab enthusiasts** running Kubernetes on a Raspberry Pi, mini PC, or spare hardware
+- **Self-hosters** who want to deploy open-source apps on their own infrastructure without the guesswork
+- **Tinkerers and learners** who want well-structured examples of real Kubernetes deployments
+- **Small teams** who need reliable packaging without enterprise overhead
 
 ## Core Concepts
 
@@ -33,15 +31,15 @@ We provide **Backstage Software Templates** that scaffold complete application r
 
 Every application gets two Helm charts:
 
-- **Base** — The application itself: Deployment, Service, Ingress. Works on any k8s cluster.
-- **Platform** — Optional managed infrastructure: databases (CNPG), storage (S3), identity (Keycloak). Requires cluster operators but provides plug-and-play dependencies.
+- **Platform** — Hiroba's focus. Always custom, always present. Wires in databases (CNPG), storage (S3), identity (Keycloak), and observability using cluster operators — plug-and-play infrastructure without manual setup.
+- **Base** — The application itself. Often just an upstream third-party Helm chart used as a dependency — Hiroba doesn't rewrite what already works.
 
 [Learn more about this distinction](architecture/base-vs-platform)
 
-### Backstage Integration
+### Requesting a New Chart
 
-Templates are designed as [Backstage Software Templates](architecture/backstage-templates). An admin configures the template in Backstage, and developers use it to scaffold new application repos with a single click.
+Don't see the app you want? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request, scaffold a new app repository from the template, and publish it for the community.
 
 ## Getting Started
 
-Head to the [Getting Started guide](guides/getting-started) to begin.
+Head to the [Getting Started guide](guides/getting-started) to deploy your first app.
