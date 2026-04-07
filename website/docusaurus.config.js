@@ -7,7 +7,7 @@ const config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://hiroba.7kgroup.org',
-  baseUrl: '/docs/',
+  baseUrl: '/',
 
   organizationName: '7KGroup',
   projectName: 'hiroba',
