@@ -84,6 +84,31 @@ data:
     # your config here
 ```
 
+## Operator Dependency Checks
+
+The platform chart validates that required operators are installed before rendering resources. This is handled by `templates/_checks.yaml`, which uses Helm's `.Capabilities.APIVersions` to check for CRDs at install time.
+
+If you add a new operator-backed feature to the platform chart, add a corresponding check:
+
+```yaml
+{{- if and .Values.myFeature.enabled (not (.Capabilities.APIVersions.Has "example.io/v1")) }}
+  {{- fail "myFeature.enabled is true but the Example Operator CRD (example.io/v1) is not installed. Install the operator first or set myFeature.enabled=false." }}
+{{- end }}
+```
+
+The rules:
+1. **One check per CRD** — add it to `_checks.yaml` alongside the existing checks.
+2. **Guard the resources** — wrap all templates that use the CRD with `{{- if .Values.myFeature.enabled }}`.
+3. **Default to disabled** — set `myFeature.enabled: false` in `values.yaml` so the chart is safe to install without the operator.
+4. **Skip native resources** — features backed by ConfigMaps, Jobs, or other built-in kinds don't need checks.
+
+:::note CI and offline rendering
+`helm template` does not connect to a cluster, so `.Capabilities.APIVersions` will be empty. Pass `--api-versions` to simulate the APIs your cluster provides:
+```bash
+helm template my-app ./helm/platform --api-versions postgresql.cnpg.io/v1
+```
+:::
+
 ## Linting and Testing
 
 ```bash
