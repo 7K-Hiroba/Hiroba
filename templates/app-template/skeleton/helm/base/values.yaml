@@ -33,10 +33,10 @@ securityContext:
 service:
   type: ClusterIP
   port: 80
-  targetPort: ${{ values.port }}
+  targetPort: 8080
 
 gateway:
-  enabled: ${{ values.enableIngress }}
+  enabled: true
   annotations: {}
   # -- Parent Gateway references
   parentRefs:
@@ -45,7 +45,7 @@ gateway:
       # sectionName: https
   # -- Hostnames to match
   hostnames:
-    - ${{ values.hostname | default('app.example.com') }}
+    - myapp.example.com
   # -- Routing rules (omit for a simple catch-all route to the service)
   rules: []
   #  - matches:

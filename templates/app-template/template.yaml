@@ -41,46 +41,23 @@ spec:
             catalogFilter:
               kind: Group
 
-    - title: Deployment Configuration
-      required:
-        - port
+    - title: Platform Chart Examples
+      description: >-
+        The platform chart ships with example resource definitions.
+        Toggle the ones you want included in your new app — you can always
+        add or remove them later. See helm/platform/ for the full list.
       properties:
-        port:
-          title: Container Port
-          type: number
-          default: 8080
-          description: The port your application listens on
-        enableIngress:
-          title: Enable HTTPRoute
-          type: boolean
-          default: true
-          description: Create a Gateway API HTTPRoute for external access
-        hostname:
-          title: Hostname
-          type: string
-          description: HTTPRoute hostname (e.g., myapp.example.com)
-          ui:options:
-            rows: 1
-
-    - title: Platform Dependencies
-      description: Select platform resources to provision alongside your application
-      properties:
-        enablePlatform:
-          title: Enable Platform Chart
-          type: boolean
-          default: false
-          description: Include platform dependencies (database, object storage, etc.)
         enablePostgres:
-          title: PostgreSQL (CNPG)
+          title: Include PostgreSQL example (CNPG)
           type: boolean
           default: false
-          description: Provision a CloudNativePG PostgreSQL cluster
+          description: Include an example CloudNativePG PostgreSQL cluster definition
           ui:widget: checkbox
         enableS3:
-          title: S3 Bucket
+          title: Include S3 Bucket example
           type: boolean
           default: false
-          description: Provision an S3-compatible object storage bucket via Crossplane
+          description: Include an example S3-compatible object storage bucket definition (Crossplane)
           ui:widget: checkbox
 
     - title: Repository
@@ -95,7 +72,7 @@ spec:
             allowedHosts:
               - github.com
             allowedOwners:
-              - 7KGroup
+              - 7K-Hiroba
 
   steps:
     - id: fetch-skeleton
@@ -107,9 +84,6 @@ spec:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
-          port: ${{ parameters.port }}
-          enableIngress: ${{ parameters.enableIngress }}
-          hostname: ${{ parameters.hostname }}
           enablePlatform: ${{ parameters.enablePlatform }}
           enablePostgres: ${{ parameters.enablePostgres }}
           enableS3: ${{ parameters.enableS3 }}
