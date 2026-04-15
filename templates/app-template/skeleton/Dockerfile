@@ -14,22 +14,17 @@ COPY . .
 RUN npm run build
 
 # -- Runtime stage
-FROM node:20-alpine
+FROM gcr.io/distroless/nodejs20-debian12:nonroot
 
 LABEL maintainer="7KGroup <https://github.com/7KGroup>"
 LABEL org.opencontainers.image.source="https://github.com/7KGroup/${{ values.name }}"
 LABEL org.opencontainers.image.description="${{ values.description }}"
-
-RUN addgroup -g 1000 appgroup && \
-    adduser -u 1000 -G appgroup -D appuser
 
 WORKDIR /app
 
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/node_modules ./node_modules
 
-USER appuser
-
 EXPOSE 8080
 
-ENTRYPOINT ["node", "dist/index.js"]
+ENTRYPOINT ["dist/index.js"]
