@@ -9,7 +9,7 @@ metadata:
     - helm
     - recommended
   annotations:
-    backstage.io/techdocs-ref: dir:../..
+    backstage.io/docs-url: https://hiroba.7kgroup.org
 spec:
   owner: group:hiroba
   type: service

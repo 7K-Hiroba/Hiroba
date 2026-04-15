@@ -10,12 +10,11 @@ jobs:
   app:
     if: >-
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'Dockerfile') ||
-      contains(toJSON(github.event.commits.*.modified), 'src/')
+      contains(toJSON(github.event.commits.*.modified), 'Dockerfile')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: app
-      image-name: ${{ secrets.HARBOR_REGISTRY }}/${{ secrets.HARBOR_PROJECT }}/${{ values.name }}
+      image-name: ${{ values.name }}
       path: .
     secrets: inherit
 
@@ -43,7 +42,6 @@ jobs:
     if: >-
       github.event_name == 'pull_request' ||
       contains(toJSON(github.event.commits.*.modified), 'docs/') ||
-      contains(toJSON(github.event.commits.*.modified), 'mkdocs.yml')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: docs
