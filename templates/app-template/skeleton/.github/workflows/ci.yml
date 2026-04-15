@@ -7,6 +7,9 @@ on:
     branches: [main]
 
 jobs:
+  lint-pr-title:
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-lint-pr-title.yml@main
+
   app:
     if: >-
       github.event_name == 'pull_request' ||
