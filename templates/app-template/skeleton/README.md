@@ -8,7 +8,8 @@ ${{ values.description }}
 ├── helm/
 │   ├── base/           # Core k8s resources (Deployment, Service, Ingress)
 │   └── platform/       # Platform dependencies with provider switching
-├── crossplane/         # App-specific Crossplane compositions (XRDs, Compositions)
+├── compositions/
+│   └── crossplane/     # App-specific Crossplane compositions (XRDs, Compositions)
 ├── gitops/
 │   ├── argocd/         # ArgoCD Application manifests
 │   └── fluxcd/         # FluxCD Kustomization manifests
@@ -34,7 +35,7 @@ helm install ${{ values.name }}-platform ./helm/platform
 
 ## Documentation
 
-Full documentation is available in Backstage via TechDocs, or locally under `docs/`.
+Full documentation is available at [hiroba.7kgroup.org/apps/${{ values.name }}](https://hiroba.7kgroup.org/apps/${{ values.name }}), or locally under `docs/`.
 
 ## Part of the Hiroba ecosystem
 

@@ -41,7 +41,7 @@ jobs:
   docs:
     if: >-
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'docs/') ||
+      contains(toJSON(github.event.commits.*.modified), 'docs/')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: docs
