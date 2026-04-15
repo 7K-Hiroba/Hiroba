@@ -4,8 +4,8 @@ metadata:
   name: ${{ values.name }}
   description: ${{ values.description }}
   annotations:
-    github.com/project-slug: 7KGroup/${{ values.name }}
-    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: 7K-Hiroba/${{ values.name }}
+    backstage.io/docs-url: https://hiroba.7kgroup.org/${{ values.name }}
   tags:
     - kubernetes
 spec:
