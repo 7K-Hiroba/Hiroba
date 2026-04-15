@@ -30,6 +30,6 @@ COPY --from=builder /build/node_modules ./node_modules
 
 USER appuser
 
-EXPOSE ${{ values.port }}
+EXPOSE 8080
 
 ENTRYPOINT ["node", "dist/index.js"]

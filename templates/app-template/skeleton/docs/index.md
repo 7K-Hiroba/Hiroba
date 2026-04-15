@@ -4,7 +4,9 @@ ${{ values.description }}
 
 ## Overview
 
-This application is part of the [7KGroup](https://github.com/7KGroup) ecosystem, scaffolded using [Hiroba](https://github.com/7KGroup/hiroba) templates.
+This application is part of the [7KGroup](https://github.com/7KGroup)
+ecosystem, scaffolded using [Hiroba](https://github.com/7KGroup/hiroba)
+templates.
 
 ## Architecture
 
@@ -30,4 +32,6 @@ helm install ${{ values.name }}-platform ./helm/platform
 
 ## Configuration
 
-See [helm/base/values.yaml](../helm/base/values.yaml) for base application configuration and [helm/platform/values.yaml](../helm/platform/values.yaml) for platform dependencies.
+See [helm/base/values.yaml](../helm/base/values.yaml) for base application
+configuration and [helm/platform/values.yaml](../helm/platform/values.yaml)
+for platform dependencies.
