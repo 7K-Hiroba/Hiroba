@@ -2,16 +2,16 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: app-template
-  title: Application Template
-  description: Scaffold a new Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
+  title: Hiroba Application Template
+  description: Scaffold a new hiroba Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
   tags:
     - kubernetes
     - helm
     - recommended
   annotations:
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/techdocs-ref: dir:../..
 spec:
-  owner: group:platform-team
+  owner: group:hiroba
   type: service
 
   parameters:
