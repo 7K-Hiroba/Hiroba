@@ -39,7 +39,7 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
     with:
       stack: app
-      image-name: ghcr.io/7kgroup/${{ values.name }}
+      image-name: ${{ secrets.HARBOR_REGISTRY }}/${{ secrets.HARBOR_PROJECT }}/${{ values.name }}
       path: .
       version: ${{ needs.release-please.outputs.app--version }}
     secrets: inherit
