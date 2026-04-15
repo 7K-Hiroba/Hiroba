@@ -1,6 +1,6 @@
-# Platform dependencies for ${{ values.name }}
-# These resources are managed by cluster operators (CNPG, Crossplane, etc.)
-# and provide plug-and-play infrastructure alongside the base application.
+# Platform chart examples for ${{ values.name }}
+# These are example resource definitions managed by cluster operators (CNPG, Crossplane, etc.).
+# Add, remove, or customise them to match your application's needs.
 #
 # Each resource supports a `provider` switch to select the backend implementation.
 # Available providers are listed per resource — add your own by creating a

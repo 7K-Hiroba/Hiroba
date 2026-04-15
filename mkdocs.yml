@@ -1,0 +1,24 @@
+site_name: Hiroba
+site_description: Kubernetes packaging for self-hosters and homelab enthusiasts
+
+nav:
+  - Home: index.md
+  - Introduction: intro.md
+  - Mission: mission.md
+  - Roadmap: roadmap.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Base vs Platform: architecture/base-vs-platform.md
+      - GitOps: architecture/gitops.md
+      - Backstage Templates: architecture/backstage-templates.md
+  - Guides:
+      - Getting Started: guides/getting-started.md
+      - Using Helm Templates: guides/using-helm-templates.md
+      - Containerization: guides/containerization.md
+      - Crossplane Compositions: guides/crossplane-compositions.md
+  - Community:
+      - Contributing: community/contributing.md
+      - Governance: community/governance.md
+
+plugins:
+  - techdocs-core

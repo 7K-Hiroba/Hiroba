@@ -18,7 +18,7 @@ Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/so
 4. They fill in parameters based on the issue:
    - **Application info** — name, description
    - **Deployment config** — container port, ingress hostname
-   - **Platform dependencies** — toggle Postgres, S3, Keycloak, etc
+   - **Included examples** — include or exclude example resource definitions (HTTPRoute, Postgres, S3)
    - **Repository** — where to publish on GitHub
 5. Backstage scaffolds the repo:
    - Fetches the skeleton and renders `${{ values.* }}` placeholders
@@ -38,7 +38,7 @@ templates/app-template/
     ├── mkdocs.yml          # TechDocs config
     ├── helm/
     │   ├── base/           # Standard k8s Helm chart
-    │   └── platform/       # Platform dependencies chart
+    │   └── platform/       # Platform chart (example resource definitions)
     ├── crossplane/         # App-specific XRDs & Compositions
     ├── docs/               # Documentation
     └── .github/workflows/  # CI/CD referencing workflow-library
@@ -51,8 +51,8 @@ The `template.yaml` defines four parameter groups:
 | Group | Fields | Purpose |
 |---|---|---|
 | Application Info | name, description, owner | Identity and ownership |
-| Deployment Config | port, enableIngress, hostname | How the app is exposed |
-| Platform Dependencies | enablePostgres, enableS3, enableKeycloak | What infra to provision |
+| Deployment Config | port | How the app is exposed |
+| Included Examples | enableIngress, hostname, enablePostgres, enableS3 | Example resource definitions to include (all on by default) |
 | Repository | repoUrl | Where to publish |
 
 ## CI/CD Integration
