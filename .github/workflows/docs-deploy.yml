@@ -28,8 +28,6 @@ jobs:
         uses: peak/action-setup-s5cmd@main
         with:
           version: v2.0.0
-      
-
 
       - name: Sync app docs from S3
         env:

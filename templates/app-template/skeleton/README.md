@@ -16,8 +16,7 @@ ${{ values.description }}
 ├── docs/               # TechDocs content
 ├── .github/workflows/  # CI/CD (references 7K-Hiroba/workflows-library)
 ├── Dockerfile
-├── catalog-info.yaml   # Backstage catalog entry
-└── mkdocs.yml          # TechDocs configuration
+└── catalog-info.yaml   # Backstage catalog entry
 ```
 
 ## Quick Start

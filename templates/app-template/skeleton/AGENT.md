@@ -35,8 +35,7 @@ This project follows a **near-native** approach. We prefer upstream, official so
 ├── docs/                              # TechDocs content (published via Backstage)
 ├── .github/workflows/                 # CI/CD — references 7K-Hiroba/workflows-library
 ├── Dockerfile                         # Only if a custom image is maintained
-├── catalog-info.yaml                  # Backstage catalog registration
-└── mkdocs.yml                         # TechDocs configuration
+└── catalog-info.yaml                  # Backstage catalog registration
 ```
 
 ## Where to Add What
@@ -74,7 +73,7 @@ ArgoCD and FluxCD manifests live under `gitops/`. There are separate manifests f
 
 ### Documentation
 
-All docs go under `docs/` and are published through Backstage TechDocs via `mkdocs.yml`. Keep docs in Markdown.
+All docs go under `docs/` and are published via Docusaurus. Keep docs in Markdown.
 
 ### CI/CD workflows
 
@@ -85,7 +84,7 @@ There are two workflow files — `ci.yml` and `release-please.yml` — each call
 | App (Dockerfile) | `app` | `Dockerfile`, `src/` | `app/v*` | `simple` |
 | Helm Base | `helm` | `helm/base/` | `helm-base/v*` | `helm` (bumps Chart.yaml) |
 | Helm Platform | `helm` | `helm/platform/` | `helm-platform/v*` | `helm` (bumps Chart.yaml) |
-| Docs | `docs` | `docs/`, `mkdocs.yml` | `docs/v*` | `simple` |
+| Docs | `docs` | `docs/` | `docs/v*` | `simple` |
 | Crossplane | `crossplane` | `crossplane/` | `crossplane/v*` | `simple` |
 
 **CI** (`ci.yml`) — jobs run conditionally based on which paths changed. The library workflow decides what to do based on `stack`: lint+template+test for `helm`, build+scan for `app`, validate for `crossplane`, etc.
