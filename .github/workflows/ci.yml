@@ -5,6 +5,7 @@ on:
     branches: [main]
 
 jobs:
+
   lint-helm:
     name: Lint Helm Charts
     runs-on: ubuntu-latest

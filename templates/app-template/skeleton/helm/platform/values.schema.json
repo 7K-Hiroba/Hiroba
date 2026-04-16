@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["global"],
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": ["appName"],
+      "properties": {
+        "appName": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "postgres": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "enum": ["cnpg"] },
+        "instances": { "type": "integer", "minimum": 1 },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$" },
+            "storageClass": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            },
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "imageName": { "type": "string" },
+        "database": { "type": "string" },
+        "owner": { "type": "string" },
+        "backup": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "schedule": { "type": "string" },
+            "retentionPolicy": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
+        "bucketName": { "type": "string" },
+        "acl": { "type": "string" },
+        "crossplane": {
+          "type": "object",
+          "properties": {
+            "region": { "type": "string" },
+            "providerConfigRef": { "type": "string" },
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "expirationDays": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "garage": {
+          "type": "object",
+          "properties": {
+            "endpoint": { "type": "string" },
+            "accessKeySecret": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "secretKeySecret": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "replicationFactor": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "externalSecrets": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "refreshInterval": { "type": "string" },
+        "storeRef": {
+          "type": "object",
+          "required": ["name", "kind"],
+          "properties": {
+            "name": { "type": "string" },
+            "kind": { "type": "string", "enum": ["SecretStore", "ClusterSecretStore"] }
+          },
+          "additionalProperties": false
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["secretKey", "remoteKey"],
+            "properties": {
+              "secretKey": { "type": "string" },
+              "remoteKey": { "type": "string" },
+              "property": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "dataFrom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extract": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "serviceMonitor": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "additionalLabels": { "type": "object" },
+            "port": { "type": "string" },
+            "path": { "type": "string" },
+            "interval": { "type": "string" },
+            "scrapeTimeout": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "grafanaDashboard": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "folderLabel": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "prometheusRules": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

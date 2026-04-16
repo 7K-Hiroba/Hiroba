@@ -19,9 +19,13 @@ This project follows a **near-native** approach. We prefer upstream, official so
 │   ├── base/                          # Application Helm chart
 │   │   ├── Chart.yaml                 # May declare upstream chart as dependency
 │   │   ├── values.yaml                # Overrides for upstream + custom values
-│   │   └── templates/                 # Only if extending upstream; otherwise minimal
+│   │   ├── values.schema.json         # JSON Schema for values validation (required)
+│   │   ├── templates/                 # Only if extending upstream; otherwise minimal
+│   │   └── tests/                     # helm-unittest test suites
 │   └── platform/                      # Platform dependencies (always custom)
 │       ├── values.yaml
+│       ├── values.schema.json         # JSON Schema for values validation (required)
+│       ├── tests/                     # helm-unittest test suites
 │       └── templates/
 │           ├── database/              # CNPG clusters, etc.
 │           ├── storage/               # S3 buckets (Crossplane, Garage, etc.)
@@ -87,7 +91,7 @@ There are two workflow files — `ci.yml` and `release-please.yml` — each call
 | Docs | `docs` | `docs/` | `docs/v*` | `simple` |
 | Crossplane | `crossplane` | `crossplane/` | `crossplane/v*` | `simple` |
 
-**CI** (`ci.yml`) — jobs run conditionally based on which paths changed. The library workflow decides what to do based on `stack`: lint+template+test for `helm`, build+scan for `app`, validate for `crossplane`, etc.
+**CI** (`ci.yml`) — jobs run conditionally based on which paths changed. The library workflow decides what to do based on `stack`: lint+template+unittest+test for `helm`, build+scan for `app`, validate for `crossplane`, etc.
 
 **Releases** (`release-please.yml`) — fully automated via [release-please](https://github.com/googleapis/release-please). On every push to `main`, release-please reads conventional commits, determines which stacks need a release, and opens separate release PRs per component. When a release PR is merged, it creates the tag + GitHub Release and triggers the publish job for that stack.
 
@@ -111,6 +115,25 @@ The scope in the commit message should match the component path or name. Release
 - All resources include `app.kubernetes.io/part-of: hiroba` for traceability
 - Security defaults: `runAsNonRoot: true`, `readOnlyRootFilesystem: true`, all capabilities dropped
 - External traffic uses **Gateway API** (`gateway.networking.k8s.io/v1` HTTPRoute), not Ingress
+- Every chart **must** include a `values.schema.json` — CI will fail without it. Helm lint and template rendering validate values against this schema automatically
+- Every chart **must** include unit tests under `tests/` using [helm-unittest](https://github.com/helm-unittest/helm-unittest). Test files follow the naming convention `<template>_test.yaml`
+
+### Values schema conventions
+
+- Use [JSON Schema draft-07](https://json-schema.org/draft-07/schema#)
+- Set `additionalProperties: false` on key objects to catch typos
+- Mark essential fields as `required` (e.g., `image`, `service`, `global.appName`)
+- Use `enum` for fields with a fixed set of values (e.g., `pullPolicy`, `provider`)
+- When adding a new value to `values.yaml`, always add the corresponding entry in `values.schema.json`
+
+### Unit test conventions
+
+- Tests live in `tests/` inside each chart directory
+- One test file per template: `<template>_test.yaml`
+- Each test file declares `suite`, `templates`, and a list of `tests`
+- For platform chart tests, set `capabilities.apiVersions` to satisfy CRD checks in `_checks.yaml`
+- Test both the default state (enabled/disabled) and customized values
+- Test conditional rendering (e.g., resource created when enabled, absent when disabled)
 
 ### Platform chart conventions
 

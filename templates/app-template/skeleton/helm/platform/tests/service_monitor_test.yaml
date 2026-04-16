@@ -1,0 +1,66 @@
+suite: ServiceMonitor
+templates:
+  - templates/observability/service-monitor.yaml
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1
+tests:
+  - it: is not created when disabled
+    set:
+      observability.serviceMonitor.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders when enabled
+    set:
+      observability.serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: apiVersion
+          value: monitoring.coreos.com/v1
+
+  - it: uses configured scrape settings
+    set:
+      observability.serviceMonitor:
+        enabled: true
+        port: metrics
+        path: /custom-metrics
+        interval: 15s
+        scrapeTimeout: 5s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: metrics
+      - equal:
+          path: spec.endpoints[0].path
+          value: /custom-metrics
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 15s
+      - equal:
+          path: spec.endpoints[0].scrapeTimeout
+          value: 5s
+
+  - it: includes additional labels
+    set:
+      observability.serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack
+
+  - it: targets the correct namespace
+    release:
+      namespace: my-namespace
+    set:
+      observability.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.namespaceSelector.matchNames[0]
+          value: my-namespace

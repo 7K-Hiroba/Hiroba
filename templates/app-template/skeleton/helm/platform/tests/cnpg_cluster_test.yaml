@@ -1,0 +1,78 @@
+suite: CNPG Cluster
+templates:
+  - templates/database/cnpg-cluster.yaml
+capabilities:
+  apiVersions:
+    - postgresql.cnpg.io/v1
+tests:
+  - it: is not created when postgres is disabled
+    set:
+      postgres.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders when postgres is enabled
+    set:
+      postgres.enabled: true
+    asserts:
+      - isKind:
+          of: Cluster
+      - equal:
+          path: apiVersion
+          value: postgresql.cnpg.io/v1
+
+  - it: uses configured instances and storage
+    set:
+      postgres:
+        enabled: true
+        instances: 3
+        storage:
+          size: 20Gi
+          storageClass: fast-ssd
+    asserts:
+      - equal:
+          path: spec.instances
+          value: 3
+      - equal:
+          path: spec.storage.size
+          value: 20Gi
+      - equal:
+          path: spec.storage.storageClass
+          value: fast-ssd
+
+  - it: sets database bootstrap config
+    set:
+      postgres:
+        enabled: true
+        database: mydb
+        owner: myuser
+    asserts:
+      - equal:
+          path: spec.bootstrap.initdb.database
+          value: mydb
+      - equal:
+          path: spec.bootstrap.initdb.owner
+          value: myuser
+
+  - it: omits backup section when disabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: false
+    asserts:
+      - isNull:
+          path: spec.backup
+
+  - it: includes backup config when enabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "30d"
+    asserts:
+      - equal:
+          path: spec.backup.retentionPolicy
+          value: "30d"
