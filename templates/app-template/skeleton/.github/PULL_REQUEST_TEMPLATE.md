@@ -3,7 +3,6 @@
 <!-- Brief description of the changes -->
 
 ## Type of Change
-npm
 - [ ] New Helm chart / template
 - [ ] Update to existing chart / template
 - [ ] Documentation
@@ -20,9 +19,6 @@ npm
 ## Testing
 
 <!-- How were these changes tested? -->
-
-- [ ] Helm lint passes
-- [ ] Template renders correctly (`helm template`)
 - [ ] Deployed and tested on a cluster
 - [ ] Documentation reviewed for accuracy
 - [ ] N/A
