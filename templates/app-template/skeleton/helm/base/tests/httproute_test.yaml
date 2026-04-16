@@ -1,0 +1,48 @@
+suite: HTTPRoute
+templates:
+  - templates/httproute.yaml
+tests:
+  - it: renders with default values
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: apiVersion
+          value: gateway.networking.k8s.io/v1
+
+  - it: sets parent gateway reference
+    set:
+      gateway.parentRefs:
+        - name: my-gateway
+          namespace: gateway-system
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].name
+          value: my-gateway
+      - equal:
+          path: spec.parentRefs[0].namespace
+          value: gateway-system
+
+  - it: sets hostnames
+    set:
+      gateway.hostnames:
+        - app.example.com
+        - www.example.com
+    asserts:
+      - equal:
+          path: spec.hostnames[0]
+          value: "app.example.com"
+      - equal:
+          path: spec.hostnames[1]
+          value: "www.example.com"
+
+  - it: renders catch-all rule when no custom rules
+    set:
+      gateway.rules: []
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: PathPrefix
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /

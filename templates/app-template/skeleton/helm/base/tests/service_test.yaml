@@ -1,0 +1,36 @@
+suite: Service
+templates:
+  - templates/service.yaml
+tests:
+  - it: renders with default values
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+
+  - it: uses configured port and type
+    set:
+      service.type: NodePort
+      service.port: 8080
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+      - equal:
+          path: spec.ports[0].port
+          value: 8080
+
+  - it: has correct selector labels
+    release:
+      name: my-release
+    asserts:
+      - isNotNull:
+          path: spec.selector["app.kubernetes.io/name"]
+      - equal:
+          path: spec.selector["app.kubernetes.io/instance"]
+          value: my-release
