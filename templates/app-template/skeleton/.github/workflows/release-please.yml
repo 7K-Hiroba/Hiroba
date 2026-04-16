@@ -12,6 +12,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
+{%- raw %}
       app--release_created: ${{ steps.release.outputs['app--release_created'] }}
       app--tag_name: ${{ steps.release.outputs['app--tag_name'] }}
       app--version: ${{ steps.release.outputs['app--version'] }}
@@ -39,7 +40,7 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
     with:
       stack: app
-      image-name: ${{ secrets.HARBOR_REGISTRY }}/${{ secrets.HARBOR_PROJECT }}/${{ values.name }}
+      image-name: ${{ secrets.HARBOR_REGISTRY }}/${{ secrets.HARBOR_PROJECT }}/{% endraw %}${{ values.name }}{%- raw %}
       path: .
       version: ${{ needs.release-please.outputs.app--version }}
     secrets: inherit
@@ -83,3 +84,4 @@ jobs:
       path: crossplane
       version: ${{ needs.release-please.outputs.crossplane--version }}
     secrets: inherit
+{% endraw %}
