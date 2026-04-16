@@ -40,7 +40,7 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
     with:
       stack: app
-      image-name: ${{ secrets.HARBOR_REGISTRY }}/${{ secrets.HARBOR_PROJECT }}/{% endraw %}${{ values.name }}{%- raw %}
+      image-name: {% endraw %}${{ values.name }}{%- raw %}
       path: .
       version: ${{ needs.release-please.outputs.app--version }}
     secrets: inherit
