@@ -20,6 +20,8 @@ Hiroba separates these concerns. This matters just as much on a homelab as anywh
 
 The platform chart is **always custom** — this is where 7K-Hiroba adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
 
+Both charts require a `values.schema.json` (for values validation) and unit tests under `tests/` (using [helm-unittest](https://github.com/helm-unittest/helm-unittest)). CI enforces both — see [Using Helm Templates](../guides/using-helm-templates.md) for details.
+
 It contains third-party CRs organized into subdirectories:
 
 | Category | Examples | Operators |
