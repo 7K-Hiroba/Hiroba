@@ -17,12 +17,12 @@ jobs:
       app--release_created: ${{ steps.release.outputs['app--release_created'] }}
       app--tag_name: ${{ steps.release.outputs['app--tag_name'] }}
       app--version: ${{ steps.release.outputs['app--version'] }}
-      helm-base--release_created: ${{ steps.release.outputs['helm-base--release_created'] }}
-      helm-base--tag_name: ${{ steps.release.outputs['helm-base--tag_name'] }}
-      helm-base--version: ${{ steps.release.outputs['helm-base--version'] }}
-      helm-platform--release_created: ${{ steps.release.outputs['helm-platform--release_created'] }}
-      helm-platform--tag_name: ${{ steps.release.outputs['helm-platform--tag_name'] }}
-      helm-platform--version: ${{ steps.release.outputs['helm-platform--version'] }}
+      helm-base--release_created: ${{ steps.release.outputs['helm/base--release_created'] }}
+      helm-base--tag_name: ${{ steps.release.outputs['helm/base--tag_name'] }}
+      helm-base--version: ${{ steps.release.outputs['helm/base--version'] }}
+      helm-platform--release_created: ${{ steps.release.outputs['helm/platform--release_created'] }}
+      helm-platform--tag_name: ${{ steps.release.outputs['helm/platform--tag_name'] }}
+      helm-platform--version: ${{ steps.release.outputs['helm/platform--version'] }}
       docs--release_created: ${{ steps.release.outputs['docs--release_created'] }}
       docs--tag_name: ${{ steps.release.outputs['docs--tag_name'] }}
       docs--version: ${{ steps.release.outputs['docs--version'] }}
