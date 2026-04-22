@@ -108,6 +108,12 @@ The scope in the commit message should match the component path or name. Release
 
 ## Technical Specifics
 
+### API versions
+
+- Prefer the **latest stable (GA) API version** for every resource. Avoid `v1alphaN` / `v1betaN` when a GA `v1` (or newer) exists upstream.
+- When an upstream operator promotes an API to GA, update the template, the `_checks.yaml` capability probe, and any `helm unittest` fixtures together so they stay in sync.
+- Only fall back to alpha/beta when upstream ships no GA version (e.g. `argoproj.io/v1alpha1` for Argo CD Application, `backstage.io/v1alpha1` for Backstage catalog entities).
+
 ### Helm
 
 - API version: `apiVersion: v2`
@@ -156,7 +162,7 @@ The scope in the commit message should match the component path or name. Release
 
 ### External Secrets
 
-- Use `external-secrets.io/v1beta1` ExternalSecret
+- Use `external-secrets.io/v1` ExternalSecret
 - Reference a `ClusterSecretStore` by default
 - Map individual keys via `data[]` or bulk-import via `dataFrom[]`
 

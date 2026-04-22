@@ -9,15 +9,20 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-
-  source:
-    repoURL: https://github.com/7KGroup/${{ values.name }}.git
-    targetRevision: main
-    path: helm/base
-    helm:
-      valueFiles:
-        - values.yaml
-        # - values-production.yaml  # Uncomment for env-specific overrides
+  sources:
+    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+      targetRevision: main
+      path: helm/base
+      helm:
+        valueFiles:
+          - values.yaml
+          # - values-production.yaml  # Uncomment for env-specific overrides
+    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+      targetRevision: main
+      path: helm/platform
+      helm:
+        valueFiles:
+          - values.yaml
 
   destination:
     server: https://kubernetes.default.svc

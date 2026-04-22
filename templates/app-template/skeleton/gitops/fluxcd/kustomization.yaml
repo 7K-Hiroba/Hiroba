@@ -23,6 +23,6 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m
-  url: https://github.com/7KGroup/${{ values.name }}.git
+  url: https://github.com/7K-Hiroba/${{ values.name }}.git
   ref:
     branch: main
