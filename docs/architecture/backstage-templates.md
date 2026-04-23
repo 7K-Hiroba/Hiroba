@@ -5,7 +5,7 @@ sidebar_position: 3
 # Backstage Software Templates (Internal)
 
 :::info 7KGroup Maintainers Only
-The Backstage instance is only accessible to 7KGroup representatives. Community members request new charts by [opening a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) on GitHub.
+The Backstage instance is only accessible to 7KGroup representatives. Community members request new charts by [opening a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub.
 :::
 
 Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) internally to scaffold new application repositories when a chart request is approved.

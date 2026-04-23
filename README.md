@@ -48,7 +48,7 @@ hiroba/
 ### Clone and Deploy
 
 ```bash
-git clone https://github.com/7KGroup/hiroba.git
+git clone https://github.com/7K-Hiroba/Hiroba.git
 cp -r hiroba/templates/app-template/skeleton ./my-app
 cd my-app
 ```
@@ -65,7 +65,7 @@ helm install my-app-platform ./helm/platform
 
 ### Request a New Chart
 
-Want a chart for an app we don't cover yet? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) — a 7KGroup maintainer will scaffold and publish the new repo.
+Want a chart for an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) — a 7KGroup maintainer will scaffold and publish the new repo.
 
 ### Browse the Documentation
 

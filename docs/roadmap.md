@@ -36,4 +36,4 @@ sidebar_position: 3
 
 ---
 
-This roadmap is a living document. Priorities shift based on community feedback — [open a discussion](https://github.com/7KGroup/hiroba/discussions) to propose changes.
+This roadmap is a living document. Priorities shift based on community feedback — [open a discussion](https://github.com/7K-Hiroba/Hiroba/discussions) to propose changes.

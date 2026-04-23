@@ -29,7 +29,7 @@ const config = {
           path: '../docs',
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/7KGroup/hiroba/tree/main/website/',
+          editUrl: 'https://github.com/7K-Hiroba/Hiroba/tree/main/website/',
         },
         blog: false,
         theme: {
@@ -57,7 +57,7 @@ const config = {
             position: 'left',
           },
           {
-            href: 'https://github.com/7KGroup/hiroba',
+            href: 'https://github.com/7K-Hiroba/Hiroba',
             label: 'GitHub',
             position: 'right',
           },
@@ -77,8 +77,8 @@ const config = {
           {
             title: 'Community',
             items: [
-              { label: 'GitHub Discussions', href: 'https://github.com/7KGroup/hiroba/discussions' },
-              { label: 'Contributing', href: 'https://github.com/7KGroup/hiroba/blob/main/CONTRIBUTING.md' },
+              { label: 'GitHub Discussions', href: 'https://github.com/7K-Hiroba/Hiroba/discussions' },
+              { label: 'Contributing', href: 'https://github.com/7K-Hiroba/Hiroba/blob/main/CONTRIBUTING.md' },
             ],
           },
           {

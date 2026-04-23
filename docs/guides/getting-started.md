@@ -21,7 +21,7 @@ For homelab setups, [k3s](https://k3s.io/) is a great starting point — it runs
 1. Clone the repo and copy the app skeleton:
 
 ```bash
-git clone https://github.com/7KGroup/hiroba.git
+git clone https://github.com/7K-Hiroba/Hiroba.git
 cp -r hiroba/templates/app-template/skeleton ./my-app
 cd my-app
 ```
@@ -49,7 +49,7 @@ kubectl get svc my-app
 
 ## Requesting a New Chart
 
-Want Hiroba to package an app we don't cover yet? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request and scaffold a new app repository for the community.
+Want Hiroba to package an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request and scaffold a new app repository for the community.
 
 ## Next Steps
 

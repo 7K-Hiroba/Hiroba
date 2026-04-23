@@ -38,4 +38,4 @@ Full documentation is available at [hiroba.7kgroup.org/apps/${{ values.name }}](
 
 ## Part of the Hiroba ecosystem
 
-Scaffolded with [Hiroba](https://github.com/7KGroup/hiroba) by 7KGroup.
+Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba) by 7KGroup.

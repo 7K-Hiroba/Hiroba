@@ -38,7 +38,7 @@ Every application gets two Helm charts:
 
 ### Requesting a New Chart
 
-Don't see the app you want? [Open a Chart Request issue](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request, scaffold a new app repository from the template, and publish it for the community.
+Don't see the app you want? [Open a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request, scaffold a new app repository from the template, and publish it for the community.
 
 ## Getting Started
 
