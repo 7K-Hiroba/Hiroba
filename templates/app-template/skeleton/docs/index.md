@@ -5,7 +5,7 @@ ${{ values.description }}
 ## Overview
 
 This application is part of the [7KGroup](https://github.com/7KGroup)
-ecosystem, scaffolded using [Hiroba](https://github.com/7KGroup/hiroba)
+ecosystem, scaffolded using [Hiroba](https://github.com/7K-Hiroba/Hiroba)
 templates.
 
 ## Architecture

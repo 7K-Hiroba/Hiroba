@@ -63,7 +63,7 @@ ENTRYPOINT ["app"]
 ### Add Metadata Labels
 
 ```dockerfile
-LABEL org.opencontainers.image.source="https://github.com/7KGroup/hiroba"
+LABEL org.opencontainers.image.source="https://github.com/7K-Hiroba/Hiroba"
 LABEL org.opencontainers.image.description="My application"
 LABEL org.opencontainers.image.version="1.0.0"
 ```

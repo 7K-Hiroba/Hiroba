@@ -56,7 +56,7 @@ GitOps is split into two layers. The **application layer** lives in each app rep
 
 ### Chart Request Flow
 
-New charts are requested by the community via [GitHub Issues](https://github.com/7KGroup/hiroba/issues/new?template=chart_request.md). A 7K-Hiroba maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
+New charts are requested by the community via [GitHub Issues](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md). A 7K-Hiroba maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
 
 ### Crossplane Compositions (per-app, Optional)
 
