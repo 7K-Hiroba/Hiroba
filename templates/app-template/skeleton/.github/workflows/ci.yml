@@ -9,15 +9,12 @@ permissions:
 
 jobs:
   lint-pr-title:
-    if: >-
-      !startsWith(github.head_ref, 'release-please--')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-lint-pr-title.yml@main
 
   app:
     if: >-
-      !startsWith(github.head_ref, 'release-please--') && (
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'Dockerfile'))
+      contains(toJSON(github.event.commits.*.modified), 'Dockerfile')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: app
@@ -27,9 +24,8 @@ jobs:
 
   helm-base:
     if: >-
-      !startsWith(github.head_ref, 'release-please--') && (
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'helm/base/'))
+      contains(toJSON(github.event.commits.*.modified), 'helm/base/')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: helm
@@ -38,9 +34,8 @@ jobs:
 
   helm-platform:
     if: >-
-      !startsWith(github.head_ref, 'release-please--') && (
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'helm/platform/'))
+      contains(toJSON(github.event.commits.*.modified), 'helm/platform/')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: helm
@@ -49,9 +44,8 @@ jobs:
 
   docs:
     if: >-
-      !startsWith(github.head_ref, 'release-please--') && (
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'docs/'))
+      contains(toJSON(github.event.commits.*.modified), 'docs/')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: docs
@@ -60,9 +54,8 @@ jobs:
 
   crossplane:
     if: >-
-      !startsWith(github.head_ref, 'release-please--') && (
       github.event_name == 'pull_request' ||
-      contains(toJSON(github.event.commits.*.modified), 'crossplane/'))
+      contains(toJSON(github.event.commits.*.modified), 'crossplane/')
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci.yml@v1
     with:
       stack: crossplane

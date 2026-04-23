@@ -35,7 +35,7 @@
       "changelog-path": "CHANGELOG.md"
     }
   },
-  "separate-pull-requests": true,
+  "separate-pull-requests": false,
   "changelog-type": "github",
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true
