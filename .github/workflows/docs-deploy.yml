@@ -36,7 +36,7 @@ jobs:
           AWS_DEFAULT_REGION: garage
         run: |
           for app in $(s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} ls "s3://${{ secrets.APPDOCS_S3_BUCKET }}/" | awk '{print $NF}' | sed 's|s3://${{ secrets.APPDOCS_S3_BUCKET }}/||' | tr -d '/'); do
-            s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync "s3://${{ secrets.APPDOCS_S3_BUCKET }}/${app}/docs/*" "docs/apps/${app}/"
+            s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync "s3://${{ secrets.APPDOCS_S3_BUCKET }}/${app}/*" "docs/apps/${app}/"
           done
 
       - name: Install dependencies
