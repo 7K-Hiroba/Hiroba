@@ -6,6 +6,8 @@ on:
     paths:
       - 'website/**'
       - 'docs/**'
+  repository_dispatch:
+    types: [docs-updated]
 
 permissions:
   contents: read
