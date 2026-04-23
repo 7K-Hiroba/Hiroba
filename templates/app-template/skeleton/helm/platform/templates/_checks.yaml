@@ -18,8 +18,8 @@ the available APIs.
   {{- fail "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false." }}
 {{- end }}
 
-{{- if and .Values.externalSecrets.enabled (not (.Capabilities.APIVersions.Has "external-secrets.io/v1beta1")) }}
-  {{- fail "externalSecrets.enabled is true but the External Secrets Operator CRD (external-secrets.io/v1beta1) is not installed. Install the operator first or set externalSecrets.enabled=false." }}
+{{- if and .Values.externalSecrets.enabled (not (.Capabilities.APIVersions.Has "external-secrets.io/v1")) }}
+  {{- fail "externalSecrets.enabled is true but the External Secrets Operator CRD (external-secrets.io/v1) is not installed. Install the operator first or set externalSecrets.enabled=false." }}
 {{- end }}
 
 {{- if and .Values.observability.serviceMonitor.enabled (not (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1")) }}
