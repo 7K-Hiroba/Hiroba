@@ -1,0 +1,48 @@
+suite: PodDisruptionBudget
+templates:
+  - templates/pdb.yaml
+tests:
+  - it: is not created when disabled
+    set:
+      podDisruptionBudget.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with minAvailable when enabled
+    set:
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 2
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 2
+
+  - it: selector matches the Deployment pod labels
+    set:
+      podDisruptionBudget.enabled: true
+    release:
+      name: prod
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: ${{ values.name }}
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/instance"]
+          value: prod
+
+  - it: supports maxUnavailable
+    set:
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: null
+        maxUnavailable: "25%"
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: "25%"
+      - notExists:
+          path: spec.minAvailable

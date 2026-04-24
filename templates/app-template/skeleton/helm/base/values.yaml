@@ -87,6 +87,14 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
 
+# -- Pod Disruption Budget. Only meaningful when running more than one replica
+# (replicaCount > 1 or autoscaling.enabled).
+podDisruptionBudget:
+  enabled: false
+  # -- Exactly one of minAvailable or maxUnavailable should be set
+  minAvailable: 1
+  # maxUnavailable: 1
+
 nodeSelector: {}
 tolerations: []
 affinity: {}

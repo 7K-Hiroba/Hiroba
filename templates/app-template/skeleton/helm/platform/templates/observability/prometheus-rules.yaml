@@ -7,28 +7,5 @@ metadata:
     {{- include "platform.labels" . | nindent 4 }}
 spec:
   groups:
-    - name: {{ include "platform.name" . }}.rules
-      rules:
-        - alert: HighErrorRate
-          expr: |
-            sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}", status=~"5.."}[5m]))
-            /
-            sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}"}[5m]))
-            > 0.05
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High error rate for {{ include "platform.name" . }}"
-            description: "Error rate is above 5% for the last 5 minutes."
-        - alert: HighLatency
-          expr: |
-            histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}"}[5m]))
-            > 1
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High p99 latency for {{ include "platform.name" . }}"
-            description: "p99 latency is above 1 second for the last 5 minutes."
+    {{- tpl (toYaml .Values.observability.prometheusRules.groups) . | nindent 4 }}
 {{- end }}

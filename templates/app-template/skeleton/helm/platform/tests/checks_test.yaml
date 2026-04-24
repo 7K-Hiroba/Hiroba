@@ -1,0 +1,72 @@
+suite: Operator dependency checks
+templates:
+  - templates/checks.yaml
+tests:
+  - it: fails when postgres is enabled without CNPG CRD
+    set:
+      postgres.enabled: true
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgres.enabled is true but the CloudNativePG Operator CRD (postgresql.cnpg.io/v1) is not installed. Install the operator first or set postgres.enabled=false."
+
+  - it: fails when s3 with crossplane provider is enabled without Crossplane S3 CRD
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false."
+
+  - it: passes for s3 garage provider without Crossplane CRD
+    set:
+      s3.enabled: true
+      s3.provider: garage
+    capabilities:
+      apiVersions: []
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: fails when externalSecrets is enabled without ESO CRD
+    set:
+      externalSecrets.enabled: true
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "externalSecrets.enabled is true but the External Secrets Operator CRD (external-secrets.io/v1) is not installed. Install the operator first or set externalSecrets.enabled=false."
+
+  - it: fails when ServiceMonitor is enabled without Prometheus Operator CRD
+    set:
+      observability.serviceMonitor.enabled: true
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "observability.serviceMonitor.enabled is true but the Prometheus Operator CRD (monitoring.coreos.com/v1) is not installed. Install the Prometheus Operator first or set observability.serviceMonitor.enabled=false."
+
+  - it: fails when PrometheusRule is enabled without Prometheus Operator CRD
+    set:
+      observability.prometheusRules.enabled: true
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "observability.prometheusRules.enabled is true but the Prometheus Operator CRD (monitoring.coreos.com/v1) is not installed. Install the Prometheus Operator first or set observability.prometheusRules.enabled=false."
+
+  - it: passes when all features disabled
+    set:
+      postgres.enabled: false
+      s3.enabled: false
+      externalSecrets.enabled: false
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
+    capabilities:
+      apiVersions: []
+    asserts:
+      - hasDocuments:
+          count: 0
