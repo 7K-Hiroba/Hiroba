@@ -38,9 +38,8 @@ jobs:
   publish-app:
     needs: release-please
     if: needs.release-please.outputs.app--release_created == 'true'
-    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-app.yml@v1
     with:
-      stack: app
       image-name: {% endraw %}${{ values.name }}{%- raw %}
       path: .
       version: ${{ needs.release-please.outputs.app--version }}
@@ -49,9 +48,8 @@ jobs:
   publish-helm-base:
     needs: release-please
     if: needs.release-please.outputs.helm-base--release_created == 'true'
-    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
     with:
-      stack: helm
       path: helm/base
       version: ${{ needs.release-please.outputs.helm-base--version }}
     secrets: inherit
@@ -59,9 +57,8 @@ jobs:
   publish-helm-platform:
     needs: release-please
     if: needs.release-please.outputs.helm-platform--release_created == 'true'
-    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
     with:
-      stack: helm
       path: helm/platform
       version: ${{ needs.release-please.outputs.helm-platform--version }}
     secrets: inherit
@@ -69,9 +66,8 @@ jobs:
   publish-docs:
     needs: release-please
     if: needs.release-please.outputs.docs--release_created == 'true'
-    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-docs.yml@v1
     with:
-      stack: docs
       path: docs
       version: ${{ needs.release-please.outputs.docs--version }}
     secrets: inherit
@@ -79,9 +75,8 @@ jobs:
   publish-crossplane:
     needs: release-please
     if: needs.release-please.outputs.crossplane--release_created == 'true'
-    uses: 7K-Hiroba/workflows-library/.github/workflows/release.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-crossplane.yml@v1
     with:
-      stack: crossplane
       path: crossplane
       version: ${{ needs.release-please.outputs.crossplane--version }}
     secrets: inherit
