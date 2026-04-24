@@ -96,6 +96,19 @@ autoscaling:
 
 <!-- TODO: Confirm your application is stateless before enabling autoscaling. If it holds in-process state (sessions, caches, websockets), pin a single replica or externalize state first. -->
 
+### PodDisruptionBudget
+
+Once you're running more than one replica, enable a PDB so node drains / cluster upgrades can't take the app fully offline:
+
+```yaml
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: "25%"   # mutually exclusive — set minAvailable: null to use this
+```
+
+The selector reuses `app.selectorLabels`, so it matches the Deployment's pods automatically — no cross-release label coupling needed.
+
 ## Probes
 
 Liveness and readiness probes target `/healthz` and `/readyz` on the container port. Override the defaults in `livenessProbe` / `readinessProbe` if your application exposes different paths.
