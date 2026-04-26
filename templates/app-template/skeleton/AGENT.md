@@ -78,6 +78,7 @@ ArgoCD and FluxCD manifests live under `gitops/`. There are separate manifests f
 ### Documentation
 
 All docs go under `docs/` and are published via Docusaurus. Keep docs in Markdown.
+If updating the helm chart, be sure the corresponding README.md is also updated
 
 ### CI/CD workflows
 
