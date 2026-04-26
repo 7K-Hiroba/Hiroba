@@ -1,0 +1,21 @@
+name: Bootstrap Artifact Hub
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    uses: 7K-Hiroba/workflows-library/.github/workflows/bootstrap-artifacthub.yml@v1
+    with:
+      org: 7k-hiroba
+      registry-base: harbor.7kgroup.org/7khiroba/charts
+      charts: |
+        [
+          { "file": "helm/base-artifacthub-repo.yml",
+            "chart": "${{ values.name }}",
+            "displayName": "${{ values.name }}" },
+          { "file": "helm/platform-artifacthub-repo.yml",
+            "chart": "${{ values.name }}-platform",
+            "displayName": "${{ values.name }} — platform" }
+        ]
+    secrets: inherit

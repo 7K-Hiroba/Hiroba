@@ -11,6 +11,18 @@ keywords:
   - crossplane
   - cnpg
   - hiroba
-home: https://github.com/7KGroup/${{ values.name }}
+home: https://github.com/7K-Hiroba/${{ values.name }}
 sources:
-  - https://github.com/7KGroup/${{ values.name }}
+  - https://github.com/7K-Hiroba/${{ values.name }}
+annotations:
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: documentation
+      url: https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-platform
+    - name: source
+      url: https://github.com/7K-Hiroba/${{ values.name }}
+    - name: support
+      url: https://github.com/7K-Hiroba/${{ values.name }}/issues
+  artifacthub.io/maintainers: |
+    - name: 7k-hiroba
