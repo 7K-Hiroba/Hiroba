@@ -3,6 +3,10 @@ name: Bootstrap Artifact Hub
 on:
   workflow_dispatch:
 
+permissions:
+      contents: write
+      pull-requests: write
+
 jobs:
   bootstrap:
     uses: 7K-Hiroba/workflows-library/.github/workflows/bootstrap-artifacthub.yml@v1
