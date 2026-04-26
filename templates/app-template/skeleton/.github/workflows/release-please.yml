@@ -80,4 +80,38 @@ jobs:
       path: crossplane
       version: ${{ needs.release-please.outputs.crossplane--version }}
     secrets: inherit
+
+  detect-artifacthub-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.filter.outputs.base }}
+      platform: ${{ steps.filter.outputs.platform }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            base:
+              - 'helm/base-artifacthub-repo.yml'
+            platform:
+              - 'helm/platform-artifacthub-repo.yml'
+
+  publish-artifacthub-base:
+    needs: detect-artifacthub-changes
+    if: needs.detect-artifacthub-changes.outputs.base == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
+    with:
+      file: helm/base-artifacthub-repo.yml
+      chart: {% endraw %}${{ values.name }}{%- raw %}
+    secrets: inherit
+
+  publish-artifacthub-platform:
+    needs: detect-artifacthub-changes
+    if: needs.detect-artifacthub-changes.outputs.platform == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
+    with:
+      file: helm/platform-artifacthub-repo.yml
+      chart: {% endraw %}${{ values.name }}{%- raw %}-platform
+    secrets: inherit
 {% endraw %}

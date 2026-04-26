@@ -3,7 +3,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/7kgroup/${{ values.name }}
+  repository: ghcr.io/7k-hiroba/${{ values.name }}
   pullPolicy: IfNotPresent
   tag: ""
 

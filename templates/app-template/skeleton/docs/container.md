@@ -16,8 +16,8 @@ The template's Dockerfile has two stages:
 ## Build locally
 
 ```bash
-docker build -t ghcr.io/7kgroup/${{ values.name }}:dev .
-docker run --rm -p 8080:8080 ghcr.io/7kgroup/${{ values.name }}:dev
+docker build -t ghcr.io/7k-hiroba/${{ values.name }}:dev .
+docker run --rm -p 8080:8080 ghcr.io/7k-hiroba/${{ values.name }}:dev
 ```
 
 ## Image labels
@@ -34,7 +34,7 @@ Labels are populated from the template at scaffold time:
 
 ## Publishing
 
-Images are built and published by the CI workflows under `.github/workflows/`, which reference the centralized [workflow-library](https://github.com/7K-Hiroba/workflows-library). The default target is `ghcr.io/7kgroup/${{ values.name }}`.
+Images are built and published by the CI workflows under `.github/workflows/`, which reference the centralized [workflow-library](https://github.com/7K-Hiroba/workflows-library). The default target is `ghcr.io/7k-hiroba/${{ values.name }}`.
 
 ## Runtime expectations
 
