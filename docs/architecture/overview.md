@@ -6,12 +6,15 @@ sidebar_position: 1
 
 Hiroba is built around a layered architecture that separates concerns cleanly. Every layer is optional beyond the base chart, so you can start simple and add complexity only when you need it.
 
-## The Stack
+## The Layers
 
 ```
 ┌─────────────────────────────────────────┐
-│   GitOps Orchestration + Operators      │  App-of-Apps, ApplicationSets
-│     (separate repos, coming soon)       │  Deploys apps AND operators
+│   Stack (Multi-App Composition)         │  Composes apps into a platform
+│     (stack-template scaffolded repos)   │  Shared infra + value overrides
+├─────────────────────────────────────────┤
+│   GitOps Orchestration                  │  App-of-Apps, ApplicationSets
+│     (per-stack or standalone repos)     │  Deploys apps + operators
 ├─────────────────────────────────────────┤
 │         GitOps Application Refs         │  Per-app ArgoCD/FluxCD manifests
 │           (gitops/ in each app)         │  References base + platform charts
@@ -26,7 +29,7 @@ Hiroba is built around a layered architecture that separates concerns cleanly. E
 └─────────────────────────────────────────┘
 ```
 
-The **Platform Chart** is where Hiroba focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart or operator CRs. **GitOps** connects everything: application-level refs in each repo, and orchestration repos that assemble apps into a complete platform. **TechDocs** ties it all together with documentation for every app.
+The **Platform Chart** is where Hiroba focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart or operator CRs. **Stacks** compose multiple apps into a deployable platform with operator management and per-app value overrides. **GitOps** connects everything: application-level refs in each app repo, and stack-level orchestration that deploys the full composition. **TechDocs** ties it all together with documentation for every app and stack.
 
 ## Component Responsibilities
 
@@ -50,9 +53,21 @@ The base chart works on any cluster — even a single-node k3s or kind setup.
 
 ### GitOps
 
-GitOps is split into two layers. The **application layer** lives in each app repo (`gitops/` directory) — it contains ArgoCD Application and FluxCD Kustomization manifests that reference the app's base and platform charts. The **orchestration layer** lives in separate repositories and assembles individual apps into a complete platform using patterns like App-of-Apps or ApplicationSets. Orchestration repos with fully built and tested examples are coming soon.
+GitOps is split into two layers. The **application layer** lives in each app repo (`gitops/` directory) — it contains ArgoCD Application and FluxCD Kustomization manifests that reference the app's base and platform charts. The **orchestration layer** is provided by the stack template — it uses ArgoCD App-of-Apps or FluxCD Kustomizations to deploy all apps in a stack with proper ordering (operators first, then apps).
 
 [Learn more about the GitOps architecture](gitops)
+
+### Stacks (Multi-App Composition)
+
+A stack composes multiple Hiroba apps into a single deployable platform. Scaffolded from the **stack-template**, each stack repo provides:
+
+- **Operator management** (`gitops/*/common/`) — operators as individual ArgoCD Applications or FluxCD HelmReleases, independently add/removable
+- **Per-app value overrides** (`apps/<name>/`) — configuration tailored to this stack without forking app charts
+- **GitOps orchestration** (`gitops/`) — ArgoCD App-of-Apps or FluxCD Kustomizations that deploy everything in the right order
+
+Stacks follow a loose coupling model — they reference app charts as external dependencies, not as copies. Apps retain their independent release lifecycle.
+
+[Learn more about Backstage templates](backstage-templates)
 
 ### Chart Request Flow
 

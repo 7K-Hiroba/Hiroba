@@ -1,0 +1,31 @@
+# Platform chart value overrides for the example app.
+#
+# These values are passed to the app's helm/platform chart via ArgoCD multi-source
+# or FluxCD HelmRelease valuesFrom. They override the app's default platform values.
+#
+# Copy this file when adding a new app:
+#   cp apps/example/values-platform.yaml apps/<app-name>/values-platform.yaml
+#
+# Common overrides:
+#
+# global:
+#   appName: example
+#
+# postgres:
+#   enabled: true
+#   database: example_db
+#   owner: example
+#
+# externalSecrets:
+#   enabled: true
+#   data:
+#     - secretKey: DATABASE_URL
+#       remoteKey: stack/example/database
+#       property: url
+#     - secretKey: API_KEY
+#       remoteKey: stack/example/api
+#       property: key
+#
+# observability:
+#   serviceMonitor:
+#     enabled: true

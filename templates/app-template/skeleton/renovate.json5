@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Container image references in Helm values (imageName field)",
+      "fileMatch": ["helm/.+/values\\.yaml$"],
+      "matchStrings": [
+        "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "description": "Group Dockerfile base image updates",
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker-base-images",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "docker"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "semanticCommitType": "ci"
+    },
+    {
+      "description": "Platform chart dependency updates",
+      "matchFileNames": ["helm/platform/**"],
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "helm-platform"
+    }
+  ]
+}

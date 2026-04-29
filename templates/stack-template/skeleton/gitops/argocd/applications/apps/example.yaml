@@ -1,0 +1,58 @@
+# ArgoCD Application for an example app.
+#
+# This is a reference you can copy for each app you add to the stack.
+# It uses multi-source to pull the app's Helm charts from the app repo
+# while reading value overrides from this stack repo.
+#
+# To add a new app:
+#   1. Copy this file to <app-name>.yaml
+#   2. Update metadata.name, repoURL, and valueFiles paths
+#   3. Create apps/<app-name>/values-base.yaml and values-platform.yaml
+#   4. Commit and push — ArgoCD syncs automatically via the root App-of-Apps
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-example
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: app
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ${{ values.name }}
+  sources:
+    # Reference to this stack's repo for value overrides
+    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+      targetRevision: main
+      ref: stack
+
+    # App base chart (Deployment, Service, HTTPRoute, etc.)
+    # CHANGE_ME: Replace with the actual app repo URL
+    - repoURL: https://github.com/7K-Hiroba/CHANGE_ME.git
+      targetRevision: main
+      path: helm/base
+      helm:
+        valueFiles:
+          - $stack/apps/example/values-base.yaml
+
+    # App platform chart (database, storage, secrets, observability)
+    # CHANGE_ME: Replace with the actual app repo URL
+    - repoURL: https://github.com/7K-Hiroba/CHANGE_ME.git
+      targetRevision: main
+      path: helm/platform
+      helm:
+        valueFiles:
+          - $stack/apps/example/values-platform.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

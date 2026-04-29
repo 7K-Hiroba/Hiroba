@@ -1,0 +1,92 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: stack-template
+  title: Hiroba Stack Template
+  description: Scaffold a multi-app stack that composes Hiroba applications with GitOps orchestration, operator management, and per-app value overrides
+  tags:
+    - kubernetes
+    - gitops
+    - argocd
+    - stack
+  annotations:
+    backstage.io/docs-url: https://hiroba.7kgroup.org
+spec:
+  owner: group:hiroba
+  type: system
+
+  parameters:
+    - title: Stack Info
+      required:
+        - name
+        - description
+        - owner
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name of the stack (e.g., media-stack, dev-tools)
+          ui:autofocus: true
+          ui:options:
+            rows: 1
+        description:
+          title: Description
+          type: string
+          description: What does this stack do? Which apps does it compose?
+        owner:
+          title: Owner
+          type: string
+          description: Team that owns this stack
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Repository
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+            allowedOwners:
+              - 7K-Hiroba
+
+  steps:
+    - id: fetch-skeleton
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: public
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

@@ -23,12 +23,12 @@ sidebar_position: 3
 - [ ] Test Phase for Container builds
 
 ## Maturity
-- [ ] Homelab blueprints — opinionated stacks for common setups (media server, dev tools, home automation)
+- [x] Homelab blueprints — opinionated stacks for common setups (media server, dev tools, home automation): **Stack template scaffolder available**
+- [ ] First stack implementation (media server stack as proof of concept)
 - [ ] Community showcase — who's running Hiroba charts on their homelab
 
 ## Planned
 
-- GitOps orchestration repositories — fully built and tested App-of-Apps / ApplicationSet examples you can fork for your own cluster
 - GitOps integration guides (Flux, ArgoCD)
 - Observability stack blueprints (Prometheus, Grafana, Loki)
 - Single-node optimization guides

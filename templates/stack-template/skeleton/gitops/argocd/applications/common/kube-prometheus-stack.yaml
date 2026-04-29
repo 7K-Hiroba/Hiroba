@@ -1,0 +1,43 @@
+# kube-prometheus-stack — Prometheus, Grafana, Alertmanager.
+# Remove this file if no app in the stack uses ServiceMonitor, PrometheusRules,
+# or Grafana dashboards.
+# Docs: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: common
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: common
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 67.4.0
+    helm:
+      values: |
+        crds:
+          enabled: true
+        # Grafana sidecar discovers dashboards with the grafana_dashboard label
+        grafana:
+          sidecar:
+            dashboards:
+              enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

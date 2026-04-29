@@ -1,0 +1,39 @@
+# Root ArgoCD Application (App-of-Apps pattern)
+#
+# This Application recursively watches gitops/argocd/applications/ and
+# automatically creates/syncs all manifests found there, including:
+#   common/  — AppProject + operator Applications (sync-wave -10/-5)
+#   apps/    — AppProject + app Applications (sync-wave 0)
+#
+# Apply this single manifest to bootstrap the entire stack:
+#   kubectl apply -f gitops/argocd/root.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: stack
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: main
+    path: gitops/argocd/applications
+    directory:
+      recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

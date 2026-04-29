@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    github.com/project-slug: 7K-Hiroba/${{ values.name }}
+    backstage.io/docs-url: https://hiroba.7kgroup.org/${{ values.name }}
+  tags:
+    - kubernetes
+    - stack
+spec:
+  owner: ${{ values.owner }}

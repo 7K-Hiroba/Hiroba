@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+
+  // ArgoCD Application manifests (chart + targetRevision + repoURL)
+  "argocd": {
+    "fileMatch": ["gitops/argocd/.+\\.yaml$"]
+  },
+
+  // FluxCD HelmRelease + GitRepository + HelmRepository manifests
+  "flux": {
+    "fileMatch": ["gitops/fluxcd/.+\\.yaml$"]
+  },
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "kubeconform binary version in CI",
+      "fileMatch": ["\\.github/workflows/ci\\.yml$"],
+      "matchStrings": [
+        "KUBECONFORM_VERSION=\"(?<currentValue>v[^\"]+)\""
+      ],
+      "depNameTemplate": "yannh/kubeconform",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "pluto binary version in CI",
+      "fileMatch": ["\\.github/workflows/ci\\.yml$"],
+      "matchStrings": [
+        "PLUTO_VERSION=\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "FairwindsOps/pluto",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "description": "Group shared operator updates (ArgoCD)",
+      "matchFileNames": ["gitops/argocd/applications/common/**"],
+      "groupName": "operators",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "operators"
+    },
+    {
+      "description": "Group shared operator updates (FluxCD)",
+      "matchFileNames": ["gitops/fluxcd/common/**"],
+      "groupName": "operators",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "operators"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "semanticCommitType": "ci"
+    },
+    {
+      "description": "Group CI tooling updates",
+      "matchDepNames": ["yannh/kubeconform", "FairwindsOps/pluto"],
+      "groupName": "github-actions",
+      "semanticCommitType": "ci"
+    }
+  ]
+}
