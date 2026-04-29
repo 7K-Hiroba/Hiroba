@@ -1,0 +1,13 @@
+{
+  "packages": {
+    "docs": {
+      "release-type": "simple",
+      "component": "docs",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-component-in-tag": true,
+  "group-pull-requests-by": "single-pr"
+}

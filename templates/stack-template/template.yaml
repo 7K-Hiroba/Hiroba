@@ -1,21 +1,22 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: app-template
-  title: Hiroba Application Template
-  description: Scaffold a new hiroba Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
+  name: stack-template
+  title: Hiroba Stack Template
+  description: Scaffold a multi-app stack that composes Hiroba applications with GitOps orchestration, operator management, and per-app value overrides
   tags:
     - kubernetes
-    - helm
-    - recommended
+    - gitops
+    - argocd
+    - stack
   annotations:
     backstage.io/docs-url: https://hiroba.7kgroup.org
 spec:
   owner: group:hiroba
-  type: service
+  type: system
 
   parameters:
-    - title: Application Info
+    - title: Stack Info
       required:
         - name
         - description
@@ -24,41 +25,22 @@ spec:
         name:
           title: Name
           type: string
-          description: Unique name of the application
+          description: Unique name of the stack (e.g., media-stack, dev-tools)
           ui:autofocus: true
           ui:options:
             rows: 1
         description:
           title: Description
           type: string
-          description: What does this application do?
+          description: What does this stack do? Which apps does it compose?
         owner:
           title: Owner
           type: string
-          description: Team that owns this application
+          description: Team that owns this stack
           ui:field: OwnerPicker
           ui:options:
             catalogFilter:
               kind: Group
-
-    - title: Platform Chart Examples
-      description: >-
-        The platform chart ships with example resource definitions.
-        Toggle the ones you want included in your new app — you can always
-        add or remove them later. See helm/platform/ for the full list.
-      properties:
-        enablePostgres:
-          title: Include PostgreSQL example (CNPG)
-          type: boolean
-          default: false
-          description: Include an example CloudNativePG PostgreSQL cluster definition
-          ui:widget: checkbox
-        enableS3:
-          title: Include S3 Bucket example
-          type: boolean
-          default: false
-          description: Include an example S3-compatible object storage bucket definition (Crossplane)
-          ui:widget: checkbox
 
     - title: Repository
       required:
@@ -84,9 +66,6 @@ spec:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
-          enablePlatform: ${{ parameters.enablePlatform }}
-          enablePostgres: ${{ parameters.enablePostgres }}
-          enableS3: ${{ parameters.enableS3 }}
 
     - id: publish
       name: Publish to GitHub
@@ -98,7 +77,7 @@ spec:
         repoVisibility: public
         topics:
           - hiroba
-          - hiroba-app
+          - hiroba-stack
 
     - id: register
       name: Register in Catalog

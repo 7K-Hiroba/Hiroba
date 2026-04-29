@@ -6,3 +6,4 @@ metadata:
 spec:
   targets:
     - ./app-template/template.yaml
+    - ./stack-template/template.yaml

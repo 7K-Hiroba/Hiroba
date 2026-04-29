@@ -14,7 +14,7 @@ This project follows a **near-native** approach. We prefer upstream, official so
 
 ## Repository Structure
 
-```
+```text
 ├── helm/
 │   ├── base/                          # Application Helm chart
 │   │   ├── Chart.yaml                 # May declare upstream chart as dependency
@@ -53,7 +53,7 @@ Modify `helm/base/values.yaml` or, if using an upstream chart as a dependency, o
 Add or modify resources under `helm/platform/templates/<category>/`. Each resource is gated by an `enabled` flag in `helm/platform/values.yaml`. Respect the subfolder organization:
 
 | Category | Path | Examples |
-|---|---|---|
+| --- | --- | --- |
 | database | `templates/database/` | CNPG Cluster |
 | storage | `templates/storage/` | S3 via Crossplane, S3 via Garage |
 | secrets | `templates/secrets/` | ExternalSecret |
@@ -85,7 +85,7 @@ If updating the helm chart, be sure the corresponding README.md is also updated
 There are two workflow files — `ci.yml` and `release-please.yml` — each calling a **single reusable workflow** from `7K-Hiroba/workflows-library` with a `stack` parameter to differentiate behavior. Do not inline CI/CD logic — add capabilities to the library workflow instead.
 
 | Stack | `stack` param | CI trigger (path) | Release tag | release-please type |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | App (Dockerfile) | `app` | `Dockerfile`, `src/` | `app/v*` | `simple` |
 | Helm Base | `helm` | `helm/base/` | `helm-base/v*` | `helm` (bumps Chart.yaml) |
 | Helm Platform | `helm` | `helm/platform/` | `helm-platform/v*` | `helm` (bumps Chart.yaml) |
@@ -97,6 +97,7 @@ There are two workflow files — `ci.yml` and `release-please.yml` — each call
 **Releases** (`release-please.yml`) — fully automated via [release-please](https://github.com/googleapis/release-please). On every push to `main`, release-please reads conventional commits, determines which stacks need a release, and opens separate release PRs per component. When a release PR is merged, it creates the tag + GitHub Release and triggers the publish job for that stack.
 
 **Commit messages drive versioning** — use [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `fix(helm-base): correct probe path` → patch bump
 - `feat(app): add health endpoint` → minor bump
 - `feat(helm-platform)!: change CNPG API version` → major bump (breaking `!`)
@@ -104,6 +105,7 @@ There are two workflow files — `ci.yml` and `release-please.yml` — each call
 The scope in the commit message should match the component path or name. Release-please uses path-based detection to assign commits to components.
 
 **Configuration files:**
+
 - `release-please-config.json` — component definitions, release types, changelog settings
 - `.release-please-manifest.json` — tracks current version per component (committed by release-please)
 
@@ -172,3 +174,37 @@ The scope in the commit message should match the component path or name. Release
 - ServiceMonitor for Prometheus scraping (requires prometheus-operator)
 - Grafana dashboards deployed as ConfigMaps with `grafana_dashboard: "1"` label (sidecar discovery)
 - PrometheusRules for alerting (error rate, latency)
+
+## Dependency Management
+
+[Renovate](https://docs.renovatebot.com/) is configured via `renovate.json5` to automatically open PRs when dependencies have new versions. It tracks:
+
+- **Dockerfile base images** (e.g., `node:20-alpine`, `distroless` runtime)
+- **GitHub Actions** versions in `.github/workflows/`
+- **Container images in Helm values** (e.g., `imageName: ghcr.io/cloudnative-pg/postgresql:16.2` in platform chart)
+
+Package rules group related updates into single PRs:
+
+| Group | Includes | Commit prefix |
+| --- | --- | --- |
+| `docker-base-images` | Dockerfile FROM image bumps | `fix(docker):` |
+| `github-actions` | All GitHub Actions version bumps | `ci:` |
+| (ungrouped) | Platform chart image updates | `fix(helm-platform):` |
+
+When Renovate opens a PR for a Dockerfile base image update, verify the new image is compatible with your build and runtime requirements. Helm values image updates (e.g., PostgreSQL) should be tested on a cluster before merging.
+
+## Markdown Linting
+
+CI runs [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) on every pull request. Any violation fails the build.
+
+**After creating or editing any `.md` file, you must run the linter before committing:**
+
+```bash
+npx markdownlint-cli2 "**/*.md"
+```
+
+- Rules are configured in `.markdownlint.yaml` at the repository root.
+- Fix every reported error. Do not disable rules inline or in config to silence warnings — fix the underlying markup instead.
+- Common issues: fenced code blocks without a language tag (MD040), table separator rows missing spaces around pipes (MD060), missing blank lines before/after lists and headings (MD032, MD022), and duplicate heading text across sections (MD024).
+- If you add a new Markdown file, ensure it starts with a top-level `# Heading` (MD041).
+- Run the linter again after making fixes to confirm zero errors before committing.

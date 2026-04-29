@@ -10,7 +10,7 @@ Hiroba's GitOps approach is split into two distinct layers: **application** and 
 
 Each app repository includes a `gitops/` directory with manifests that describe *how this app should be deployed* via common GitOps tools. These are **references** — they point GitOps controllers at the app's base and platform charts.
 
-```
+```text
 my-app/
 └── gitops/
     ├── argocd/
@@ -27,59 +27,106 @@ These manifests live in the app repo so the app is self-contained — everything
 
 ## Orchestration Layer
 
-The orchestration layer is where you assemble individual apps into a complete platform. This lives in a **separate repository** (not in the app repo) and uses patterns like:
+The orchestration layer is where you assemble individual apps into a complete platform. This is provided by the **stack template** — each stack repo scaffolded from the template includes:
 
-- **ArgoCD App-of-Apps** — A root Application that references each app's ArgoCD Application manifests
-- **ArgoCD ApplicationSets** — Dynamically generate Applications from a list of apps or Git directories
-- **FluxCD Kustomizations** — A top-level Kustomization that composes individual app Kustomizations
+- **ArgoCD App-of-Apps** — A root Application that watches `gitops/argocd/applications/` and automatically manages all child Applications
+- **FluxCD Kustomizations** — A common Kustomization for operators with per-app Kustomizations that depend on it
 
-This is where you define *what runs on your cluster* — which apps, in which order, with which environment-specific overrides.
+Stacks use **multi-source** ArgoCD Applications to pull Helm charts from app repos while reading value overrides from the stack repo. This keeps apps loosely coupled — they retain their independent repos and release lifecycles.
 
-### Example: ArgoCD App-of-Apps
+### Example: ArgoCD App-of-Apps (from stack template)
+
+The root Application bootstraps the entire stack:
 
 ```yaml
-# In your orchestration repo: apps/my-app.yaml
+# gitops/argocd/root.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: my-app-base
+  name: my-stack
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/7KGroup/my-app.git
-    path: gitops/argocd
+    repoURL: https://github.com/7K-Hiroba/my-stack.git
     targetRevision: main
+    path: gitops/argocd/applications
   destination:
     server: https://kubernetes.default.svc
-    namespace: my-app
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
 ```
 
-A root App-of-Apps Application then points at the directory containing all these individual app manifests.
+Each app in the stack gets a multi-source Application:
 
-## What Exists Today vs What's Coming
+```yaml
+# gitops/argocd/applications/apps/my-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-stack-my-app
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    # Stack repo for value overrides
+    - repoURL: https://github.com/7K-Hiroba/my-stack.git
+      targetRevision: main
+      ref: stack
+    # App base chart from the app's own repo
+    - repoURL: https://github.com/7K-Hiroba/my-app.git
+      targetRevision: main
+      path: helm/base
+      helm:
+        valueFiles:
+          - $stack/apps/my-app/values-base.yaml
+    # App platform chart from the app's own repo
+    - repoURL: https://github.com/7K-Hiroba/my-app.git
+      targetRevision: main
+      path: helm/platform
+      helm:
+        valueFiles:
+          - $stack/apps/my-app/values-platform.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-stack
+```
 
-**Today:** Each app template includes the `gitops/` directory with application-level ArgoCD and FluxCD manifests. These are ready to use.
+## What Exists Today
 
-**Coming soon:** Dedicated orchestration repositories with fully built and tested examples of how to assemble a homelab platform using App-of-Apps and similar patterns. These will be real, working setups — not just documentation — that you can fork and adapt for your own cluster.
+**Application layer:** Each app template includes the `gitops/` directory with ArgoCD and FluxCD manifests. These are ready to use for standalone app deployment.
+
+**Stack layer:** The stack template scaffolds complete orchestration repositories with App-of-Apps (ArgoCD) and Kustomizations (FluxCD), operator management, and per-app value overrides. These provide the "what runs on your cluster" answer.
 
 ## How the Layers Connect
 
-```
-Orchestration Repo                    App Repos
-(your cluster platform)               (individual apps)
-┌───────────────────┐
-│  App-of-Apps /    │    references    ┌──────────────────┐
-│  ApplicationSet   │───────────────► │ my-app/gitops/   │
-│                   │                 │  ├── argocd/      │
-│                   │    references    │  └── fluxcd/      │
-│                   │───────────────► ├──────────────────┤
-│                   │                 │ keycloak/gitops/  │
-│                   │    references    │  ├── argocd/      │
-│                   │───────────────► │  └── fluxcd/      │
-└───────────────────┘                 └──────────────────┘
-                                        │
-                                        ▼
-                                      helm/base + helm/platform
-                                      (actual chart deployment)
+```text
+Stack Repo                             App Repos
+(multi-app composition)                (individual apps)
+┌───────────────────────┐
+│  Root App-of-Apps     │
+│  ┌─────────────────┐  │
+│  │ common/         │  │  deploys      ┌──────────────────┐
+│  │ (sync-wave: -5) │──┼──────────────►│ Operator charts  │
+│  └─────────────────┘  │  (external)   │ (cert-manager,   │
+│  ┌─────────────────┐  │  references   │  CNPG, ESO, etc) │
+│  │ my-app.yaml     │──┼──────────────►├──────────────────┤
+│  │ (multi-source)  │  │  (external)   │ my-app repo      │
+│  └─────────────────┘  │               │  helm/base       │
+│  ┌─────────────────┐  │  references   │  helm/platform   │
+│  │ keycloak.yaml   │──┼──────────────►├──────────────────┤
+│  │ (multi-source)  │  │  (external)   │ keycloak repo    │
+│  └─────────────────┘  │               │  helm/base       │
+│                       │               │  helm/platform   │
+│  apps/                │               └──────────────────┘
+│  ├── my-app/          │  value overrides applied via
+│  │   ├── values-base  │  ArgoCD multi-source $ref
+│  │   └── values-plat  │
+│  └── keycloak/        │
+│      ├── values-base  │
+│      └── values-plat  │
+└───────────────────────┘
 ```

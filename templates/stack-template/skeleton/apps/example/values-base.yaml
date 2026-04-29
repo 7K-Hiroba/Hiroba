@@ -1,0 +1,34 @@
+# Base chart value overrides for the example app.
+#
+# These values are passed to the app's helm/base chart via ArgoCD multi-source
+# or FluxCD HelmRelease valuesFrom. They override the app's default values.yaml.
+#
+# Copy this file when adding a new app:
+#   cp apps/example/values-base.yaml apps/<app-name>/values-base.yaml
+#
+# Common overrides:
+#
+# replicaCount: 1
+#
+# image:
+#   tag: "1.0.0"     # Pin to a specific version for this stack
+#
+# gateway:
+#   enabled: true
+#   hostnames:
+#     - example.your-domain.com
+#   parentRefs:
+#     - name: main-gateway
+#       namespace: gateway-system
+#
+# resources:
+#   limits:
+#     cpu: 500m
+#     memory: 512Mi
+#   requests:
+#     cpu: 100m
+#     memory: 128Mi
+#
+# env:
+#   - name: UPSTREAM_URL
+#     value: "http://another-app:8080"

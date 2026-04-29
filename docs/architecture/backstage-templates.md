@@ -8,18 +8,21 @@ sidebar_position: 3
 The Backstage instance is only accessible to 7KGroup representatives. Community members request new charts by [opening a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub.
 :::
 
-Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) internally to scaffold new application repositories when a chart request is approved.
+Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) internally to scaffold new repositories when a chart or stack request is approved.
+
+## Available Templates
+
+| Template | Backstage Entity | Purpose |
+|----------|-----------------|---------|
+| **Application Template** | `Component` (service) | Single app with Helm charts, Dockerfile, CI/CD, Crossplane compositions |
+| **Stack Template** | `System` | Multi-app composition with GitOps orchestration, operator management, per-app value overrides |
 
 ## How It Works
 
 1. A community member opens a **Chart Request** issue on GitHub
 2. A 7KGroup maintainer reviews, evaluates and approves the request
-3. The maintainer opens the Backstage portal and selects **"Application Template"**
-4. They fill in parameters based on the issue:
-   - **Application info** — name, description
-   - **Deployment config** — container port, ingress hostname
-   - **Included examples** — include or exclude example resource definitions (HTTPRoute, Postgres, S3)
-   - **Repository** — where to publish on GitHub
+3. The maintainer opens the Backstage portal and selects the appropriate template
+4. They fill in parameters based on the issue
 5. Backstage scaffolds the repo:
    - Fetches the skeleton and renders `${{ values.* }}` placeholders
    - Publishes to GitHub
@@ -28,13 +31,15 @@ Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/so
 
 ## Template Structure
 
-```
+### Application Template
+
+```text
 templates/app-template/
 ├── template.yaml           # Backstage template definition
 └── skeleton/               # Files that get scaffolded
     ├── README.md
     ├── Dockerfile
-    ├── catalog-info.yaml   # Backstage catalog entry
+    ├── catalog-info.yaml   # Backstage catalog entry (Component)
     ├── mkdocs.yml          # TechDocs config
     ├── helm/
     │   ├── base/           # Standard k8s Helm chart
@@ -44,7 +49,32 @@ templates/app-template/
     └── .github/workflows/  # CI/CD referencing workflow-library
 ```
 
+### Stack Template
+
+```text
+templates/stack-template/
+├── template.yaml           # Backstage template definition
+└── skeleton/               # Files that get scaffolded
+    ├── README.md
+    ├── catalog-info.yaml   # Backstage catalog entry (System)
+    ├── apps/               # Per-app value overrides
+    │   └── <app-name>/
+    │       ├── values-base.yaml
+    │       └── values-platform.yaml
+    ├── gitops/
+    │   ├── argocd/         # App-of-Apps orchestration
+    │   │   ├── root.yaml
+    │   │   └── applications/
+    │   │       ├── common/  # Operator Applications
+    │   │       └── apps/    # App Applications
+    │   └── fluxcd/         # FluxCD Kustomization orchestration
+    ├── docs/               # Stack documentation
+    └── .github/workflows/  # CI/CD referencing workflow-library
+```
+
 ## Template Parameters
+
+### Application Template
 
 The `template.yaml` defines four parameter groups:
 
@@ -53,6 +83,13 @@ The `template.yaml` defines four parameter groups:
 | Application Info | name, description, owner | Identity and ownership |
 | Deployment Config | port | How the app is exposed |
 | Included Examples | enableIngress, hostname, enablePostgres, enableS3 | Example resource definitions to include (all on by default) |
+| Repository | repoUrl | Where to publish |
+
+### Stack Template
+
+| Group | Fields | Purpose |
+|---|---|---|
+| Stack Info | name, description, owner | Identity and ownership |
 | Repository | repoUrl | Where to publish |
 
 ## CI/CD Integration

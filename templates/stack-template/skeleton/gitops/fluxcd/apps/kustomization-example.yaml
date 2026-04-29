@@ -1,0 +1,30 @@
+# FluxCD Kustomization for an example app.
+#
+# This is a reference you can copy for each app you add to the stack.
+# Depends on common (operators) being ready before deploying apps.
+#
+# To add a new app:
+#   1. Copy this file to kustomization-<app-name>.yaml
+#   2. Update metadata.name and the spec below
+#   3. Create apps/<app-name>/values-base.yaml and values-platform.yaml
+#   4. Commit and push
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ${{ values.name }}-example
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 10m
+  targetNamespace: ${{ values.name }}
+  sourceRef:
+    kind: GitRepository
+    name: ${{ values.name }}
+  path: ./apps/example
+  prune: true
+  wait: true
+  timeout: 5m
+  dependsOn:
+    - name: ${{ values.name }}-common

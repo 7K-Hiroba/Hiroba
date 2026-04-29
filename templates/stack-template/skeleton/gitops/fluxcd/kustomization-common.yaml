@@ -1,0 +1,21 @@
+# FluxCD Kustomization for common infrastructure (operators).
+#
+# Deploys all HelmRepositories and HelmReleases in the common/ directory.
+# Apps should depend on this via dependsOn.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ${{ values.name }}-common
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: ${{ values.name }}
+  path: ./gitops/fluxcd/common
+  prune: true
+  wait: true
+  timeout: 10m
