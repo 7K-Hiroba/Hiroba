@@ -75,6 +75,9 @@ spec:
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: public
+        topics:
+          - hiroba
+          - hiroba-stack
 
     - id: register
       name: Register in Catalog
