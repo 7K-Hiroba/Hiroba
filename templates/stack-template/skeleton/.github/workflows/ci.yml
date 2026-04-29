@@ -18,61 +18,15 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-docs.yml@v1
     with:
       path: docs
+      
+  kubeconform-argocd:
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
+    with:
+      path: gitops/argocd
+      kubernetes-version: "1.31.0"
 
-  kubeconform:
-    name: Validate Kubernetes Manifests
-    runs-on: ubuntu-latest
-    env:
-      # Target Kubernetes version for schema validation.
-      # Update this when upgrading your cluster.
-      KUBERNETES_VERSION: "1.31.0"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install kubeconform
-        run: |
-          KUBECONFORM_VERSION="v0.6.7"
-          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
-            | tar xz -C /usr/local/bin kubeconform
-
-      - name: Install pluto
-        run: |
-          PLUTO_VERSION="5.21.0"
-          curl -fsSL "https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz" \
-            | tar xz -C /usr/local/bin pluto
-
-      - name: Validate ArgoCD manifests
-        run: |
-          kubeconform \
-            -strict \
-            -ignore-missing-schemas \
-            -kubernetes-version "$KUBERNETES_VERSION" \
-            -schema-location default \
-            -schema-location 'https://raw.githubusercontent.com/datree/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-            -summary \
-            gitops/argocd/
-
-      - name: Validate FluxCD manifests
-        run: |
-          kubeconform \
-            -strict \
-            -ignore-missing-schemas \
-            -kubernetes-version "$KUBERNETES_VERSION" \
-            -schema-location default \
-            -schema-location 'https://raw.githubusercontent.com/datree/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-            -summary \
-            gitops/fluxcd/
-
-      - name: Check for deprecated APIs (ArgoCD)
-        run: |
-          pluto detect-files \
-            -d gitops/argocd/ \
-            --target-versions "k8s=v$KUBERNETES_VERSION" \
-            -o wide
-
-      - name: Check for deprecated APIs (FluxCD)
-        run: |
-          pluto detect-files \
-            -d gitops/fluxcd/ \
-            --target-versions "k8s=v$KUBERNETES_VERSION" \
-            -o wide
+  kubeconform-fluxcd:
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
+    with:
+      path: gitops/fluxcd
+      kubernetes-version: "1.31.0"
