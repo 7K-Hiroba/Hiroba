@@ -140,6 +140,9 @@ Once identified, use the corresponding template skeleton as the source of truth:
 
 These files are infrastructure. They must match the template unless there is a documented, intentional reason for the target repo to diverge. **Update them aggressively.**
 
+### Artifacthub Bootstrap (`.github/workflows/bootstrap-artifacthub.yml`)
+- Do not copy the workflow if it doesn't exist, only used in first commit and removed for security/cleanliness purposes 
+
 ### CI workflows (`.github/workflows/ci.yml`)
 
 - Ensure reusable workflow references point to the correct `7K-Hiroba/workflows-library` ref (e.g., `@v1`, `@main`).
