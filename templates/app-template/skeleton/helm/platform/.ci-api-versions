@@ -1,0 +1,9 @@
+# API versions to simulate during `helm template` in CI.
+# One per line. Lines starting with `#` and blank lines are ignored.
+# The ci-helm.yml reusable workflow auto-loads this file and passes each
+# entry as `--api-versions <value>` so the operator-presence checks in
+# templates/checks.yaml succeed without a live cluster.
+postgresql.cnpg.io/v1
+s3.aws.crossplane.io/v1beta1
+external-secrets.io/v1
+monitoring.coreos.com/v1

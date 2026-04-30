@@ -17,9 +17,9 @@ jobs:
         [
           { "file": "helm/base-artifacthub-repo.yml",
             "chart": "${{ values.name }}",
-            "displayName": "${{ values.name }}" },
+            "displayName": "${{ values.displayName }}" },
           { "file": "helm/platform-artifacthub-repo.yml",
             "chart": "${{ values.name }}-platform",
-            "displayName": "${{ values.name }} — platform" }
+            "displayName": "${{ values.displayName }} — Platform" }
         ]
     secrets: inherit

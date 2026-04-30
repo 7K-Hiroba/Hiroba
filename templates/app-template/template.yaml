@@ -82,6 +82,7 @@ spec:
         url: ./skeleton
         values:
           name: ${{ parameters.name }}
+          displayName: ${{ parameters.name | replace("-", " ") | title }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           enablePlatform: ${{ parameters.enablePlatform }}
