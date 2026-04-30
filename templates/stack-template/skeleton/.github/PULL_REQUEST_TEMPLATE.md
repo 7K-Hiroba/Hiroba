@@ -4,7 +4,6 @@
 
 ## Type of Change
 
-- [ ] New app added to the stack
 - [ ] Update to operator configuration
 - [ ] Update to app value overrides
 - [ ] GitOps configuration change

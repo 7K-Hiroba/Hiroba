@@ -4,8 +4,7 @@
 
 ## Type of Change
 
-- [ ] New Helm chart / template
-- [ ] Update to existing chart / template
+- [ ] Update to existing template
 - [ ] Documentation
 - [ ] CI/CD / infrastructure
 - [ ] Bug fix
@@ -15,19 +14,8 @@
 
 <!-- List the key changes -->
 
--
-
-## Testing
-
-<!-- How were these changes tested? -->
-
-- [ ] Helm lint passes
-- [ ] Template renders correctly (`helm template`)
-- [ ] Documentation reviewed for accuracy
-- [ ] N/A
-
 ## Checklist
-
+- [ ] Documentation reviewed for accuracy
 - [ ] I have read the [Contributing Guide](../CONTRIBUTING.md)
 - [ ] My changes follow the project conventions
 - [ ] I have updated documentation as needed

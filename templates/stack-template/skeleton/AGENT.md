@@ -100,7 +100,7 @@ When upgrading your cluster, update the `KUBERNETES_VERSION` env var in `.github
 ```bash
 # Schema validation
 kubeconform -strict -ignore-missing-schemas \
-  -kubernetes-version 1.31.0 \
+  -kubernetes-version 1.36.0 \
   -schema-location default \
   -schema-location 'https://raw.githubusercontent.com/datree/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
   -summary gitops/

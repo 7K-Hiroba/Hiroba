@@ -23,10 +23,10 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
     with:
       path: gitops/argocd
-      kubernetes-version: "1.31.0"
+      kubernetes-version: "1.36.0"
 
   kubeconform-fluxcd:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
     with:
       path: gitops/fluxcd
-      kubernetes-version: "1.31.0"
+      kubernetes-version: "1.36.0"
