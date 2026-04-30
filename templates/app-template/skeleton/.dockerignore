@@ -1,0 +1,43 @@
+# Repo metadata
+.git
+.gitignore
+.github
+.dockerignore
+
+# Project docs and tooling — not part of the runtime image
+AGENT.md
+LICENSE
+README.md
+docs/
+.markdownlint.yaml
+catalog-info.yaml
+release-please-config.json
+.release-please-manifest.json
+renovate.json5
+
+# Deployment artifacts — shipped via Helm/GitOps, not baked into the image
+helm/
+gitops/
+compositions/
+
+# Common build/runtime cruft
+**/node_modules
+**/__pycache__
+**/.venv
+**/dist
+**/build
+**/coverage
+**/.cache
+**/*.log
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Secrets — never ship these into a build context
+.env
+.env.*
+*.pem
+*.key

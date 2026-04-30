@@ -1,0 +1,18 @@
+# Patterns to ignore when packaging the chart.
+# Helm's built-in defaults (.git, *.tgz, .DS_Store, swap/backup files, etc.)
+# are applied automatically — entries below extend them.
+
+# Chart development artifacts
+tests/
+ci/
+.ci-api-versions
+
+# Editor / OS files
+.vscode/
+.idea/
+*.bak
+*.tmp
+*.orig
+
+# Local-only values overrides
+values-*.local.yaml
