@@ -10,7 +10,7 @@ jobs:
     name: Lint Helm Charts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
@@ -34,7 +34,7 @@ jobs:
     name: Lint Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -55,7 +55,7 @@ jobs:
     name: Validate Backstage Templates
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Validate template YAML syntax
         run: |
