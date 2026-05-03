@@ -30,7 +30,7 @@ jobs:
       crossplane--tag_name: ${{ steps.release.outputs['crossplane--tag_name'] }}
       crossplane--version: ${{ steps.release.outputs['crossplane--version'] }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
