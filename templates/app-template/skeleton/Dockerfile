@@ -5,7 +5,7 @@
 
 # -- Build stage
 # TODO: Replace with your application's build image and commands
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /build
 COPY package*.json ./
