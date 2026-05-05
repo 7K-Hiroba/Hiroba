@@ -9,7 +9,31 @@
     ]
   },
 
+  "github-actions": {
+    "fileMatch": ["\\.github/workflows/.+\\.ya?ml$"]
+  },
+
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Helm binary version in CI workflow",
+      "managerFilePatterns": ["/.github/workflows/ci\\.yml$"],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>v[^\\s]+)\\s*# helm"
+      ],
+      "depNameTemplate": "helm/helm",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "s5cmd binary version in docs-deploy workflow",
+      "managerFilePatterns": ["/.github/workflows/docs-deploy\\.yml$"],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>v[^\\s]+)\\s*# s5cmd"
+      ],
+      "depNameTemplate": "peak/s5cmd",
+      "datasourceTemplate": "github-releases"
+    },
     {
       "customType": "regex",
       "description": "kubernetes-version in stack-template skeleton CI workflow",
