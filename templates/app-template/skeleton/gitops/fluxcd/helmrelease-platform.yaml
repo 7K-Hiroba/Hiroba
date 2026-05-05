@@ -1,0 +1,62 @@
+# FluxCD HelmRelease for the ${{ values.name }} platform chart.
+#
+# The platform chart manages operator-backed infrastructure — databases, storage,
+# secrets, and observability. Changes to these resources carry higher risk, so
+# this release is NOT automatically reconciled:
+#
+#   suspend: false   — change to true to pause reconciliation while investigating
+#   interval: 30m    — longer poll interval discourages unreviewed changes
+#
+# Review the diff carefully before manually triggering a sync:
+#   flux reconcile helmrelease ${{ values.name }}-platform -n flux-system
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/git-repository.yaml   # once per cluster
+#   kubectl apply -f gitops/fluxcd/helmrelease-platform.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: platform
+spec:
+  interval: 30m
+  suspend: false
+  dependsOn:
+    - name: ${{ values.name }}-base
+      namespace: flux-system
+  chart:
+    spec:
+      chart: ./helm/platform
+      sourceRef:
+        kind: GitRepository
+        name: ${{ values.name }}
+        namespace: flux-system
+      interval: 30m
+  targetNamespace: ${{ values.name }}
+  install:
+    createNamespace: true
+    remediation:
+      retries: 1
+  upgrade:
+    remediation:
+      retries: 1
+  # Baseline values — override here or via valuesFrom for env-specific config.
+  # See gitops/values-platform.yaml for the full commented reference.
+  valuesFrom:
+    - kind: ConfigMap
+      name: ${{ values.name }}-platform-values
+      optional: true
+  values:
+    global:
+      appName: ${{ values.name }}
+      baseInstance: ""
+    postgres:
+      enabled: ${{ values.enablePostgres }}
+    s3:
+      enabled: ${{ values.enableS3 }}
+    observability:
+      serviceMonitor:
+        enabled: false

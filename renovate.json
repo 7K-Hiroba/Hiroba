@@ -1,5 +1,63 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "separateMajorMinor": false,
-  "separateMinorPatch": false
+  "separateMinorPatch": false,
+
+  "flux": {
+    "fileMatch": [
+      "templates/stack-template/skeleton/gitops/fluxcd/.+\\.yaml$"
+    ]
+  },
+
+  "github-actions": {
+    "fileMatch": ["\\.github/workflows/.+\\.ya?ml$"]
+  },
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Helm binary version in CI workflow",
+      "managerFilePatterns": ["/.github/workflows/ci\\.yml$"],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>v[^\\s]+)\\s*# helm"
+      ],
+      "depNameTemplate": "helm/helm",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "s5cmd binary version in docs-deploy workflow",
+      "managerFilePatterns": ["/.github/workflows/docs-deploy\\.yml$"],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>v[^\\s]+)\\s*# s5cmd"
+      ],
+      "depNameTemplate": "peak/s5cmd",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "kubernetes-version in stack-template skeleton CI workflow",
+      "managerFilePatterns": [
+        "/templates/stack-template/skeleton/\\.github/workflows/ci\\.yml$"
+      ],
+      "matchStrings": [
+        "kubernetes-version:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Container image references in app-template skeleton Helm values",
+      "managerFilePatterns": [
+        "/templates/app-template/skeleton/helm/.+/values\\.yaml$"
+      ],
+      "matchStrings": [
+        "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
 }
+

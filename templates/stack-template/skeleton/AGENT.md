@@ -150,6 +150,32 @@ Package rules group related updates into single PRs:
 
 When Renovate opens a PR, review the changelog and ensure CI passes before merging. Operator version bumps should be tested on a cluster before merging to `main`.
 
+## OpenCode Skills
+
+Agent skills for this repository are maintained centrally in the [Hiroba](https://github.com/7K-Hiroba/Hiroba) repo under `.opencode/skills/`. Skills enforce standards when editing GitOps manifests and documentation.
+
+To install them locally so they are available when working in this repo:
+
+```bash
+git clone https://github.com/7K-Hiroba/Hiroba /tmp/hiroba
+mkdir -p .opencode/skills
+for skill in gitops helm-chart-release documentation; do
+  ln -sf "/tmp/hiroba/.opencode/skills/$skill" .opencode/skills/
+done
+```
+
+Available skills and when they apply:
+
+| Skill | Use when… |
+| --- | --- |
+| `gitops` | Editing ArgoCD or FluxCD manifests under `gitops/` |
+| `helm-chart-release` | Preparing a release, writing commit messages, versioning |
+| `documentation` | Creating or editing Markdown files under `docs/` |
+
+If this stack needs additional skills (e.g., `cnpg-cluster` if managing CNPG directly), add them to the install loop above or symlink them individually from the Hiroba baseline.
+
+If this repo requires standards not covered by the Hiroba baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` and open a PR to Hiroba to include it upstream.
+
 ## Markdown Linting
 
 CI runs [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) on every pull request. Any violation fails the build.

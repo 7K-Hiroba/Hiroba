@@ -1,37 +1,138 @@
+# ArgoCD Application manifests for ${{ values.name }}.
+#
+# Two separate Applications are defined — one for the base chart and one for the
+# platform chart — because they have different lifecycles:
+#
+#   base     — your application workload, deploys frequently, auto-syncs
+#   platform — operator-backed infrastructure (DB, storage, secrets, observability),
+#              changes rarely, synced manually after review
+#
+# Helm values are inlined via valuesObject so no separate values files are needed.
+#
+# Usage (standalone):
+#   kubectl apply -f gitops/argocd/project.yaml
+#   kubectl apply -f gitops/argocd/application.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ${{ values.name }}
+  name: ${{ values.name }}-base
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: base
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
-  sources:
-    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
-      targetRevision: main
-      path: helm/base
-      helm:
-        valueFiles:
-          - values.yaml
-          # - values-production.yaml  # Uncomment for env-specific overrides
-    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
-      targetRevision: main
-      path: helm/platform
-      helm:
-        valueFiles:
-          - values.yaml
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: main
+    path: helm/base
+    helm:
+      valuesObject:
+        replicaCount: 1
 
+        image:
+          repository: ghcr.io/7k-hiroba/${{ values.name }}
+          pullPolicy: IfNotPresent
+          # tag: ""   # Leave empty to use appVersion from Chart.yaml; pin here for stability
+
+        gateway:
+          enabled: true
+          hostnames:
+            - ${{ values.name }}.example.com   # CHANGE_ME: set your actual hostname
+          parentRefs:
+            - name: default-gateway
+              # namespace: gateway-system
+              # sectionName: https
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        # env:
+        #   - name: UPSTREAM_URL
+        #     value: "http://another-service:8080"
+        #   - name: LOG_LEVEL
+        #     value: info
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.name }}
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: main
+    path: helm/platform
+    helm:
+      valuesObject:
+        global:
+          appName: ${{ values.name }}
+          # baseInstance: ""   # Set if you run multiple releases of the base chart in the
+          #                    # same namespace; the ServiceMonitor selector will match on
+          #                    # app.kubernetes.io/instance: <baseInstance> instead of name.
+
+        # -- PostgreSQL (CloudNativePG)
+        postgres:
+          enabled: ${{ values.enablePostgres }}
+          # instances: 1
+          # storage:
+          #   size: 10Gi
+          # database: app
+          # owner: app
+
+        # -- S3-compatible object storage
+        s3:
+          enabled: ${{ values.enableS3 }}
+          # provider: crossplane   # or "garage"
+          # bucketName: assets
+
+        # -- External Secrets
+        # externalSecrets:
+        #   enabled: true
+        #   data:
+        #     - secretKey: DATABASE_URL
+        #       remoteKey: ${{ values.name }}/database
+        #       property: url
+
+        # -- Observability
+        observability:
+          serviceMonitor:
+            enabled: false
+            # additionalLabels:
+            #   release: kube-prometheus-stack
+          grafanaDashboard:
+            enabled: false
+          prometheusRules:
+            enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}
+  syncPolicy:
+    # No automated sync — platform resources (databases, storage) must be
+    # reviewed before being applied. Sync manually via the ArgoCD UI or CLI.
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ${{ values.name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+spec:
+  description: ${{ values.description }}
+  sourceRepos:
+    - https://github.com/7K-Hiroba/${{ values.name }}.git
+  destinations:
+    - namespace: ${{ values.name }}
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
