@@ -19,7 +19,7 @@
     {
       "customType": "regex",
       "description": "kubeconform binary version in CI",
-      "fileMatch": ["\\.github/workflows/ci\\.yml$"],
+      "managerFilePatterns": ["/.github/workflows/ci\\.yml$/"],
       "matchStrings": [
         "KUBECONFORM_VERSION=\"(?<currentValue>v[^\"]+)\""
       ],
@@ -29,7 +29,7 @@
     {
       "customType": "regex",
       "description": "pluto binary version in CI",
-      "fileMatch": ["\\.github/workflows/ci\\.yml$"],
+      "managerFilePatterns": ["/.github/workflows/ci\\.yml$/"],
       "matchStrings": [
         "PLUTO_VERSION=\"(?<currentValue>[^\"]+)\""
       ],

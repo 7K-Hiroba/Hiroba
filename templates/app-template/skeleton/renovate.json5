@@ -9,7 +9,7 @@
     {
       "customType": "regex",
       "description": "Container image references in Helm values (imageName field)",
-      "fileMatch": ["helm/.+/values\\.yaml$"],
+      "managerFilePatterns": ["/helm/.+/values\\.yaml$/"],
       "matchStrings": [
         "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
       ],
