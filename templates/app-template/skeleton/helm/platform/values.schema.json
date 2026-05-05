@@ -54,7 +54,25 @@
           "properties": {
             "enabled": { "type": "boolean" },
             "schedule": { "type": "string" },
-            "retentionPolicy": { "type": "string" }
+            "retentionPolicy": { "type": "string" },
+            "garage": {
+              "type": "object",
+              "properties": {
+                "endpoint": { "type": "string" },
+                "credentialsSecret": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "accessKeyKey": { "type": "string" },
+                    "secretKeyKey": { "type": "string" }
+                  },
+                  "required": ["name", "accessKeyKey", "secretKeyKey"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["endpoint", "credentialsSecret"],
+              "additionalProperties": false
+            }
           },
           "additionalProperties": false
         }

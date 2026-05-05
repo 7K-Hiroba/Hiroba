@@ -24,16 +24,36 @@ spec:
     {{- toYaml .Values.postgres.resources | nindent 4 }}
 
   {{- if .Values.postgres.backup.enabled }}
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: {{ include "platform.name" . }}-pg-barman
+
   backup:
-    barmanObjectStore:
-      destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
-      s3Credentials:
-        accessKeyId:
-          name: {{ include "platform.name" . }}-pg-backup-creds
-          key: ACCESS_KEY_ID
-        secretAccessKey:
-          name: {{ include "platform.name" . }}-pg-backup-creds
-          key: ACCESS_SECRET_KEY
     retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
   {{- end }}
+{{- end }}
+{{- if .Values.postgres.backup.enabled }}
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "platform.name" . }}-pg-barman
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  configuration:
+    destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
+    endpointURL: {{ .Values.postgres.backup.garage.endpoint | quote }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.garage.credentialsSecret.accessKeyKey }}
+      secretAccessKey:
+        name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.garage.credentialsSecret.secretKeyKey }}
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
 {{- end }}
