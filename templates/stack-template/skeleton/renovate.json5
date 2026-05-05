@@ -4,6 +4,8 @@
     "config:recommended",
     ":semanticCommits"
   ],
+  "separateMajorMinor": false,
+  "separateMinorPatch": false,
 
   // ArgoCD Application manifests (chart + targetRevision + repoURL)
   "argocd": {
