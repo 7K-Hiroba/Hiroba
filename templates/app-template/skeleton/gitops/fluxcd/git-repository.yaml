@@ -1,0 +1,20 @@
+# FluxCD GitRepository source for ${{ values.name }}.
+#
+# Apply this once to register the app's Git repository as a Flux source.
+# Both HelmRelease manifests (helmrelease-base.yaml and helmrelease-platform.yaml)
+# reference this GitRepository.
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/git-repository.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ${{ values.name }}
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 5m
+  url: https://github.com/7K-Hiroba/${{ values.name }}.git
+  ref:
+    branch: main

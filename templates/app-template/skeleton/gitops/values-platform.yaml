@@ -1,0 +1,49 @@
+# Baseline values for the ${{ values.name }} platform chart.
+#
+# This file is referenced by ArgoCD (gitops/argocd/application.yaml) and
+# FluxCD (gitops/fluxcd/helmrelease-platform.yaml) as the default value overlay
+# applied on top of helm/platform/values.yaml.
+#
+# Override any value from helm/platform/values.yaml here. When deploying through
+# a stack repo, copy this file to apps/${{ values.name }}/values-platform.yaml
+# in the stack and point the multi-source Application at that path instead.
+
+global:
+  appName: ${{ values.name }}
+  # baseInstance: ""   # Set if you run multiple releases of the base chart in the
+  #                    # same namespace; the ServiceMonitor selector will match on
+  #                    # app.kubernetes.io/instance: <baseInstance> instead of name.
+
+# -- PostgreSQL (CloudNativePG)
+postgres:
+  enabled: ${{ values.enablePostgres }}
+  # instances: 1
+  # storage:
+  #   size: 10Gi
+  # database: app
+  # owner: app
+
+# -- S3-compatible object storage
+s3:
+  enabled: ${{ values.enableS3 }}
+  # provider: crossplane   # or "garage"
+  # bucketName: assets
+
+# -- External Secrets
+# externalSecrets:
+#   enabled: true
+#   data:
+#     - secretKey: DATABASE_URL
+#       remoteKey: ${{ values.name }}/database
+#       property: url
+
+# -- Observability
+observability:
+  serviceMonitor:
+    enabled: false
+    # additionalLabels:
+    #   release: kube-prometheus-stack
+  grafanaDashboard:
+    enabled: false
+  prometheusRules:
+    enabled: false

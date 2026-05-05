@@ -13,17 +13,22 @@ Each app repository includes a `gitops/` directory with manifests that describe 
 ```text
 my-app/
 └── gitops/
+    ├── values-base.yaml                  # Baseline overrides for helm/base
+    ├── values-platform.yaml              # Baseline overrides for helm/platform
     ├── argocd/
-    │   ├── base-application.yaml       # ArgoCD Application for helm/base
-    │   └── platform-application.yaml   # ArgoCD Application for helm/platform
+    │   ├── project.yaml                  # AppProject scoping source repos and namespace
+    │   └── application.yaml              # <app>-base (auto-sync) + <app>-platform (manual)
     └── fluxcd/
-        ├── base-kustomization.yaml     # FluxCD Kustomization for helm/base
-        └── platform-kustomization.yaml # FluxCD Kustomization for helm/platform
+        ├── git-repository.yaml           # GitRepository source
+        ├── helmrelease-base.yaml         # HelmRelease for helm/base
+        └── helmrelease-platform.yaml     # HelmRelease for helm/platform
 ```
 
-Base and platform get **separate Application/Kustomization manifests** because they have different lifecycles — the base chart (your app) deploys frequently, while platform resources (databases, storage) change rarely.
+Base and platform get **separate Application/HelmRelease manifests** because they have different lifecycles — the base chart (your app) deploys frequently, while platform resources (databases, storage) change rarely and require manual review before syncing.
 
-These manifests live in the app repo so the app is self-contained — everything needed to deploy it (charts, Dockerfile, GitOps references) is in one place.
+`values-base.yaml` and `values-platform.yaml` are the baseline value overrides applied on top of each chart's own `values.yaml`. They wire the base and platform charts together through shared settings such as `global.appName` and `global.baseInstance`.
+
+These manifests live in the app repo so the app is self-contained — everything needed to deploy it (charts, Dockerfile, GitOps references, value overrides) is in one place.
 
 ## Orchestration Layer
 
@@ -97,7 +102,7 @@ spec:
 
 ## What Exists Today
 
-**Application layer:** Each app template includes the `gitops/` directory with ArgoCD and FluxCD manifests. These are ready to use for standalone app deployment.
+**Application layer:** Each app template includes the `gitops/` directory with ArgoCD and FluxCD manifests, baseline value override files (`values-base.yaml`, `values-platform.yaml`), and an AppProject. These are ready to use for standalone app deployment and wire the base and platform charts together out of the box.
 
 **Stack layer:** The stack template scaffolds complete orchestration repositories with App-of-Apps (ArgoCD) and Kustomizations (FluxCD), operator management, and per-app value overrides. These provide the "what runs on your cluster" answer.
 

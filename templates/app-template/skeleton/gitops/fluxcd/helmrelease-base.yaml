@@ -1,0 +1,53 @@
+# FluxCD HelmRelease for the ${{ values.name }} base chart.
+#
+# The base chart deploys the application workload. It reconciles every 5 minutes
+# and auto-applies changes — equivalent to ArgoCD automated sync.
+#
+# Inline values (spec.values) are the baseline overrides. For environment-specific
+# overrides, add entries to spec.valuesFrom referencing a ConfigMap or Secret.
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/git-repository.yaml   # once per cluster
+#   kubectl apply -f gitops/fluxcd/helmrelease-base.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-base
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: base
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./helm/base
+      sourceRef:
+        kind: GitRepository
+        name: ${{ values.name }}
+        namespace: flux-system
+      interval: 5m
+  targetNamespace: ${{ values.name }}
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # Baseline values — override here or via valuesFrom for env-specific config.
+  # See gitops/values-base.yaml for the full commented reference.
+  valuesFrom:
+    - kind: ConfigMap
+      name: ${{ values.name }}-base-values
+      optional: true
+  values:
+    image:
+      repository: ghcr.io/7k-hiroba/${{ values.name }}
+      tag: ""
+    gateway:
+      enabled: true
+      hostnames:
+        - ${{ values.name }}.example.com
+      parentRefs:
+        - name: default-gateway

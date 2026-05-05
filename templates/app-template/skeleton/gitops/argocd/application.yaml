@@ -1,37 +1,74 @@
+# ArgoCD Application manifests for ${{ values.name }}.
+#
+# Two separate Applications are defined — one for the base chart and one for the
+# platform chart — because they have different lifecycles:
+#
+#   base     — your application workload, deploys frequently, auto-syncs
+#   platform — operator-backed infrastructure (DB, storage, secrets, observability),
+#              changes rarely, synced manually after review
+#
+# These manifests reference values files from this repo so the app is
+# self-contained. When deploying through a stack, use the stack repo's
+# multi-source Application instead and point valueFiles at the stack overlay.
+#
+# Usage (standalone):
+#   kubectl apply -f gitops/argocd/project.yaml
+#   kubectl apply -f gitops/argocd/application.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ${{ values.name }}
+  name: ${{ values.name }}-base
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: base
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
-  sources:
-    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
-      targetRevision: main
-      path: helm/base
-      helm:
-        valueFiles:
-          - values.yaml
-          # - values-production.yaml  # Uncomment for env-specific overrides
-    - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
-      targetRevision: main
-      path: helm/platform
-      helm:
-        valueFiles:
-          - values.yaml
-
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: main
+    path: helm/base
+    helm:
+      valueFiles:
+        - ../../gitops/values-base.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.name }}
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: main
+    path: helm/platform
+    helm:
+      valueFiles:
+        - ../../gitops/values-platform.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}
+  syncPolicy:
+    # No automated sync — platform resources (databases, storage) must be
+    # reviewed before being applied. Sync manually via the ArgoCD UI or CLI.
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
