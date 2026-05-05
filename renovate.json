@@ -1,5 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "separateMajorMinor": false,
-  "separateMinorPatch": false
+  "separateMinorPatch": false,
+
+  "flux": {
+    "fileMatch": [
+      "templates/stack-template/skeleton/gitops/fluxcd/.+\\.yaml$"
+    ]
+  },
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "kubernetes-version in stack-template skeleton CI workflow",
+      "managerFilePatterns": [
+        "/templates/stack-template/skeleton/\\.github/workflows/ci\\.yml$"
+      ],
+      "matchStrings": [
+        "kubernetes-version:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Container image references in app-template skeleton Helm values",
+      "managerFilePatterns": [
+        "/templates/app-template/skeleton/helm/.+/values\\.yaml$"
+      ],
+      "matchStrings": [
+        "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
 }
+
