@@ -4,6 +4,7 @@ templates:
 capabilities:
   apiVersions:
     - postgresql.cnpg.io/v1
+    - barmancloud.cnpg.io/v1
 tests:
   - it: is not created when postgres is disabled
     set:
@@ -18,9 +19,11 @@ tests:
     asserts:
       - isKind:
           of: Cluster
+        documentIndex: 0
       - equal:
           path: apiVersion
           value: postgresql.cnpg.io/v1
+        documentIndex: 0
 
   - it: uses configured instances and storage
     set:
@@ -34,12 +37,15 @@ tests:
       - equal:
           path: spec.instances
           value: 3
+        documentIndex: 0
       - equal:
           path: spec.storage.size
           value: 20Gi
+        documentIndex: 0
       - equal:
           path: spec.storage.storageClass
           value: fast-ssd
+        documentIndex: 0
 
   - it: sets database bootstrap config
     set:
@@ -51,28 +57,179 @@ tests:
       - equal:
           path: spec.bootstrap.initdb.database
           value: mydb
+        documentIndex: 0
       - equal:
           path: spec.bootstrap.initdb.owner
           value: myuser
+        documentIndex: 0
 
-  - it: omits backup section when disabled
+  - it: omits backup section and plugin when disabled
     set:
       postgres:
         enabled: true
         backup:
           enabled: false
     asserts:
+      - hasDocuments:
+          count: 1
       - isNull:
           path: spec.backup
+        documentIndex: 0
+      - isNull:
+          path: spec.plugins
+        documentIndex: 0
 
-  - it: includes backup config when enabled
+  - it: renders two documents when backup is enabled
     set:
       postgres:
         enabled: true
         backup:
           enabled: true
           retentionPolicy: "30d"
+          garage:
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: myapp-pg-garage-key
+              accessKeyKey: accessKey
+              secretKeyKey: secretKey
     asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: cluster references barman plugin when backup enabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "30d"
+          garage:
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: myapp-pg-garage-key
+              accessKeyKey: accessKey
+              secretKeyKey: secretKey
+    asserts:
+      - equal:
+          path: spec.plugins[0].name
+          value: barman-cloud.cloudnative-pg.io
+        documentIndex: 0
       - equal:
           path: spec.backup.retentionPolicy
           value: "30d"
+        documentIndex: 0
+
+  - it: objectstore uses garage endpoint and credentials secret
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: myapp-pg-garage-key
+              accessKeyKey: accessKey
+              secretKeyKey: secretKey
+    asserts:
+      - isKind:
+          of: ObjectStore
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: barmancloud.cnpg.io/v1
+        documentIndex: 1
+      - equal:
+          path: spec.configuration.endpointURL
+          value: "http://garage.garage.svc.cluster.local:3900"
+        documentIndex: 1
+      - equal:
+          path: spec.configuration.s3Credentials.accessKeyId.name
+          value: myapp-pg-garage-key
+        documentIndex: 1
+      - equal:
+          path: spec.configuration.s3Credentials.accessKeyId.key
+          value: accessKey
+        documentIndex: 1
+      - equal:
+          path: spec.configuration.s3Credentials.secretAccessKey.key
+          value: secretKey
+        documentIndex: 1
+
+  - it: objectstore enables wal and data compression
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: myapp-pg-garage-key
+              accessKeyKey: accessKey
+              secretKeyKey: secretKey
+    asserts:
+      - equal:
+          path: spec.configuration.wal.compression
+          value: gzip
+        documentIndex: 1
+      - equal:
+          path: spec.configuration.data.compression
+          value: gzip
+        documentIndex: 1
+
+---
+suite: CNPG ScheduledBackup
+templates:
+  - templates/database/cnpg-scheduled-backup.yaml
+capabilities:
+  apiVersions:
+    - postgresql.cnpg.io/v1
+tests:
+  - it: is not created when postgres is disabled
+    set:
+      postgres.enabled: false
+      postgres.backup.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when backup is disabled
+    set:
+      postgres.enabled: true
+      postgres.backup.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders ScheduledBackup when both postgres and backup are enabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          schedule: "0 3 * * *"
+          retentionPolicy: "7d"
+          garage:
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: myapp-pg-garage-key
+              accessKeyKey: accessKey
+              secretKeyKey: secretKey
+    asserts:
+      - isKind:
+          of: ScheduledBackup
+      - equal:
+          path: apiVersion
+          value: postgresql.cnpg.io/v1
+      - equal:
+          path: spec.schedule
+          value: "0 3 * * *"
+      - equal:
+          path: spec.backupOwnerReference
+          value: self
+      - equal:
+          path: spec.pluginConfiguration.name
+          value: barman-cloud.cloudnative-pg.io

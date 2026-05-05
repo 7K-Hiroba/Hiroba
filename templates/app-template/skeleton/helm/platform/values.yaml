@@ -47,6 +47,15 @@ postgres:
     enabled: false
     schedule: "0 2 * * *"
     retentionPolicy: "7d"
+    # -- Garage S3 settings for WAL archiving and base backups (barman-cloud plugin)
+    garage:
+      # -- Garage API endpoint
+      endpoint: "http://garage.garage.svc.cluster.local:3900"
+      # -- Pre-existing Secret containing Garage credentials (e.g. from a GarageKey resource)
+      credentialsSecret:
+        name: ""
+        accessKeyKey: accessKey
+        secretKeyKey: secretKey
 
 # -- S3-compatible object storage
 s3:

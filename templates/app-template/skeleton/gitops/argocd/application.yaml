@@ -102,6 +102,16 @@ spec:
           #   size: 10Gi
           # database: app
           # owner: app
+          # backup:
+          #   enabled: true
+          #   schedule: "0 2 * * *"
+          #   retentionPolicy: "7d"
+          #   garage:
+          #     endpoint: "http://garage.garage.svc.cluster.local:3900"
+          #     credentialsSecret:
+          #       name: <app>-pg-garage-key   # Pre-provisioned Secret (e.g. from GarageKey)
+          #       accessKeyKey: accessKey
+          #       secretKeyKey: secretKey
 
         # -- S3-compatible object storage
         s3:
