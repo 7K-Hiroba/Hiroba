@@ -7,9 +7,7 @@
 #   platform — operator-backed infrastructure (DB, storage, secrets, observability),
 #              changes rarely, synced manually after review
 #
-# These manifests reference values files from this repo so the app is
-# self-contained. When deploying through a stack, use the stack repo's
-# multi-source Application instead and point valueFiles at the stack overlay.
+# Helm values are inlined via valuesObject so no separate values files are needed.
 #
 # Usage (standalone):
 #   kubectl apply -f gitops/argocd/project.yaml
@@ -31,8 +29,36 @@ spec:
     targetRevision: main
     path: helm/base
     helm:
-      valueFiles:
-        - ../../gitops/values-base.yaml
+      valuesObject:
+        replicaCount: 1
+
+        image:
+          repository: ghcr.io/7k-hiroba/${{ values.name }}
+          pullPolicy: IfNotPresent
+          # tag: ""   # Leave empty to use appVersion from Chart.yaml; pin here for stability
+
+        gateway:
+          enabled: true
+          hostnames:
+            - ${{ values.name }}.example.com   # CHANGE_ME: set your actual hostname
+          parentRefs:
+            - name: default-gateway
+              # namespace: gateway-system
+              # sectionName: https
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        # env:
+        #   - name: UPSTREAM_URL
+        #     value: "http://another-service:8080"
+        #   - name: LOG_LEVEL
+        #     value: info
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.name }}
@@ -61,8 +87,46 @@ spec:
     targetRevision: main
     path: helm/platform
     helm:
-      valueFiles:
-        - ../../gitops/values-platform.yaml
+      valuesObject:
+        global:
+          appName: ${{ values.name }}
+          # baseInstance: ""   # Set if you run multiple releases of the base chart in the
+          #                    # same namespace; the ServiceMonitor selector will match on
+          #                    # app.kubernetes.io/instance: <baseInstance> instead of name.
+
+        # -- PostgreSQL (CloudNativePG)
+        postgres:
+          enabled: ${{ values.enablePostgres }}
+          # instances: 1
+          # storage:
+          #   size: 10Gi
+          # database: app
+          # owner: app
+
+        # -- S3-compatible object storage
+        s3:
+          enabled: ${{ values.enableS3 }}
+          # provider: crossplane   # or "garage"
+          # bucketName: assets
+
+        # -- External Secrets
+        # externalSecrets:
+        #   enabled: true
+        #   data:
+        #     - secretKey: DATABASE_URL
+        #       remoteKey: ${{ values.name }}/database
+        #       property: url
+
+        # -- Observability
+        observability:
+          serviceMonitor:
+            enabled: false
+            # additionalLabels:
+            #   release: kube-prometheus-stack
+          grafanaDashboard:
+            enabled: false
+          prometheusRules:
+            enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.name }}

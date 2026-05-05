@@ -42,6 +42,8 @@ gitops/argocd/
 
 ### Application manifest conventions
 
+Helm values are inlined via `valuesObject` — no separate values files. This keeps the Application self-contained and avoids the need for a `ref` source solely for value overrides.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -57,8 +59,12 @@ spec:
     targetRevision: HEAD
     path: helm/base
     helm:
-      valueFiles:
-        - ../../apps/<app>/values-base.yaml
+      valuesObject:
+        replicaCount: 1
+        image:
+          repository: ghcr.io/7k-hiroba/<app>
+          pullPolicy: IfNotPresent
+        # ... additional values
   destination:
     server: https://kubernetes.default.svc
     namespace: <app>
@@ -68,14 +74,27 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ```
 
 Platform Application: same shape but **no `automated` sync** — platform resources (databases, buckets) must be reviewed before being applied:
 
 ```yaml
+  source:
+    repoURL: <repo>
+    targetRevision: HEAD
+    path: helm/platform
+    helm:
+      valuesObject:
+        global:
+          appName: <app>
+        postgres:
+          enabled: false
+        # ... additional values
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
     # No automated: block — sync manually after review
 ```
 
@@ -177,6 +196,7 @@ pluto detect-files -d gitops/
 - [ ] Base and platform deployed as separate resources
 - [ ] Platform resource has no automated sync
 - [ ] ArgoCD Application includes `resources-finalizer.argocd.argoproj.io`
+- [ ] ArgoCD Application uses `helm.valuesObject` (not `valueFiles`)
 - [ ] ArgoCD AppProject scopes source repos and destination namespaces
 - [ ] FluxCD uses `helm.toolkit.fluxcd.io/v2` (not v2beta*)
 - [ ] kubeconform passes with zero errors
