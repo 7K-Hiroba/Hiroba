@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Container image
 
-The application ships as an OCI image built from the root [`Dockerfile`](https://github.com/7KGroup/${{ values.name }}/blob/main/Dockerfile). The scaffolded template uses a two-stage build (builder + distroless runtime); adjust the build stage to match your language and toolchain.
+The application ships as an OCI image built from the root [`Dockerfile`](https://github.com/7K-Okura/${{ values.name }}/blob/main/Dockerfile). The scaffolded template uses a two-stage build (builder + distroless runtime); adjust the build stage to match your language and toolchain.
 
 ## Build stages
 
@@ -16,8 +16,8 @@ The template's Dockerfile has two stages:
 ## Build locally
 
 ```bash
-docker build -t ghcr.io/7k-hiroba/${{ values.name }}:dev .
-docker run --rm -p 8080:8080 ghcr.io/7k-hiroba/${{ values.name }}:dev
+docker build -t ghcr.io/7k-okura/${{ values.name }}:dev .
+docker run --rm -p 8080:8080 ghcr.io/7k-okura/${{ values.name }}:dev
 ```
 
 ## Image labels
@@ -27,14 +27,14 @@ Labels are populated from the template at scaffold time:
 | Label                                           | Value                                                    |
 | ----------------------------------------------- | -------------------------------------------------------- |
 | `maintainer`                                    | `7KGroup <https://github.com/7KGroup>`                   |
-| `org.opencontainers.image.source`               | `https://github.com/7KGroup/${{ values.name }}`          |
+| `org.opencontainers.image.source`               | `https://github.com/7K-Okura/${{ values.name }}`         |
 | `org.opencontainers.image.description`          | `${{ values.description }}`                              |
 
 <!-- TODO: Add more OCI labels (version, revision, created) once your CI wiring is in place. -->
 
 ## Publishing
 
-Images are built and published by the CI workflows under `.github/workflows/`, which reference the centralized [workflow-library](https://github.com/7K-Hiroba/workflows-library). The default target is `ghcr.io/7k-hiroba/${{ values.name }}`.
+Images are built and published by the CI workflows under `.github/workflows/`, which reference the centralized [workflow-library](https://github.com/7K-Okura/workflows-library). The default target is `ghcr.io/7k-okura/${{ values.name }}`.
 
 ## Runtime expectations
 

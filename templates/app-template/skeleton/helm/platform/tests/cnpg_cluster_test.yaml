@@ -12,9 +12,10 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: renders when postgres is enabled
+  - it: renders when cnpg is enabled
     set:
       postgres.enabled: true
+      postgres.provider: cnpg
     asserts:
       - isKind:
           of: Cluster
@@ -26,6 +27,7 @@ tests:
     set:
       postgres:
         enabled: true
+        provider: cnpg
         instances: 3
         storage:
           size: 20Gi
@@ -45,6 +47,7 @@ tests:
     set:
       postgres:
         enabled: true
+        provider: cnpg
         database: mydb
         owner: myuser
     asserts:
@@ -59,6 +62,7 @@ tests:
     set:
       postgres:
         enabled: true
+        provider: cnpg
         backup:
           enabled: false
     asserts:
@@ -69,6 +73,7 @@ tests:
     set:
       postgres:
         enabled: true
+        provider: cnpg
         backup:
           enabled: true
           retentionPolicy: "30d"

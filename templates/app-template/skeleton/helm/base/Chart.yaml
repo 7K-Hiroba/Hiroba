@@ -5,24 +5,24 @@ type: application
 version: 0.1.0
 appVersion: "0.1.0"
 maintainers:
-  - name: 7k-hiroba
+  - name: 7k-okura
 keywords:
   - kubernetes
-  - hiroba
-home: https://github.com/7K-Hiroba/${{ values.name }}
+  - okura
+home: https://github.com/7K-Okura/${{ values.name }}
 sources:
-  - https://github.com/7K-Hiroba/${{ values.name }}
+  - https://github.com/7K-Okura/${{ values.name }}
 annotations:
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: documentation
-      url: https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-base
+      url: https://okura.7kgroup.org/docs/apps/${{ values.name }}/helm-base
     - name: source
-      url: https://github.com/7K-Hiroba/${{ values.name }}
+      url: https://github.com/7K-Okura/${{ values.name }}
     - name: support
-      url: https://github.com/7K-Hiroba/${{ values.name }}/issues
+      url: https://github.com/7K-Okura/${{ values.name }}/issues
   artifacthub.io/images: |
     - name: ${{ values.name }}
       image: https://platform.7kgroup.org/static/media/7K.79ddfff5fb29a50e3165ccfcec442d4f.svg
   artifacthub.io/maintainers: |
-    - name: 7k-hiroba
+    - name: 7k-okura

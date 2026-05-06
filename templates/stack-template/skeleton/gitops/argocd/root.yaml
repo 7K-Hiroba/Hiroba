@@ -13,14 +13,14 @@ metadata:
   name: ${{ values.name }}
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/part-of: okura
     app.kubernetes.io/component: stack
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    repoURL: https://github.com/7K-Okura/${{ values.name }}.git
     targetRevision: main
     path: gitops/argocd/applications
     directory:

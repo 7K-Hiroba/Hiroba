@@ -1,29 +1,29 @@
 # Propagate to All Apps
 
-This file is for AI agents performing bulk updates across repositories that were scaffolded from the Hiroba templates. Activate this workflow when the user says **"propagate to all apps"**.
+This file is for AI agents performing bulk updates across repositories that were scaffolded from the Okura templates. Activate this workflow when the user says **"propagate to all apps"**.
 
 ## Purpose
 
-The Hiroba project scaffolds repositories from two Backstage templates (`app-template` and `stack-template`). After scaffolding, these repos diverge as teams customize them. This workflow propagates **infrastructure and tooling changes** from the canonical templates to all live repos, without disturbing app-specific content.
+The Okura project scaffolds repositories from two Backstage templates (`app-template` and `stack-template`). After scaffolding, these repos diverge as teams customize them. This workflow propagates **infrastructure and tooling changes** from the canonical templates to all live repos, without disturbing app-specific content.
 
 ## Discovering Target Repositories
 
-All Hiroba-scaffolded repos are tagged with GitHub topics for discovery:
+All Okura-scaffolded repos are tagged with GitHub topics for discovery:
 
-- `hiroba-app` — repos created from the app-template
-- `hiroba-stack` — repos created from the stack-template
+- `okura-app` — repos created from the app-template
+- `okura-stack` — repos created from the stack-template
 
 List all target repos:
 
 ```bash
-gh repo list 7K-Hiroba --topic hiroba-app --json nameWithOwner --jq '.[].nameWithOwner'
-gh repo list 7K-Hiroba --topic hiroba-stack --json nameWithOwner --jq '.[].nameWithOwner'
+gh repo list 7K-Okura --topic okura-app --json nameWithOwner --jq '.[].nameWithOwner'
+gh repo list 7K-Okura --topic okura-stack --json nameWithOwner --jq '.[].nameWithOwner'
 ```
 
 If a scaffolded repo is missing its topic, add it:
 
 ```bash
-gh repo edit 7K-Hiroba/<repo> --add-topic hiroba,hiroba-app   # or hiroba-stack
+gh repo edit 7K-Okura/<repo> --add-topic okura,okura-app   # or okura-stack
 ```
 
 ## Git Workflow
@@ -36,7 +36,7 @@ Pick a working directory for all clones. If a clone already exists locally, reus
 
 ```bash
 WORKDIR="$(pwd)"
-REPO="7K-Hiroba/example-app"
+REPO="7K-Okura/example-app"
 
 if [ -d "$WORKDIR/$(basename $REPO)" ]; then
   cd "$WORKDIR/$(basename $REPO)"
@@ -64,13 +64,13 @@ git checkout -b propagate/update-infra origin/main
 
 ### 3. Apply changes
 
-Read files locally, compare against the canonical template skeleton in the Hiroba repo, and edit them in place. Use standard file editing — no GitHub API calls. See the sections below for what to change and what to preserve.
+Read files locally, compare against the canonical template skeleton in the Okura repo, and edit them in place. Use standard file editing — no GitHub API calls. See the sections below for what to change and what to preserve.
 
 ### 4. Commit
 
 ```bash
 git add -A
-git commit -m "chore(infra): sync common infrastructure with Hiroba template"
+git commit -m "chore(infra): sync common infrastructure with Okura template"
 ```
 
 Use a conventional commit message scoped to what changed:
@@ -78,17 +78,17 @@ Use a conventional commit message scoped to what changed:
 - `ci: update workflow refs to workflows-library@v2`
 - `fix(renovate): add missing custom manager for helm values`
 - `chore: sync release-please-config with template`
-- If multiple scopes are touched, use `chore(infra): sync common infrastructure with Hiroba template`
+- If multiple scopes are touched, use `chore(infra): sync common infrastructure with Okura template`
 
 ### 5. Push and open a PR
 
 ```bash
 git push -u origin propagate/update-infra
-gh pr create --title "chore(infra): sync common infrastructure with Hiroba template" \
+gh pr create --title "chore(infra): sync common infrastructure with Okura template" \
   --body "$(cat <<'EOF'
 ## Summary
 
-Propagated infrastructure and tooling updates from the canonical Hiroba template.
+Propagated infrastructure and tooling updates from the canonical Okura template.
 
 ### What changed
 
@@ -145,7 +145,7 @@ These files are infrastructure. They must match the template unless there is a d
 
 ### CI workflows (`.github/workflows/ci.yml`)
 
-- Ensure reusable workflow references point to the correct `7K-Hiroba/workflows-library` ref (e.g., `@v1`, `@main`).
+- Ensure reusable workflow references point to the correct `7K-Okura/workflows-library` ref (e.g., `@v1`, `@main`).
 - Ensure job structure matches the template: same jobs, same `if` conditions, same `with` parameters.
 - For stack repos: ensure `kubernetes-version` in kubeconform jobs matches the template (or is intentionally pinned to a different cluster version — check for a comment explaining why).
 - Do NOT modify app-specific `with` parameters that were customized at scaffolding time (e.g., `image-name` in app-template repos uses the app's actual name, not the template variable `${{ values.name }}`).

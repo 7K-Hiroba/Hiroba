@@ -39,7 +39,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: garage
+          AWS_DEFAULT_REGION: us-east-1
         run: |
           for app in $(s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} ls "s3://${{ secrets.APPDOCS_S3_BUCKET }}/" | awk '{print $NF}' | sed 's|s3://${{ secrets.APPDOCS_S3_BUCKET }}/||' | tr -d '/'); do
             s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync "s3://${{ secrets.APPDOCS_S3_BUCKET }}/${app}/*" "docs/apps/${app}/"
@@ -57,7 +57,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: garage
+          AWS_DEFAULT_REGION: us-east-1
         run: | 
         
           s5cmd --endpoint-url=${{ secrets.DOCS_S3_ENDPOINT_URL }} sync --size-only --delete website/build/ s3://${{ secrets.DOCS_S3_BUCKET }}

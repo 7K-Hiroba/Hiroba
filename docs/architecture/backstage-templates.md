@@ -5,10 +5,10 @@ sidebar_position: 3
 # Backstage Software Templates (Internal)
 
 :::info 7KGroup Maintainers Only
-The Backstage instance is only accessible to 7KGroup representatives. Community members request new charts by [opening a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub.
+The Backstage instance is only accessible to 7KGroup representatives. Community members request new charts by [opening a Chart Request issue](https://github.com/7K-Okura/Okura/issues/new?template=chart_request.md) on GitHub.
 :::
 
-Hiroba uses [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) internally to scaffold new repositories when a chart or stack request is approved.
+Okura uses [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) internally to scaffold new repositories when a chart or stack request is approved.
 
 ## Available Templates
 
@@ -94,12 +94,12 @@ The `template.yaml` defines four parameter groups:
 
 ## CI/CD Integration
 
-Scaffolded workflows reference the centralized `7K-Hiroba/workflows-library`:
+Scaffolded workflows reference the centralized `7K-Okura/workflows-library`:
 
 ```yaml
 jobs:
   build:
-    uses: 7K-Hiroba/workflows-library/.github/workflows/build.yml@v1
+    uses: 7K-Okura/workflows-library/.github/workflows/build.yml@v1
     with:
       image-name: ghcr.io/7kgroup/my-app
     secrets: inherit

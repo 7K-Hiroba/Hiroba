@@ -1,12 +1,12 @@
-# Contributing to Hiroba
+# Contributing to Okura
 
-Thank you for your interest in contributing to the 7KGroup Hiroba project! This guide will help you get started.
+Thank you for your interest in contributing to the 7KGroup Okura project! This guide will help you get started.
 
 ## How to Contribute
 
 ### Reporting Issues
 
-- Use [GitHub Issues](https://github.com/7K-Hiroba/Hiroba/issues) to report bugs or request features
+- Use [GitHub Issues](https://github.com/7K-Okura/Okura/issues) to report bugs or request features
 - Check existing issues before creating a new one
 - Use the provided issue templates when available
 
@@ -95,4 +95,4 @@ All participants are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Questions?
 
-Open a [Discussion](https://github.com/7K-Hiroba/Hiroba/discussions) or reach out to the maintainers.
+Open a [Discussion](https://github.com/7K-Okura/Okura/discussions) or reach out to the maintainers.

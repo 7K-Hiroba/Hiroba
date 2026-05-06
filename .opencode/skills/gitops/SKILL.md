@@ -1,6 +1,6 @@
 ---
 name: gitops
-description: Standards for ArgoCD and FluxCD manifests in Hiroba stack repos including App-of-Apps structure and sync policies
+description: Standards for ArgoCD and FluxCD manifests in Okura stack repos including App-of-Apps structure and sync policies
 license: MIT
 compatibility: opencode
 metadata:
@@ -62,7 +62,7 @@ spec:
       valuesObject:
         replicaCount: 1
         image:
-          repository: ghcr.io/7k-hiroba/<app>
+          repository: ghcr.io/7k-okura/<app>
           pullPolicy: IfNotPresent
         # ... additional values
   destination:

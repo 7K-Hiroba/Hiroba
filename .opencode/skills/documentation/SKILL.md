@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Standards for TechDocs content in Hiroba repos covering structure, markdownlint rules, and Docusaurus conventions
+description: Standards for TechDocs content in Okura repos covering structure, markdownlint rules, and Docusaurus conventions
 license: MIT
 compatibility: opencode
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 ## What I cover
 
-Every rule that applies when creating or editing Markdown documentation under `docs/` in app and stack repos, and under `website/` in the Hiroba root repo.
+Every rule that applies when creating or editing Markdown documentation under `docs/` in app and stack repos, and under `website/` in the Okura root repo.
 
 ## Philosophy
 

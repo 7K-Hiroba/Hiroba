@@ -8,10 +8,10 @@ Step-by-step guide for adding a new application to this stack.
 
 ## Prerequisites
 
-The app must be a Hiroba application (scaffolded from the app-template) with:
+The app must be a Okura application (scaffolded from the app-template) with:
 - `helm/base/` chart
 - `helm/platform/` chart
-- Published to a Git repository under `7K-Hiroba`
+- Published to a Git repository under `7K-Okura`
 
 ## Steps
 

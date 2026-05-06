@@ -14,7 +14,7 @@ assignees: ''
 
 ## Description
 
-What does this application do and why should it be included in Hiroba?
+What does this application do and why should it be included in Okura?
 
 ## Deployment Requirements
 

@@ -4,13 +4,13 @@ Helm chart for ${{ values.name }}.
 
 This chart installs the workload (Deployment, Service, HPA, PDB, HTTPRoute). For cross-cutting platform dependencies (secrets, observability, databases), install the companion [${{ values.name }}-platform](../platform/README.md) chart.
 
-**Documentation:** <https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-base>
+**Documentation:** <https://okura.7kgroup.org/docs/apps/${{ values.name }}/helm-base>
 
 ## TL;DR
 
 ```bash
 helm install ${{ values.name }} \
-  oci://harbor.7kgroup.org/7khiroba/charts/${{ values.name }} \
+  oci://harbor.7kgroup.org/7kokura/charts/${{ values.name }} \
   --version 0.1.0
 ```
 
@@ -35,6 +35,6 @@ helm install ${{ values.name }} \
 
 All values are documented in [`values.yaml`](values.yaml) and validated against [`values.schema.json`](values.schema.json). Artifact Hub renders the schema as an interactive form on the chart page.
 
-## Part of the Hiroba ecosystem
+## Part of the Okura ecosystem
 
-Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba). Source and issues: <https://github.com/7K-Hiroba/${{ values.name }}>.
+Scaffolded with [Okura](https://github.com/7K-Okura/Okura). Source and issues: <https://github.com/7K-Okura/${{ values.name }}>.

@@ -31,7 +31,7 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["hiroba", "{{ include `platform.name` . }}"],
+  "tags": ["okura", "{{ include `platform.name` . }}"],
   "templating": {
     "list": [
       {

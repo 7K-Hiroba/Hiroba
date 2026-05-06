@@ -19,21 +19,21 @@ sidebar_position: 3
 
 ## TODO — Expansion
 
-- [ ] 10+ community-maintained Helm charts for popular self-hosted apps
+- [ ] 10+ community-maintained Helm charts for popular cloud-ready apps
 - [ ] Test Phase for Container builds
 
 ## Maturity
 - [x] Homelab blueprints — opinionated stacks for common setups (media server, dev tools, home automation): **Stack template scaffolder available**
 - [ ] First stack implementation (media server stack as proof of concept)
-- [ ] Community showcase — who's running Hiroba charts on their homelab
+- [ ] Community showcase — who's running Okura charts in managed or hybrid clusters
 
 ## Planned
 
 - GitOps integration guides (Flux, ArgoCD)
 - Observability stack blueprints (Prometheus, Grafana, Loki)
 - Single-node optimization guides
-- Backup and restore patterns for self-hosted data
+- Backup and restore patterns for managed service data
 
 ---
 
-This roadmap is a living document. Priorities shift based on community feedback — [open a discussion](https://github.com/7K-Hiroba/Hiroba/discussions) to propose changes.
+This roadmap is a living document. Priorities shift based on community feedback — [open a discussion](https://github.com/7K-Okura/Okura/discussions) to propose changes.

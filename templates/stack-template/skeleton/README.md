@@ -2,11 +2,11 @@
 
 ${{ values.description }}
 
-A [Hiroba](https://hiroba.7kgroup.org) stack — a multi-app composition with GitOps-managed operators and per-app overrides.
+A [Okura](https://okura.7kgroup.org) stack — a multi-app composition with GitOps-managed operators and per-app overrides.
 
 ## Overview
 
-This stack composes multiple Hiroba applications into a single, deployable platform:
+This stack composes multiple Okura applications into a single, deployable platform:
 
 - **Operators** (CNPG, cert-manager, ESO, Prometheus) are individual ArgoCD Applications / FluxCD HelmReleases under `gitops/*/common/` — add or remove them by adding or deleting YAML files
 - **Per-app value overrides** in `apps/<name>/` tailor each app without forking charts

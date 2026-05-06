@@ -4,16 +4,16 @@ sidebar_position: 1
 
 # Getting Started
 
-This guide walks you through deploying your first application using Hiroba's Helm chart templates.
+This guide walks you through deploying your first application using Okura's Helm chart templates.
 
 ## Prerequisites
 
-- A running Kubernetes cluster (k3s, kind, microk8s, or any distribution)
+- A running Kubernetes cluster (EKS, GKE, AKS, or a managed distribution)
 - [Helm](https://helm.sh/) v3.x installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) configured for your cluster
 
 :::tip New to Kubernetes?
-For homelab setups, [k3s](https://k3s.io/) is a great starting point — it runs on a single node with minimal resources and includes an Ingress controller and load balancer out of the box.
+For managed cloud setups, use a supported Kubernetes service (EKS, GKE, or AKS) with a Gateway API implementation and Crossplane providers installed.
 :::
 
 ## Deploy from the Template
@@ -21,8 +21,8 @@ For homelab setups, [k3s](https://k3s.io/) is a great starting point — it runs
 1. Clone the repo and copy the app skeleton:
 
 ```bash
-git clone https://github.com/7K-Hiroba/Hiroba.git
-cp -r hiroba/templates/app-template/skeleton ./my-app
+git clone https://github.com/7K-Okura/Okura.git
+cp -r okura/templates/app-template/skeleton ./my-app
 cd my-app
 ```
 
@@ -49,7 +49,7 @@ kubectl get svc my-app
 
 ## Requesting a New Chart
 
-Want Hiroba to package an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request and scaffold a new app repository for the community.
+Want Okura to package an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Okura/Okura/issues/new?template=chart_request.md) on GitHub. A 7KGroup maintainer will review the request and scaffold a new app repository for the community.
 
 ## Next Steps
 

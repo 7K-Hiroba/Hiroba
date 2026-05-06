@@ -2,17 +2,17 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: stack-template
-  title: Hiroba Stack Template
-  description: Scaffold a multi-app stack that composes Hiroba applications with GitOps orchestration, operator management, and per-app value overrides
+  title: Okura Stack Template
+  description: Scaffold a multi-app stack that composes Okura applications with GitOps orchestration, operator management, and per-app value overrides
   tags:
     - kubernetes
     - gitops
     - argocd
     - stack
   annotations:
-    backstage.io/docs-url: https://hiroba.7kgroup.org
+    backstage.io/docs-url: https://okura.7kgroup.org
 spec:
-  owner: group:hiroba
+  owner: group:okura
   type: system
 
   parameters:
@@ -54,7 +54,7 @@ spec:
             allowedHosts:
               - github.com
             allowedOwners:
-              - 7K-Hiroba
+              - 7K-Okura
 
   steps:
     - id: fetch-skeleton
@@ -76,8 +76,8 @@ spec:
         defaultBranch: main
         repoVisibility: public
         topics:
-          - hiroba
-          - hiroba-stack
+          - okura
+          - okura-stack
 
     - id: register
       name: Register in Catalog

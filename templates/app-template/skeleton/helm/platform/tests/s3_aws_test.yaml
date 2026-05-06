@@ -1,0 +1,39 @@
+suite: AWS S3 Bucket
+templates:
+  - templates/storage/s3-aws.yaml
+capabilities:
+  apiVersions:
+    - s3.aws.crossplane.io/v1beta1
+tests:
+  - it: is not created when s3 is disabled
+    set:
+      s3.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders when aws provider is enabled
+    set:
+      s3:
+        enabled: true
+        provider: aws
+        bucketName: assets
+        aws:
+          region: us-east-1
+          providerConfigRef: aws-provider
+          acl: private
+          lifecycle:
+            enabled: true
+            expirationDays: 30
+    asserts:
+      - isKind:
+          of: Bucket
+      - equal:
+          path: apiVersion
+          value: s3.aws.crossplane.io/v1beta1
+      - equal:
+          path: spec.forProvider.locationConstraint
+          value: us-east-1
+      - equal:
+          path: spec.providerConfigRef.name
+          value: aws-provider

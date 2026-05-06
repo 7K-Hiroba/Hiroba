@@ -2,34 +2,55 @@ suite: Operator dependency checks
 templates:
   - templates/checks.yaml
 tests:
-  - it: fails when postgres is enabled without CNPG CRD
+  - it: fails when postgres cnpg is enabled without CNPG CRD
     set:
       postgres.enabled: true
+      postgres.provider: cnpg
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
           errorMessage: "postgres.enabled is true but the CloudNativePG Operator CRD (postgresql.cnpg.io/v1) is not installed. Install the operator first or set postgres.enabled=false."
 
-  - it: fails when s3 with crossplane provider is enabled without Crossplane S3 CRD
+  - it: fails when postgres aws is enabled without RDS CRD
     set:
-      s3.enabled: true
-      s3.provider: crossplane
+      postgres.enabled: true
+      postgres.provider: aws
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false."
+          errorMessage: "postgres.enabled is true with provider 'aws' but the Crossplane RDS CRD (rds.aws.crossplane.io/v1alpha1) is not installed. Install Crossplane with the AWS provider first, or set postgres.enabled=false."
 
-  - it: passes for s3 garage provider without Crossplane CRD
+  - it: fails when postgres gcp is enabled without CloudSQL CRD
     set:
-      s3.enabled: true
-      s3.provider: garage
+      postgres.enabled: true
+      postgres.provider: gcp
     capabilities:
       apiVersions: []
     asserts:
-      - hasDocuments:
-          count: 0
+      - failedTemplate:
+          errorMessage: "postgres.enabled is true with provider 'gcp' but the Crossplane CloudSQL CRD (database.gcp.crossplane.io/v1beta1) is not installed. Install Crossplane with the GCP provider first, or set postgres.enabled=false."
+
+  - it: fails when s3 aws is enabled without Crossplane S3 CRD
+    set:
+      s3.enabled: true
+      s3.provider: aws
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "s3.enabled is true with provider 'aws' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS provider first, or set s3.enabled=false."
+
+  - it: fails when s3 gcp is enabled without GCS CRD
+    set:
+      s3.enabled: true
+      s3.provider: gcp
+    capabilities:
+      apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "s3.enabled is true with provider 'gcp' but the Crossplane GCP Storage CRD (storage.gcp.crossplane.io/v1alpha3) is not installed. Install Crossplane with the GCP provider first, or set s3.enabled=false."
 
   - it: fails when externalSecrets is enabled without ESO CRD
     set:

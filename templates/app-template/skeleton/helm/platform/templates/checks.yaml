@@ -14,8 +14,20 @@ the available APIs.
   {{- fail "postgres.enabled is true but the CloudNativePG Operator CRD (postgresql.cnpg.io/v1) is not installed. Install the operator first or set postgres.enabled=false." }}
 {{- end }}
 
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") (not (.Capabilities.APIVersions.Has "s3.aws.crossplane.io/v1beta1")) }}
-  {{- fail "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false." }}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "aws") (not (.Capabilities.APIVersions.Has "s3.aws.crossplane.io/v1beta1")) }}
+  {{- fail "s3.enabled is true with provider 'aws' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS provider first, or set s3.enabled=false." }}
+{{- end }}
+
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "gcp") (not (.Capabilities.APIVersions.Has "storage.gcp.crossplane.io/v1alpha3")) }}
+  {{- fail "s3.enabled is true with provider 'gcp' but the Crossplane GCP Storage CRD (storage.gcp.crossplane.io/v1alpha3) is not installed. Install Crossplane with the GCP provider first, or set s3.enabled=false." }}
+{{- end }}
+
+{{- if and .Values.postgres.enabled (eq .Values.postgres.provider "aws") (not (.Capabilities.APIVersions.Has "rds.aws.crossplane.io/v1alpha1")) }}
+  {{- fail "postgres.enabled is true with provider 'aws' but the Crossplane RDS CRD (rds.aws.crossplane.io/v1alpha1) is not installed. Install Crossplane with the AWS provider first, or set postgres.enabled=false." }}
+{{- end }}
+
+{{- if and .Values.postgres.enabled (eq .Values.postgres.provider "gcp") (not (.Capabilities.APIVersions.Has "database.gcp.crossplane.io/v1beta1")) }}
+  {{- fail "postgres.enabled is true with provider 'gcp' but the Crossplane CloudSQL CRD (database.gcp.crossplane.io/v1beta1) is not installed. Install Crossplane with the GCP provider first, or set postgres.enabled=false." }}
 {{- end }}
 
 {{- if and .Values.externalSecrets.enabled (not (.Capabilities.APIVersions.Has "external-secrets.io/v1")) }}

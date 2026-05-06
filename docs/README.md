@@ -1,6 +1,6 @@
 # Project Documentation
 
-This directory contains project-level documentation that is also published to the [Hiroba docs site](https://7kgroup.github.io/hiroba).
+This directory contains project-level documentation that is also published to the [Okura docs site](https://7kgroup.github.io/okura).
 
 ## Contents
 

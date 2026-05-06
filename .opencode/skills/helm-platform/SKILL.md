@@ -1,6 +1,6 @@
 ---
 name: helm-platform
-description: Standards for editing the Hiroba platform Helm chart covering providers, schema, checks, and tests
+description: Standards for editing the Okura platform Helm chart covering providers, schema, checks, and tests
 license: MIT
 compatibility: opencode
 metadata:
@@ -26,8 +26,8 @@ helm/platform/
 ├── templates/
 │   ├── _helpers.tpl
 │   ├── checks.yaml           # operator CRD guards
-│   ├── database/             # CNPG clusters, etc.
-│   ├── storage/              # S3 via Crossplane, Garage, etc.
+│   ├── database/             # CNPG clusters, managed DBs via Crossplane
+│   ├── storage/              # Object storage via Crossplane
 │   ├── secrets/              # ExternalSecret
 │   └── observability/        # ServiceMonitor, GrafanaDashboard, PrometheusRules
 └── tests/                    # helm-unittest suites
@@ -50,7 +50,7 @@ Never render a resource unconditionally. A misconfigured but disabled resource m
 When a resource has multiple backend implementations, use a `provider` enum:
 
 ```yaml
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") }}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "aws") }}
 ```
 
 - Template files are named `<resource>-<provider>.yaml` inside the category subfolder.
@@ -86,7 +86,10 @@ Existing guards (do not duplicate):
 | Feature | CRD |
 | --- | --- |
 | `postgres.enabled` | `postgresql.cnpg.io/v1` |
-| `s3.enabled` + `provider=crossplane` | `s3.aws.crossplane.io/v1beta1` |
+| `s3.enabled` + `provider=aws` | `s3.aws.crossplane.io/v1beta1` |
+| `s3.enabled` + `provider=gcp` | `storage.gcp.crossplane.io/v1alpha3` |
+| `postgres.enabled` + `provider=aws` | `rds.aws.crossplane.io/v1alpha1` |
+| `postgres.enabled` + `provider=gcp` | `database.gcp.crossplane.io/v1beta1` |
 | `externalSecrets.enabled` | `external-secrets.io/v1` |
 | `observability.serviceMonitor.enabled` | `monitoring.coreos.com/v1` |
 | `observability.prometheusRules.enabled` | `monitoring.coreos.com/v1` |
@@ -119,7 +122,7 @@ capabilities:
 ```
 
 - Test the enabled and disabled states of every gated resource.
-- Test provider switching (e.g., crossplane vs. garage).
+- Test provider switching (e.g., aws vs. gcp).
 - Test that `checks.yaml` fails when the CRD is absent (omit the capability).
 
 ## Checklist before committing

@@ -27,7 +27,7 @@
 
 ## Checklist
 
-- [ ] I have read the [Contributing Guide](https://github.com/7K-Hiroba/Hiroba/blob/main/CONTRIBUTING.md)
+- [ ] I have read the [Contributing Guide](https://github.com/7K-Okura/Okura/blob/main/CONTRIBUTING.md)
 - [ ] My changes follow the project conventions
 - [ ] I have updated documentation as needed
 - [ ] New apps include both values-base.yaml and values-platform.yaml

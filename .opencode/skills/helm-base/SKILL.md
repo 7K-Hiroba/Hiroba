@@ -1,6 +1,6 @@
 ---
 name: helm-base
-description: Standards for editing the Hiroba base Helm chart covering security contexts, Gateway API, schema, and tests
+description: Standards for editing the Okura base Helm chart covering security contexts, Gateway API, schema, and tests
 license: MIT
 compatibility: opencode
 metadata:
@@ -100,7 +100,7 @@ readinessProbe:
 
 ## Labels — use helpers
 
-All resources must use `app.kubernetes.io/*` standard labels via `_helpers.tpl`. Include `app.kubernetes.io/part-of: hiroba`:
+All resources must use `app.kubernetes.io/*` standard labels via `_helpers.tpl`. Include `app.kubernetes.io/part-of: okura`:
 
 ```yaml
 labels:

@@ -8,7 +8,7 @@ ${{ values.description }}
 
 ## Overview
 
-This application is part of the [7KGroup](https://github.com/7KGroup) ecosystem, scaffolded using [Hiroba](https://github.com/7K-Hiroba/Hiroba) templates.
+This application is part of the [7KGroup](https://github.com/7KGroup) ecosystem, scaffolded using [Okura](https://github.com/7K-Okura/Okura) templates.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ This application is part of the [7KGroup](https://github.com/7KGroup) ecosystem,
 - Access to the Kubernetes cluster
 - Helm v3.x installed
 - kubectl configured
-- A parent `Gateway` (HTTP + HTTPS listeners, TLS configured) — typically from a gateway chart such as `hiroba-gateway`
+- A parent `Gateway` (HTTP + HTTPS listeners, TLS configured) — typically from a gateway chart such as `okura-gateway`
 
 ## Quick start
 

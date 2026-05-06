@@ -14,7 +14,7 @@ metadata:
   name: ${{ values.name }}-example
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/part-of: okura
     app.kubernetes.io/component: app
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -23,7 +23,7 @@ spec:
   sources:
     # App base chart (Deployment, Service, HTTPRoute, etc.)
     # CHANGE_ME: Replace with the actual app repo URL
-    - repoURL: https://github.com/7K-Hiroba/CHANGE_ME.git
+    - repoURL: https://github.com/7K-Okura/CHANGE_ME.git
       targetRevision: main
       path: helm/base
       helm:
@@ -31,7 +31,7 @@ spec:
           replicaCount: 1
 
           image:
-            repository: ghcr.io/7k-hiroba/CHANGE_ME   # CHANGE_ME
+            repository: ghcr.io/7k-okura/CHANGE_ME   # CHANGE_ME
             pullPolicy: IfNotPresent
 
           gateway:
@@ -51,7 +51,7 @@ spec:
 
     # App platform chart (database, storage, secrets, observability)
     # CHANGE_ME: Replace with the actual app repo URL
-    - repoURL: https://github.com/7K-Hiroba/CHANGE_ME.git
+    - repoURL: https://github.com/7K-Okura/CHANGE_ME.git
       targetRevision: main
       path: helm/platform
       helm:

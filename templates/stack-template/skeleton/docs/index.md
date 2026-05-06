@@ -8,7 +8,7 @@ ${{ values.description }}
 
 ## Overview
 
-This stack composes multiple Hiroba applications into a single, deployable platform. It provides:
+This stack composes multiple Okura applications into a single, deployable platform. It provides:
 
 - **Operators as ArgoCD Applications** — cert-manager, CNPG, External Secrets, Prometheus are individual Applications in the `common` project, each independently versionable and removable
 - **Per-app value overrides** via `apps/<name>/` — tailored configuration without forking charts
@@ -18,7 +18,7 @@ This stack composes multiple Hiroba applications into a single, deployable platf
 
 ### Prerequisites
 
-- Kubernetes cluster (k3s, kind, or similar)
+- Kubernetes cluster (EKS, GKE, AKS, or similar)
 - ArgoCD or FluxCD installed
 - A Gateway controller installed (Envoy Gateway, Cilium, Traefik, etc.)
 

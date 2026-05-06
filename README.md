@@ -1,24 +1,24 @@
-# Hiroba
+# Okura
 
-**Kubernetes packaging for self-hosters and homelab enthusiasts.**
+**Kubernetes packaging for managed cloud and hybrid platforms.**
 
-Hiroba (広場, "public square") is a 7KGroup community project that packages open-source applications into ready-to-deploy Helm charts, container images, and platform manifests — designed for people running Kubernetes at home or on their own infrastructure.
+Okura (広場, "public square") is a 7KGroup community project that packages open-source applications into ready-to-deploy Helm charts, container images, and platform manifests — designed for teams running Kubernetes across managed cloud and hybrid environments.
 
 ---
 
 ## Mission
 
-Great open-source software deserves packaging that just works on a single-node cluster or a small homelab. Our goal is to:
+Great open-source software deserves packaging that works consistently across managed cloud platforms. Our goal is to:
 
-- **Standardize** — Consistent patterns for deploying self-hosted apps on Kubernetes
+- **Standardize** — Consistent patterns for deploying cloud-ready apps on Kubernetes
 - **Containerize** — Lean, secure container images you can trust on your own hardware
-- **Platform** — Opinionated Helm charts that wire up databases, storage, and auth with minimal fuss
+- **Platform** — Opinionated Helm charts that wire up databases, storage, and auth using managed services
 - **Document** — Clear guides written for real people, not enterprise consultants
 
 ## Repository Structure
 
 ```
-hiroba/
+okura/
 ├── templates/
 │   ├── app-template/                  # Application template
 │   │   ├── template.yaml              # Template definition (parameters, steps)
@@ -31,7 +31,7 @@ hiroba/
 │   │       ├── gitops/
 │   │       │   ├── argocd/            # ArgoCD Application manifests
 │   │       │   └── fluxcd/            # FluxCD Kustomization manifests
-│   │       ├── .github/workflows/     # CI/CD referencing 7K-Hiroba/workflows-library
+│   │       ├── .github/workflows/     # CI/CD referencing 7K-Okura/workflows-library
 │   │       └── docs/                  # Documentation
 ├── website/                           # Docusaurus documentation site
 ├── docs/                              # Project-level docs & ADRs
@@ -40,16 +40,16 @@ hiroba/
 
 ### Base vs Platform Charts
 
-- **Platform chart** (`helm/platform/`) — Hiroba's focus. Always custom. Wires in databases (CNPG), storage (S3), auth (Keycloak), and observability using cluster operators — plug-and-play infrastructure without manual setup.
-- **Base chart** (`helm/base/`) — The application itself. Often just an upstream third-party Helm chart used as a dependency — Hiroba doesn't rewrite what already works.
+- **Platform chart** (`helm/platform/`) — Okura's focus. Always custom. Wires in databases (CNPG), storage (S3), auth (Keycloak), and observability using cluster operators — plug-and-play infrastructure without manual setup.
+- **Base chart** (`helm/base/`) — The application itself. Often just an upstream third-party Helm chart used as a dependency — Okura doesn't rewrite what already works.
 
 ## Quick Start
 
 ### Clone and Deploy
 
 ```bash
-git clone https://github.com/7K-Hiroba/Hiroba.git
-cp -r hiroba/templates/app-template/skeleton ./my-app
+git clone https://github.com/7K-Okura/Okura.git
+cp -r okura/templates/app-template/skeleton ./my-app
 cd my-app
 ```
 
@@ -59,17 +59,17 @@ Replace the `${{ values.* }}` placeholders with your values, then deploy:
 # Deploy the application
 helm install my-app ./helm/base
 
-# Optionally add platform dependencies (Postgres, S3, etc.)
+# Optionally add platform dependencies (managed Postgres, object storage, etc.)
 helm install my-app-platform ./helm/platform
 ```
 
 ### Request a New Chart
 
-Want a chart for an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md) — a 7KGroup maintainer will scaffold and publish the new repo.
+Want a chart for an app we don't cover yet? [Open a Chart Request issue](https://github.com/7K-Okura/Okura/issues/new?template=chart_request.md) — a 7KGroup maintainer will scaffold and publish the new repo.
 
 ### Browse the Documentation
 
-Visit the [Hiroba docs site](https://7kgroup.github.io/hiroba) for guides, roadmaps, and reference material.
+Visit the [Okura docs site](https://7kgroup.github.io/okura) for guides, roadmaps, and reference material.
 
 ### Run the Docs Site Locally
 

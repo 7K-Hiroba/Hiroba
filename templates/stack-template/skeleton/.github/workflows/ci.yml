@@ -9,24 +9,24 @@ permissions:
 
 jobs:
   lint-pr-title:
-    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-lint-pr-title.yml@main
+    uses: 7K-Okura/workflows-library/.github/workflows/ci-lint-pr-title.yml@main
 
   docs:
     if: >-
       github.event_name == 'pull_request' ||
       contains(toJSON(github.event.commits.*.modified), 'docs/')
-    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-docs.yml@v1
+    uses: 7K-Okura/workflows-library/.github/workflows/ci-docs.yml@v1
     with:
       path: docs
       
   kubeconform-argocd:
-    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
+    uses: 7K-Okura/workflows-library/.github/workflows/ci-kubeconform.yml@v1
     with:
       path: gitops/argocd
       kubernetes-version: "1.36.0"
 
   kubeconform-fluxcd:
-    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-kubeconform.yml@v1
+    uses: 7K-Okura/workflows-library/.github/workflows/ci-kubeconform.yml@v1
     with:
       path: gitops/fluxcd
       kubernetes-version: "1.36.0"
