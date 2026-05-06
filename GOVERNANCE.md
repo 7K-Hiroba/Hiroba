@@ -2,7 +2,7 @@
 
 ## Overview
 
-Okura is a community-driven project under the 7KGroup organization. This document describes how the project is governed, how decisions are made, and how contributors can grow into leadership roles.
+Hiroba is a community-driven project under the 7KGroup organization. This document describes how the project is governed, how decisions are made, and how contributors can grow into leadership roles.
 
 ## Roles
 

@@ -6,7 +6,7 @@ sidebar_position: 2
 
 ## Stack Composition Model
 
-This stack follows a **loose coupling** model. Each app in the stack is an independent Okura application with its own repository, Helm charts, CI/CD pipeline, and release lifecycle. The stack does not contain or fork app charts — it provides:
+This stack follows a **loose coupling** model. Each app in the stack is an independent Hiroba application with its own repository, Helm charts, CI/CD pipeline, and release lifecycle. The stack does not contain or fork app charts — it provides:
 
 1. **Operator installation** — managed as individual ArgoCD Applications (or FluxCD HelmReleases) in the `common` project, each independently versionable
 2. **Value overrides** that configure apps for this specific composition
@@ -70,7 +70,7 @@ Security is **not centralized** in the stack. Instead, each layer is responsible
 - **TLS** — cert-manager operator in `common/`, referenced by app Gateway/HTTPRoute resources
 - **Secrets** — External Secrets Operator in `common/`, configured per-app via `values-platform.yaml`
 
-## Relationship to Okura App Template
+## Relationship to Hiroba App Template
 
 | Concern | App Template | Stack Template |
 |---------|-------------|----------------|

@@ -18,14 +18,14 @@ metadata:
   name: ${{ values.name }}-base
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
     app.kubernetes.io/component: base
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: ${{ values.name }}
   source:
-    repoURL: https://github.com/7K-Okura/${{ values.name }}.git
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
     targetRevision: main
     path: helm/base
     helm:
@@ -33,7 +33,7 @@ spec:
         replicaCount: 1
 
         image:
-          repository: ghcr.io/7k-okura/${{ values.name }}
+          repository: ghcr.io/7k-hiroba/${{ values.name }}
           pullPolicy: IfNotPresent
           # tag: ""   # Leave empty to use appVersion from Chart.yaml; pin here for stability
 
@@ -76,14 +76,14 @@ metadata:
   name: ${{ values.name }}-platform
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
     app.kubernetes.io/component: platform
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: ${{ values.name }}
   source:
-    repoURL: https://github.com/7K-Okura/${{ values.name }}.git
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
     targetRevision: main
     path: helm/platform
     helm:
@@ -94,20 +94,19 @@ spec:
           #                    # same namespace; the ServiceMonitor selector will match on
           #                    # app.kubernetes.io/instance: <baseInstance> instead of name.
 
-        # -- PostgreSQL (CNPG or managed via Crossplane)
+        # -- PostgreSQL (CloudNativePG)
         postgres:
           enabled: ${{ values.enablePostgres }}
-          # provider: cnpg
           # instances: 1
           # storage:
           #   size: 10Gi
           # database: app
           # owner: app
 
-        # -- Object storage
+        # -- S3-compatible object storage
         s3:
           enabled: ${{ values.enableS3 }}
-          # provider: aws
+          # provider: crossplane   # or "garage"
           # bucketName: assets
 
         # -- External Secrets

@@ -4,11 +4,11 @@ sidebar_position: 3
 
 # Containerization Guide
 
-Best practices for building container images using Okura's Dockerfile template.
+Best practices for building container images using Hiroba's Dockerfile template.
 
 ## Template Overview
 
-The Okura Dockerfile template uses a multi-stage build pattern:
+The Hiroba Dockerfile template uses a multi-stage build pattern:
 
 1. **Build stage** — Compiles or packages the application
 2. **Runtime stage** — Minimal image containing only the built artifact
@@ -63,7 +63,7 @@ ENTRYPOINT ["app"]
 ### Add Metadata Labels
 
 ```dockerfile
-LABEL org.opencontainers.image.source="https://github.com/7K-Okura/Okura"
+LABEL org.opencontainers.image.source="https://github.com/7K-Hiroba/Hiroba"
 LABEL org.opencontainers.image.description="My application"
 LABEL org.opencontainers.image.version="1.0.0"
 ```

@@ -6,7 +6,7 @@ ${{ values.description }}
 
 ```
 ├── helm/
-│   ├── base/           # Core k8s resources (Deployment, Service, HTTPRoute)
+│   ├── base/           # Core k8s resources (Deployment, Service, Ingress)
 │   └── platform/       # Platform dependencies with provider switching
 ├── compositions/
 │   └── crossplane/     # App-specific Crossplane compositions (XRDs, Compositions)
@@ -14,7 +14,7 @@ ${{ values.description }}
 │   ├── argocd/         # ArgoCD Application manifests
 │   └── fluxcd/         # FluxCD Kustomization manifests
 ├── docs/               # TechDocs content
-├── .github/workflows/  # CI/CD (references 7K-Okura/workflows-library)
+├── .github/workflows/  # CI/CD (references 7K-Hiroba/workflows-library)
 ├── Dockerfile
 └── catalog-info.yaml   # Backstage catalog entry
 ```
@@ -34,8 +34,8 @@ helm install ${{ values.name }}-platform ./helm/platform
 
 ## Documentation
 
-Full documentation is available at [okura.7kgroup.org/apps/${{ values.name }}](https://okura.7kgroup.org/apps/${{ values.name }}), or locally under `docs/`.
+Full documentation is available at [hiroba.7kgroup.org/apps/${{ values.name }}](https://hiroba.7kgroup.org/apps/${{ values.name }}), or locally under `docs/`.
 
-## Part of the Okura ecosystem
+## Part of the Hiroba ecosystem
 
-Scaffolded with [Okura](https://github.com/7K-Okura/Okura) by 7KGroup.
+Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba) by 7KGroup.

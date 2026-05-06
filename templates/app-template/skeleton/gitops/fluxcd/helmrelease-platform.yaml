@@ -19,7 +19,7 @@ metadata:
   name: ${{ values.name }}-platform
   namespace: flux-system
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
     app.kubernetes.io/component: platform
 spec:
   interval: 30m

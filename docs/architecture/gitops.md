@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # GitOps Architecture
 
-Okura's GitOps approach is split into two distinct layers: **application** and **orchestration**.
+Hiroba's GitOps approach is split into two distinct layers: **application** and **orchestration**.
 
 ## Application Layer
 
@@ -53,7 +53,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/7K-Okura/my-stack.git
+    repoURL: https://github.com/7K-Hiroba/my-stack.git
     targetRevision: main
     path: gitops/argocd/applications
   destination:
@@ -78,18 +78,18 @@ spec:
   project: default
   sources:
     # Stack repo for value overrides
-    - repoURL: https://github.com/7K-Okura/my-stack.git
+    - repoURL: https://github.com/7K-Hiroba/my-stack.git
       targetRevision: main
       ref: stack
     # App base chart from the app's own repo
-    - repoURL: https://github.com/7K-Okura/my-app.git
+    - repoURL: https://github.com/7K-Hiroba/my-app.git
       targetRevision: main
       path: helm/base
       helm:
         valueFiles:
           - $stack/apps/my-app/values-base.yaml
     # App platform chart from the app's own repo
-    - repoURL: https://github.com/7K-Okura/my-app.git
+    - repoURL: https://github.com/7K-Hiroba/my-app.git
       targetRevision: main
       path: helm/platform
       helm:

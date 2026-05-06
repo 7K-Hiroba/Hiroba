@@ -1,6 +1,6 @@
 # Adding Apps to the Stack
 
-Each app in the stack is a **reference** to an existing Okura application chart,
+Each app in the stack is a **reference** to an existing Hiroba application chart,
 not a copy. The stack provides value overrides that tailor the app for this
 particular composition.
 

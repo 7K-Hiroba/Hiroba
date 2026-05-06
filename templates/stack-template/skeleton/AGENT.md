@@ -4,7 +4,7 @@ This file is for AI agents and automated tools making changes to this repository
 
 ## Philosophy: Composition over Duplication
 
-This is a **stack repository** — it composes multiple Okura applications into a single deployable platform. It does NOT contain application code, Dockerfiles, or app-level Helm charts.
+This is a **stack repository** — it composes multiple Hiroba applications into a single deployable platform. It does NOT contain application code, Dockerfiles, or app-level Helm charts.
 
 - **App charts are external.** Each app lives in its own repo with its own `helm/base` and `helm/platform` charts. This stack references them via GitOps manifests (ArgoCD multi-source or FluxCD HelmRelease).
 - **Operators are individual ArgoCD Applications / FluxCD HelmReleases.** They live in `gitops/argocd/applications/common/` (or `gitops/fluxcd/common/`), each independently versionable and removable. Users add or remove operators by adding or deleting YAML files.
@@ -82,7 +82,7 @@ All docs go under `docs/`. Keep docs in Markdown.
 
 ### CI/CD workflows
 
-Two workflow files — `ci.yml` and `release-please.yml` — each calling reusable workflows from `7K-Okura/workflows-library`.
+Two workflow files — `ci.yml` and `release-please.yml` — each calling reusable workflows from `7K-Hiroba/workflows-library`.
 
 | Component | CI trigger (path) | Release tag | release-please type |
 | --- | --- | --- | --- |
@@ -152,15 +152,15 @@ When Renovate opens a PR, review the changelog and ensure CI passes before mergi
 
 ## OpenCode Skills
 
-Agent skills for this repository are maintained centrally in the [Okura](https://github.com/7K-Okura/Okura) repo under `.opencode/skills/`. Skills enforce standards when editing GitOps manifests and documentation.
+Agent skills for this repository are maintained centrally in the [Hiroba](https://github.com/7K-Hiroba/Hiroba) repo under `.opencode/skills/`. Skills enforce standards when editing GitOps manifests and documentation.
 
 To install them locally so they are available when working in this repo:
 
 ```bash
-git clone https://github.com/7K-Okura/Okura /tmp/okura
+git clone https://github.com/7K-Hiroba/Hiroba /tmp/hiroba
 mkdir -p .opencode/skills
 for skill in gitops helm-chart-release documentation; do
-  ln -sf "/tmp/okura/.opencode/skills/$skill" .opencode/skills/
+  ln -sf "/tmp/hiroba/.opencode/skills/$skill" .opencode/skills/
 done
 ```
 
@@ -172,9 +172,9 @@ Available skills and when they apply:
 | `helm-chart-release` | Preparing a release, writing commit messages, versioning |
 | `documentation` | Creating or editing Markdown files under `docs/` |
 
-If this stack needs additional skills (e.g., `cnpg-cluster` if managing CNPG directly), add them to the install loop above or symlink them individually from the Okura baseline.
+If this stack needs additional skills (e.g., `cnpg-cluster` if managing CNPG directly), add them to the install loop above or symlink them individually from the Hiroba baseline.
 
-If this repo requires standards not covered by the Okura baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` and open a PR to Okura to include it upstream.
+If this repo requires standards not covered by the Hiroba baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` and open a PR to Hiroba to include it upstream.
 
 ## Markdown Linting
 

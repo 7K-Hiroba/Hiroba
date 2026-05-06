@@ -1,0 +1,51 @@
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "platform.name" . }}-s3-config
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+data:
+  S3_ENDPOINT: {{ .Values.s3.garage.endpoint | quote }}
+  S3_BUCKET: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+  S3_REGION: "garage"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "platform.name" . }}-s3-init
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: create-bucket
+          image: amazon/aws-cli:2.15.0
+          env:
+            - name: AWS_ENDPOINT_URL
+              value: {{ .Values.s3.garage.endpoint | quote }}
+            - name: AWS_DEFAULT_REGION
+              value: "garage"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.garage.accessKeySecret.name }}
+                  key: {{ .Values.s3.garage.accessKeySecret.key }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.garage.secretKeySecret.name }}
+                  key: {{ .Values.s3.garage.secretKeySecret.key }}
+          command:
+            - sh
+            - -c
+            - |
+              aws s3 mb "s3://{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}" \
+                --endpoint-url "$AWS_ENDPOINT_URL" || true
+{{- end }}

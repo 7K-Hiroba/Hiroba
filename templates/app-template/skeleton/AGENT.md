@@ -8,7 +8,7 @@ This project follows a **near-native** approach. We prefer upstream, official so
 
 - If the application has an **official Helm chart**, use it as the base rather than writing one from scratch. The `helm/base/` directory may contain the upstream chart as a dependency or a thin wrapper around it.
 - If the application has an **official Docker image**, use it. Only maintain a custom Dockerfile if the 7KGroup admins have determined the maintenance cost is justified (e.g., the official image is poorly maintained, insecure, or missing required features).
-- The **platform chart** (`helm/platform/`) is always custom. This is where Okura adds value — wiring in databases, storage, secrets, observability, and other infrastructure that the upstream chart does not provide.
+- The **platform chart** (`helm/platform/`) is always custom. This is where Hiroba adds value — wiring in databases, storage, secrets, observability, and other infrastructure that the upstream chart does not provide.
 
 **Do not rewrite what upstream already does well.** The people who build the application know it best.
 
@@ -27,8 +27,8 @@ This project follows a **near-native** approach. We prefer upstream, official so
 │       ├── values.schema.json         # JSON Schema for values validation (required)
 │       ├── tests/                     # helm-unittest test suites
 │       └── templates/
-│           ├── database/              # CNPG clusters, managed DBs via Crossplane
-│           ├── storage/               # Object storage via Crossplane
+│           ├── database/              # CNPG clusters, etc.
+│           ├── storage/               # S3 buckets (Crossplane, Garage, etc.)
 │           ├── secrets/               # ExternalSecrets
 │           └── observability/         # ServiceMonitors, Grafana dashboards, PrometheusRules
 ├── crossplane/                        # Crossplane XRDs & Compositions this app PROVIDES
@@ -39,7 +39,7 @@ This project follows a **near-native** approach. We prefer upstream, official so
 │   ├── argocd/                        # ArgoCD Application + AppProject manifests
 │   └── fluxcd/                        # FluxCD GitRepository + HelmRelease manifests
 ├── docs/                              # TechDocs content (published via Backstage)
-├── .github/workflows/                 # CI/CD — references 7K-Okura/workflows-library
+├── .github/workflows/                 # CI/CD — references 7K-Hiroba/workflows-library
 ├── Dockerfile                         # Only if a custom image is maintained
 └── catalog-info.yaml                  # Backstage catalog registration
 ```
@@ -57,17 +57,17 @@ Add or modify resources under `helm/platform/templates/<category>/`. Each resour
 | Category | Path | Examples |
 | --- | --- | --- |
 | database | `templates/database/` | CNPG Cluster |
-| storage | `templates/storage/` | Object storage via Crossplane |
+| storage | `templates/storage/` | S3 via Crossplane, S3 via Garage |
 | secrets | `templates/secrets/` | ExternalSecret |
 | observability | `templates/observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule |
 
 ### New platform provider variant
 
-Platform resources support a `provider` switch. To add a new provider for an existing resource (e.g., Azure for object storage):
+Platform resources support a `provider` switch. To add a new provider for an existing resource (e.g., a MinIO provider for S3):
 
-1. Create `helm/platform/templates/storage/s3-azure.yaml`
-2. Gate it with `{{- if and .Values.s3.enabled (eq .Values.s3.provider "azure") }}`
-3. Add provider-specific values under `s3.azure:` in `values.yaml`
+1. Create `helm/platform/templates/storage/s3-minio.yaml`
+2. Gate it with `{{- if and .Values.s3.enabled (eq .Values.s3.provider "minio") }}`
+3. Add provider-specific values under `s3.minio:` in `values.yaml`
 
 ### Crossplane compositions this app provides
 
@@ -99,7 +99,7 @@ If updating the helm chart, be sure the corresponding README.md is also updated
 
 ### CI/CD workflows
 
-There are two workflow files — `ci.yml` and `release-please.yml` — each calling a **single reusable workflow** from `7K-Okura/workflows-library` with a `stack` parameter to differentiate behavior. Do not inline CI/CD logic — add capabilities to the library workflow instead.
+There are two workflow files — `ci.yml` and `release-please.yml` — each calling a **single reusable workflow** from `7K-Hiroba/workflows-library` with a `stack` parameter to differentiate behavior. Do not inline CI/CD logic — add capabilities to the library workflow instead.
 
 | Stack | `stack` param | CI trigger (path) | Release tag | release-please type |
 | --- | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ The scope in the commit message should match the component path or name. Release
 
 - API version: `apiVersion: v2`
 - All resources use `app.kubernetes.io/*` standard labels via `_helpers.tpl`
-- All resources include `app.kubernetes.io/part-of: okura` for traceability
+- All resources include `app.kubernetes.io/part-of: hiroba` for traceability
 - Security defaults: `runAsNonRoot: true`, `readOnlyRootFilesystem: true`, all capabilities dropped
 - External traffic uses **Gateway API** (`gateway.networking.k8s.io/v1` HTTPRoute), not Ingress
 - Every chart **must** include a `values.schema.json` — CI will fail without it. Helm lint and template rendering validate values against this schema automatically
@@ -212,14 +212,14 @@ When Renovate opens a PR for a Dockerfile base image update, verify the new imag
 
 ## OpenCode Skills
 
-Agent skills for this repository are maintained centrally in the [Okura](https://github.com/7K-Okura/Okura) repo under `.opencode/skills/`. Skills enforce standards when editing charts, Dockerfiles, GitOps manifests, and documentation.
+Agent skills for this repository are maintained centrally in the [Hiroba](https://github.com/7K-Hiroba/Hiroba) repo under `.opencode/skills/`. Skills enforce standards when editing charts, Dockerfiles, GitOps manifests, and documentation.
 
 To install them locally so they are available when working in this repo:
 
 ```bash
-git clone https://github.com/7K-Okura/Okura /tmp/okura
+git clone https://github.com/7K-Hiroba/Hiroba /tmp/hiroba
 mkdir -p .opencode/skills
-for skill in /tmp/okura/.opencode/skills/*/; do
+for skill in /tmp/hiroba/.opencode/skills/*/; do
   ln -sf "$skill" .opencode/skills/
 done
 ```
@@ -232,6 +232,7 @@ Available skills and when they apply:
 | `helm-platform` | Editing `helm/platform/` templates, values, or schema |
 | `cnpg-cluster` | Adding or modifying a CNPG `Cluster` resource |
 | `crossplane-s3` | Adding or modifying S3 storage resources |
+| `garage-s3` | Working with the Garage S3 provider specifically |
 | `external-secrets` | Adding or modifying `ExternalSecret` resources |
 | `observability` | Adding or modifying ServiceMonitor, PrometheusRules, or Grafana dashboards |
 | `gitops` | Editing ArgoCD or FluxCD manifests under `gitops/` |
@@ -239,7 +240,7 @@ Available skills and when they apply:
 | `dockerfile` | Creating or modifying a `Dockerfile` |
 | `documentation` | Creating or editing Markdown files under `docs/` |
 
-If this repo requires standards not covered by the Okura baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` alongside the symlinks and open a PR to Okura to include it upstream.
+If this repo requires standards not covered by the Hiroba baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` alongside the symlinks and open a PR to Hiroba to include it upstream.
 
 ## Markdown Linting
 

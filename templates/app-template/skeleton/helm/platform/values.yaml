@@ -7,8 +7,8 @@
 # matching template file in templates/<category>/<resource>-<provider>.yaml
 #
 # Templates are organized into subdirectories:
-#   database/    — Database resources (CNPG, cloud providers via Crossplane)
-#   storage/     — Object storage (AWS/GCP via Crossplane)
+#   database/    — Database resources (CNPG, etc.)
+#   storage/     — Object storage (Crossplane, Garage, etc.)
 #   secrets/     — External secrets management
 #   observability/ — ServiceMonitors, Grafana dashboards, PrometheusRules
 
@@ -23,7 +23,7 @@ global:
 # -- PostgreSQL database
 postgres:
   enabled: ${{ values.enablePostgres }}
-  # -- Provider: "cnpg" | "aws" | "gcp"
+  # -- Provider: "cnpg" (CloudNativePG operator)
   provider: cnpg
   instances: 1
   storage:
@@ -48,55 +48,38 @@ postgres:
     schedule: "0 2 * * *"
     retentionPolicy: "7d"
 
-  # -- AWS RDS (provider: aws)
-  aws:
-    region: us-east-1
-    providerConfigRef: aws-provider
-    instanceClass: db.t3.micro
-    allocatedStorage: 20
-    engine: postgres
-    engineVersion: "15.5"
-    masterUsername: app
-    masterUserPasswordSecretRef:
-      name: ""
-      namespace: ""
-      key: password
-    writeConnectionSecretToRef:
-      name: ""
-      namespace: ""
-
-  # -- GCP Cloud SQL (provider: gcp)
-  gcp:
-    region: us-central1
-    providerConfigRef: gcp-provider
-    databaseVersion: POSTGRES_13
-    tier: db-custom-1-3840
-    writeConnectionSecretToRef:
-      name: ""
-      namespace: ""
-
-# -- Object storage
+# -- S3-compatible object storage
 s3:
   enabled: ${{ values.enableS3 }}
-  # -- Provider: "aws" | "gcp"
-  provider: aws
+  # -- Provider: "crossplane" | "garage"
+  provider: crossplane
   # -- Bucket name (will be prefixed with app name)
   bucketName: assets
+  # -- Access control
+  acl: private
 
-  # -- AWS S3 settings (provider: aws)
-  aws:
+  # -- Crossplane-specific settings (provider: crossplane)
+  crossplane:
     region: us-east-1
     providerConfigRef: aws-provider
-    acl: private
     lifecycle:
       enabled: false
       expirationDays: 90
 
-  # -- GCP Cloud Storage settings (provider: gcp)
-  gcp:
-    location: US
-    storageClass: STANDARD
-    providerConfigRef: gcp-provider
+  # -- Garage-specific settings (provider: garage)
+  garage:
+    # -- Garage API endpoint
+    endpoint: "http://garage.garage.svc.cluster.local:3900"
+    # -- Garage access key Secret reference
+    accessKeySecret:
+      name: ""
+      key: accessKey
+    # -- Garage secret key Secret reference
+    secretKeySecret:
+      name: ""
+      key: secretKey
+    # -- Number of data/parity replicas in Garage
+    replicationFactor: 3
 
 # -- External Secrets (external-secrets.io)
 externalSecrets:

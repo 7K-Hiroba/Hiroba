@@ -9,7 +9,7 @@ metadata:
   name: ${{ values.name }}-common
   namespace: flux-system
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
 spec:
   interval: 10m
   sourceRef:

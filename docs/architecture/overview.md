@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Architecture Overview
 
-Okura is built around a layered architecture that separates concerns cleanly. Every layer is optional beyond the base chart, so you can start simple and add complexity only when you need it.
+Hiroba is built around a layered architecture that separates concerns cleanly. Every layer is optional beyond the base chart, so you can start simple and add complexity only when you need it.
 
 ## The Layers
 
@@ -29,15 +29,15 @@ Okura is built around a layered architecture that separates concerns cleanly. Ev
 └─────────────────────────────────────────┘
 ```
 
-The **Platform Chart** is where Okura focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart or operator CRs. **Stacks** compose multiple apps into a deployable platform with operator management and per-app value overrides. **GitOps** connects everything: application-level refs in each app repo, and stack-level orchestration that deploys the full composition. **TechDocs** ties it all together with documentation for every app and stack.
+The **Platform Chart** is where Hiroba focuses its effort — it's always custom and always present. The base chart is often just an upstream third-party chart or operator CRs. **Stacks** compose multiple apps into a deployable platform with operator management and per-app value overrides. **GitOps** connects everything: application-level refs in each app repo, and stack-level orchestration that deploys the full composition. **TechDocs** ties it all together with documentation for every app and stack.
 
 ## Component Responsibilities
 
 ### Platform Helm Chart
 
-The platform chart is Okura's core contribution — it's **always custom** and always present. It wires third-party operator-managed infrastructure alongside your app:
+The platform chart is Hiroba's core contribution — it's **always custom** and always present. It wires third-party operator-managed infrastructure alongside your app:
 - **CNPG** — PostgreSQL clusters (CloudNativePG operator)
-- **Object storage** — Buckets via Crossplane AWS or GCP providers
+- **S3 Buckets** — Object storage (Crossplane AWS provider or Garage)
 - **Keycloak Realms** — Identity and access management (Crossplane Keycloak provider)
 
 This is what you'd otherwise have to figure out yourself: how to connect your app to a managed database, provision storage, and set up auth — all declared in Helm values.
@@ -49,7 +49,7 @@ The base chart follows the **near-native** principle: if the app has an official
 - A **thin wrapper** with minimal custom templates
 - A **from-scratch chart** only when no adequate upstream chart exists
 
-The base chart works on any cluster — including managed cloud services and hybrid environments.
+The base chart works on any cluster — even a single-node k3s or kind setup.
 
 ### GitOps
 
@@ -59,7 +59,7 @@ GitOps is split into two layers. The **application layer** lives in each app rep
 
 ### Stacks (Multi-App Composition)
 
-A stack composes multiple Okura apps into a single deployable platform. Scaffolded from the **stack-template**, each stack repo provides:
+A stack composes multiple Hiroba apps into a single deployable platform. Scaffolded from the **stack-template**, each stack repo provides:
 
 - **Operator management** (`gitops/*/common/`) — operators as individual ArgoCD Applications or FluxCD HelmReleases, independently add/removable
 - **Per-app value overrides** (`apps/<name>/`) — configuration tailored to this stack without forking app charts
@@ -71,7 +71,7 @@ Stacks follow a loose coupling model — they reference app charts as external d
 
 ### Chart Request Flow
 
-New charts are requested by the community via [GitHub Issues](https://github.com/7K-Okura/Okura/issues/new?template=chart_request.md). A 7K-Okura maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
+New charts are requested by the community via [GitHub Issues](https://github.com/7K-Hiroba/Hiroba/issues/new?template=chart_request.md). A 7K-Hiroba maintainer reviews the request, scaffolds the app repository using internal Backstage templates, and publishes it. The Backstage instance is only accessible to 7KGroup representatives — community members interact through issues and pull requests.
 
 ### Crossplane Compositions (per-app, Optional)
 
@@ -79,11 +79,11 @@ Each app includes a `crossplane/` directory for hosting compositions that the ap
 
 ### Workflow Library
 
-A separate repository (`7K-Okura/workflows-library`) containing reusable GitHub Actions workflows. Apps reference these via `uses:` rather than duplicating CI/CD logic.
+A separate repository (`7K-Hiroba/workflows-library`) containing reusable GitHub Actions workflows. Apps reference these via `uses:` rather than duplicating CI/CD logic.
 
 ## Design Principles
 
-1. **Separation of base and platform** — The platform chart is Okura's focus; the base chart is often upstream. They deploy independently.
+1. **Separation of base and platform** — The platform chart is Hiroba's focus; the base chart is often upstream. They deploy independently.
 2. **Centralized workflows** — CI/CD logic lives in one place, consumed by all apps
-3. **Works on managed clusters** — Everything should run on managed cloud services with reasonable resource limits
+3. **Works on small clusters** — Everything should run on a single-node k3s cluster with reasonable resource limits
 4. **Operator-backed infrastructure** — Platform resources are managed by proven operators, not custom scripts

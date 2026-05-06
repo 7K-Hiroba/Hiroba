@@ -2,16 +2,16 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: app-template
-  title: Okura Application Template
-  description: Scaffold a new okura Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
+  title: Hiroba Application Template
+  description: Scaffold a new hiroba Kubernetes application with Helm charts, Dockerfile, TechDocs, and CI/CD
   tags:
     - kubernetes
     - helm
     - recommended
   annotations:
-    backstage.io/docs-url: https://okura.7kgroup.org
+    backstage.io/docs-url: https://hiroba.7kgroup.org
 spec:
-  owner: group:okura
+  owner: group:hiroba
   type: service
 
   parameters:
@@ -72,7 +72,7 @@ spec:
             allowedHosts:
               - github.com
             allowedOwners:
-              - 7K-Okura
+              - 7K-Hiroba
 
   steps:
     - id: fetch-skeleton
@@ -98,8 +98,8 @@ spec:
         defaultBranch: main
         repoVisibility: public
         topics:
-          - okura
-          - okura-app
+          - hiroba
+          - hiroba-app
 
     - id: register
       name: Register in Catalog

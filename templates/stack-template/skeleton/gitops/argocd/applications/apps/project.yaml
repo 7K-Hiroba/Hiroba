@@ -2,20 +2,20 @@
 #
 # All app Applications in this directory belong to this project.
 # The sourceRepos list allows both this stack repo (for value overrides)
-# and any 7K-Okura app repo.
+# and any 7K-Hiroba app repo.
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: ${{ values.name }}
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
 spec:
   description: Applications for the ${{ values.name }} stack
   sourceRepos:
-    - "https://github.com/7K-Okura/*"
+    - "https://github.com/7K-Hiroba/*"
   destinations:
     - namespace: ${{ values.name }}
       server: https://kubernetes.default.svc

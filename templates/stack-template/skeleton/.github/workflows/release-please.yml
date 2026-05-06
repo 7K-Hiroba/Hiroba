@@ -26,7 +26,7 @@ jobs:
   publish-docs:
     needs: release-please
     if: needs.release-please.outputs.docs--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-docs.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-docs.yml@v1
     with:
       path: docs
       version: ${{ needs.release-please.outputs.docs--version }}

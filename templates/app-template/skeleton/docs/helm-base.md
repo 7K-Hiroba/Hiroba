@@ -6,7 +6,7 @@ sidebar_position: 3
 
 The base chart deploys the application itself: `Deployment`, `Service`, `ServiceAccount`, `HorizontalPodAutoscaler`, and a Gateway API `HTTPRoute`. It does **not** provision databases, secrets, or observability — see the [platform chart](./helm-platform.md) for those.
 
-Values reference: [`helm/base/values.yaml`](https://github.com/7K-Okura/${{ values.name }}/blob/main/helm/base/values.yaml)
+Values reference: [`helm/base/values.yaml`](https://github.com/7KGroup/${{ values.name }}/blob/main/helm/base/values.yaml)
 
 ## Install
 
@@ -38,14 +38,14 @@ Don't put credentials in `env`. Use `envFrom` to pull from a `Secret` — typica
 ```yaml
 envFrom:
   - secretRef:
-      name: ${{ values.name }}-secrets
+      name: ${{ values.name }}
 ```
 
 See the [platform chart docs](./helm-platform.md#externalsecrets) for how the Secret gets populated.
 
 ## Ingress
 
-The base chart emits a Gateway API `HTTPRoute`. A parent `Gateway` (with listeners and TLS) is expected to be provided by the platform — typically a gateway chart such as `okura-gateway` — so the app chart only owns the route itself.
+The base chart emits a Gateway API `HTTPRoute`. A parent `Gateway` (with listeners and TLS) is expected to be provided by the platform — typically a gateway chart such as `hiroba-gateway` — so the app chart only owns the route itself.
 
 ### Minimum configuration
 

@@ -15,7 +15,7 @@ metadata:
   name: ${{ values.name }}-base
   namespace: flux-system
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
     app.kubernetes.io/component: base
 spec:
   interval: 5m
@@ -43,7 +43,7 @@ spec:
       optional: true
   values:
     image:
-      repository: ghcr.io/7k-okura/${{ values.name }}
+      repository: ghcr.io/7k-hiroba/${{ values.name }}
       tag: ""
     gateway:
       enabled: true

@@ -38,7 +38,7 @@ jobs:
   publish-app:
     needs: release-please
     if: needs.release-please.outputs.app--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-app.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-app.yml@v1
     with:
       image-name: {% endraw %}${{ values.name }}{%- raw %}
       path: .
@@ -48,7 +48,7 @@ jobs:
   publish-helm-base:
     needs: release-please
     if: needs.release-please.outputs.helm-base--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-helm.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
     with:
       path: helm/base
       version: ${{ needs.release-please.outputs.helm-base--version }}
@@ -57,7 +57,7 @@ jobs:
   publish-helm-platform:
     needs: release-please
     if: needs.release-please.outputs.helm-platform--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-helm.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
     with:
       path: helm/platform
       version: ${{ needs.release-please.outputs.helm-platform--version }}
@@ -66,7 +66,7 @@ jobs:
   publish-docs:
     needs: release-please
     if: needs.release-please.outputs.docs--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-docs.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-docs.yml@v1
     with:
       path: docs
       version: ${{ needs.release-please.outputs.docs--version }}
@@ -75,7 +75,7 @@ jobs:
   publish-crossplane:
     needs: release-please
     if: needs.release-please.outputs.crossplane--release_created == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-crossplane.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-crossplane.yml@v1
     with:
       path: crossplane
       version: ${{ needs.release-please.outputs.crossplane--version }}
@@ -100,7 +100,7 @@ jobs:
   publish-artifacthub-base:
     needs: detect-artifacthub-changes
     if: needs.detect-artifacthub-changes.outputs.base == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
     with:
       file: helm/base-artifacthub-repo.yml
       chart: {% endraw %}${{ values.name }}{%- raw %}
@@ -109,7 +109,7 @@ jobs:
   publish-artifacthub-platform:
     needs: detect-artifacthub-changes
     if: needs.detect-artifacthub-changes.outputs.platform == 'true'
-    uses: 7K-Okura/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-artifacthub-metadata.yml@v1
     with:
       file: helm/platform-artifacthub-repo.yml
       chart: {% endraw %}${{ values.name }}{%- raw %}-platform

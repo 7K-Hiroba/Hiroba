@@ -1,6 +1,6 @@
 ---
 name: helm-chart-release
-description: Standards for releasing Okura Helm charts using Conventional Commits, release-please, and version bumping
+description: Standards for releasing Hiroba Helm charts using Conventional Commits, release-please, and version bumping
 license: MIT
 compatibility: opencode
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 ## What I cover
 
-How versioning, changelogs, and releases work for Helm charts in Okura repos.
+How versioning, changelogs, and releases work for Helm charts in Hiroba repos.
 
 ## Release automation overview
 

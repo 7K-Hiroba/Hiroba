@@ -16,7 +16,7 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["cnpg", "aws", "gcp"] },
+        "provider": { "type": "string", "enum": ["cnpg"] },
         "instances": { "type": "integer", "minimum": 1 },
         "storage": {
           "type": "object",
@@ -57,54 +57,6 @@
             "retentionPolicy": { "type": "string" }
           },
           "additionalProperties": false
-        },
-        "aws": {
-          "type": "object",
-          "properties": {
-            "region": { "type": "string" },
-            "providerConfigRef": { "type": "string" },
-            "instanceClass": { "type": "string" },
-            "allocatedStorage": { "type": "integer", "minimum": 1 },
-            "engine": { "type": "string" },
-            "engineVersion": { "type": "string" },
-            "masterUsername": { "type": "string" },
-            "masterUserPasswordSecretRef": {
-              "type": "object",
-              "properties": {
-                "name": { "type": "string" },
-                "namespace": { "type": "string" },
-                "key": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
-            "writeConnectionSecretToRef": {
-              "type": "object",
-              "properties": {
-                "name": { "type": "string" },
-                "namespace": { "type": "string" }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        "gcp": {
-          "type": "object",
-          "properties": {
-            "region": { "type": "string" },
-            "providerConfigRef": { "type": "string" },
-            "databaseVersion": { "type": "string" },
-            "tier": { "type": "string" },
-            "writeConnectionSecretToRef": {
-              "type": "object",
-              "properties": {
-                "name": { "type": "string" },
-                "namespace": { "type": "string" }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -113,14 +65,14 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["aws", "gcp"] },
+        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
         "bucketName": { "type": "string" },
-        "aws": {
+        "acl": { "type": "string" },
+        "crossplane": {
           "type": "object",
           "properties": {
             "region": { "type": "string" },
             "providerConfigRef": { "type": "string" },
-            "acl": { "type": "string", "enum": ["private", "public-read", "public-read-write", "authenticated-read", "aws-exec-read", "bucket-owner-read", "bucket-owner-full-control", "log-delivery-write"] },
             "lifecycle": {
               "type": "object",
               "properties": {
@@ -132,12 +84,27 @@
           },
           "additionalProperties": false
         },
-        "gcp": {
+        "garage": {
           "type": "object",
           "properties": {
-            "location": { "type": "string" },
-            "storageClass": { "type": "string", "enum": ["MULTI_REGIONAL", "REGIONAL", "NEARLINE", "COLDLINE", "STANDARD", "DURABLE_REDUCED_AVAILABILITY"] },
-            "providerConfigRef": { "type": "string" }
+            "endpoint": { "type": "string" },
+            "accessKeySecret": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "secretKeySecret": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "replicationFactor": { "type": "integer", "minimum": 1 }
           },
           "additionalProperties": false
         }

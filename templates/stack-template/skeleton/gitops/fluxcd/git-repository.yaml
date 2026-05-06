@@ -4,9 +4,9 @@ metadata:
   name: ${{ values.name }}
   namespace: flux-system
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
 spec:
   interval: 5m
-  url: https://github.com/7K-Okura/${{ values.name }}.git
+  url: https://github.com/7K-Hiroba/${{ values.name }}.git
   ref:
     branch: main

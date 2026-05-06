@@ -4,11 +4,11 @@ sidebar_position: 2
 
 # Using Helm Templates
 
-This guide covers how to work with Okura's Helm chart templates in detail.
+This guide covers how to work with Hiroba's Helm chart templates in detail.
 
 ## Template Structure
 
-Every Okura Helm chart follows this structure:
+Every Hiroba Helm chart follows this structure:
 
 ```
 app-template/
@@ -42,7 +42,7 @@ image:
 
 ### Resource Limits
 
-Keep these reasonable for your managed cluster size and SLO targets:
+Keep these reasonable for homelab hardware. These defaults work well on a Raspberry Pi or mini PC:
 
 ```yaml
 resources:
@@ -56,7 +56,7 @@ resources:
 
 ### Gateway API (HTTPRoute)
 
-Okura uses the Gateway API instead of Ingress for external traffic routing:
+Hiroba uses the Gateway API instead of Ingress for external traffic routing:
 
 ```yaml
 gateway:
@@ -64,7 +64,7 @@ gateway:
   parentRefs:
     - name: default-gateway
   hostnames:
-    - app.example.com
+    - app.home.lab
   rules: []  # Empty = catch-all PathPrefix /
 ```
 
@@ -111,7 +111,7 @@ helm template my-app ./helm/platform --api-versions postgresql.cnpg.io/v1
 
 ## Values Schema
 
-Every Okura chart **must** include a `values.schema.json` file. This is a [JSON Schema (draft-07)](https://json-schema.org/draft-07/schema#) that validates `values.yaml` at lint and template time. CI will fail if the file is missing.
+Every Hiroba chart **must** include a `values.schema.json` file. This is a [JSON Schema (draft-07)](https://json-schema.org/draft-07/schema#) that validates `values.yaml` at lint and template time. CI will fail if the file is missing.
 
 The schema catches typos, wrong types, and invalid values before they reach your cluster. Helm validates against it automatically during `helm lint`, `helm template`, and `helm install`.
 
@@ -147,7 +147,7 @@ When you add a new value to `values.yaml`, always add the matching entry in `val
 
 ## Unit Testing
 
-Okura uses [helm-unittest](https://github.com/helm-unittest/helm-unittest) for chart unit tests. Tests validate that templates render correctly for different value combinations — without needing a real cluster.
+Hiroba uses [helm-unittest](https://github.com/helm-unittest/helm-unittest) for chart unit tests. Tests validate that templates render correctly for different value combinations — without needing a real cluster.
 
 ### Running tests locally
 

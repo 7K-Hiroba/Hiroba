@@ -7,7 +7,7 @@ metadata:
   name: cert-manager
   namespace: argocd
   labels:
-    app.kubernetes.io/part-of: okura
+    app.kubernetes.io/part-of: hiroba
     app.kubernetes.io/component: common
   annotations:
     argocd.argoproj.io/sync-wave: "-5"

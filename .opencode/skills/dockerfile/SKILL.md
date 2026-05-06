@@ -1,6 +1,6 @@
 ---
 name: dockerfile
-description: Standards for Dockerfiles in Okura app repos including multi-stage builds, non-root user, pinned images, and OCI labels
+description: Standards for Dockerfiles in Hiroba app repos including multi-stage builds, non-root user, pinned images, and OCI labels
 license: MIT
 compatibility: opencode
 metadata:

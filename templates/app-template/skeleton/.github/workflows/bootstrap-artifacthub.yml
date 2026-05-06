@@ -9,10 +9,10 @@ permissions:
 
 jobs:
   bootstrap:
-    uses: 7K-Okura/workflows-library/.github/workflows/bootstrap-artifacthub.yml@v1
+    uses: 7K-Hiroba/workflows-library/.github/workflows/bootstrap-artifacthub.yml@v1
     with:
-      org: 7k-okura
-      registry-base: harbor.7kgroup.org/7kokura/charts
+      org: 7k-hiroba
+      registry-base: harbor.7kgroup.org/7khiroba/charts
       charts: |
         [
           { "file": "helm/base-artifacthub-repo.yml",

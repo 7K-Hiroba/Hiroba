@@ -5,27 +5,27 @@ type: application
 version: 0.1.0
 appVersion: "0.1.0"
 maintainers:
-  - name: 7k-okura
+  - name: 7k-hiroba
 keywords:
   - platform
   - crossplane
   - cnpg
-  - okura
-home: https://github.com/7K-Okura/${{ values.name }}
+  - hiroba
+home: https://github.com/7K-Hiroba/${{ values.name }}
 sources:
-  - https://github.com/7K-Okura/${{ values.name }}
+  - https://github.com/7K-Hiroba/${{ values.name }}
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: documentation
-      url: https://okura.7kgroup.org/docs/apps/${{ values.name }}/helm-platform
+      url: https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-platform
     - name: source
-      url: https://github.com/7K-Okura/${{ values.name }}
+      url: https://github.com/7K-Hiroba/${{ values.name }}
     - name: support
-      url: https://github.com/7K-Okura/${{ values.name }}/issues
+      url: https://github.com/7K-Hiroba/${{ values.name }}/issues
   artifacthub.io/images: |
     - name: ${{ values.name }}-platform
       image: https://platform.7kgroup.org/static/media/7K.79ddfff5fb29a50e3165ccfcec442d4f.svg
   artifacthub.io/maintainers: |
-    - name: 7k-okura
+    - name: 7k-hiroba

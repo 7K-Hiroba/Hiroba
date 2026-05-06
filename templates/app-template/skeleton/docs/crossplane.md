@@ -8,7 +8,7 @@ This directory hosts Crossplane Composite Resource Definitions (XRDs) and Compos
 
 Use this stack when your application exposes infrastructure capabilities that other applications can consume. For example, a Keycloak deployment might publish compositions that let other apps provision realms and clients via Claims.
 
-Values reference: [`compositions/crossplane/`](https://github.com/7K-Okura/${{ values.name }}/tree/main/compositions/crossplane)
+Values reference: [`compositions/crossplane/`](https://github.com/7KGroup/${{ values.name }}/tree/main/compositions/crossplane)
 
 ## Structure
 

@@ -1,4 +1,4 @@
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "aws") }}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") }}
 apiVersion: s3.aws.crossplane.io/v1beta1
 kind: Bucket
 metadata:
@@ -7,17 +7,17 @@ metadata:
     {{- include "platform.labels" . | nindent 4 }}
 spec:
   forProvider:
-    locationConstraint: {{ .Values.s3.aws.region }}
-    acl: {{ .Values.s3.aws.acl }}
-    {{- if .Values.s3.aws.lifecycle.enabled }}
+    region: {{ .Values.s3.crossplane.region }}
+    acl: {{ .Values.s3.acl }}
+    {{- if .Values.s3.crossplane.lifecycle.enabled }}
     lifecycleConfiguration:
       rules:
         - status: Enabled
           filter:
             prefix: ""
           expiration:
-            days: {{ .Values.s3.aws.lifecycle.expirationDays }}
+            days: {{ .Values.s3.crossplane.lifecycle.expirationDays }}
     {{- end }}
   providerConfigRef:
-    name: {{ .Values.s3.aws.providerConfigRef }}
+    name: {{ .Values.s3.crossplane.providerConfigRef }}
 {{- end }}

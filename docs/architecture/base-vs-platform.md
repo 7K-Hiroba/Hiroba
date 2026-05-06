@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Base vs Platform Charts
 
-This is a core architectural decision in Okura: every application gets **two separate Helm charts**. The platform chart is Okura's main focus.
+This is a core architectural decision in Hiroba: every application gets **two separate Helm charts**. The platform chart is Hiroba's main focus.
 
 ## Why Two Charts?
 
@@ -14,11 +14,11 @@ Most Helm charts in the ecosystem bundle everything together. A "PostgreSQL-back
 - **Lifecycle mismatch** — Apps deploy frequently; databases rarely change
 - **Portability loss** — The chart only works if you run Postgres the same way
 
-Okura separates these concerns. This matters just as much in managed cloud and hybrid environments — when your control plane or node pool recycles, you want the app and database to recover independently.
+Hiroba separates these concerns. This matters just as much on a homelab as anywhere else — when your single-node cluster restarts at 3 AM, you want the app and database to recover independently.
 
-## Platform Chart (`helm/platform/`) — Okura's Focus
+## Platform Chart (`helm/platform/`) — Hiroba's Focus
 
-The platform chart is **always custom** — this is where 7K-Okura adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
+The platform chart is **always custom** — this is where 7K-Hiroba adds its value. It wires in the infrastructure your app needs using cluster operators, so you don't have to figure out how to connect a managed database, provision storage, or set up auth yourself.
 
 Both charts require a `values.schema.json` (for values validation) and unit tests under `tests/` (using [helm-unittest](https://github.com/helm-unittest/helm-unittest)). CI enforces both — see [Using Helm Templates](../guides/using-helm-templates.md) for details.
 
@@ -26,9 +26,9 @@ It contains third-party CRs organized into subdirectories:
 
 | Category | Examples | Operators |
 |---|---|---|
-| `database/` | CNPG Cluster, managed DB instances | Crossplane (AWS/GCP), CloudNativePG |
-| `storage/` | Object storage buckets | Crossplane (AWS/GCP) |
-| `secrets/` | ExternalSecret |
+| `database/` | CNPG Cluster |
+| `storage/` | S3 Bucket | Crossplane (AWS) | GarageBucket |
+| `secrets/` | ExternalSecret | 
 | `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule |
 
 **Important:** The platform chart **does not deploy or manage operators** — it creates CRs (Custom Resources) that existing operators reconcile. Operator lifecycle (installation, upgrades, CRD management) is your responsibility. We list required operators as dependencies in the documentation, but the platform chart only consumes them.
@@ -50,16 +50,13 @@ The checks cover all operator-backed features:
 
 | Feature | Required CRD |
 |---|---|
-| `postgres.enabled` + `provider: cnpg` | `postgresql.cnpg.io/v1` (CloudNativePG) |
-| `postgres.enabled` + `provider: aws` | `rds.aws.crossplane.io/v1alpha1` (Crossplane AWS) |
-| `postgres.enabled` + `provider: gcp` | `database.gcp.crossplane.io/v1beta1` (Crossplane GCP) |
-| `s3.enabled` + `provider: aws` | `s3.aws.crossplane.io/v1beta1` (Crossplane AWS) |
-| `s3.enabled` + `provider: gcp` | `storage.gcp.crossplane.io/v1alpha3` (Crossplane GCP) |
-| `externalSecrets.enabled` | `external-secrets.io/v1` (External Secrets Operator) |
+| `postgres.enabled` | `postgresql.cnpg.io/v1` (CloudNativePG) |
+| `s3.enabled` + `provider: crossplane` | `s3.aws.crossplane.io/v1beta1` (Crossplane AWS) |
+| `externalSecrets.enabled` | `external-secrets.io/v1beta1` (External Secrets Operator) |
 | `observability.serviceMonitor.enabled` | `monitoring.coreos.com/v1` (Prometheus Operator) |
 | `observability.prometheusRules.enabled` | `monitoring.coreos.com/v1` (Prometheus Operator) |
 
-Features that use only native Kubernetes resources (Grafana dashboards via ConfigMap) do not require checks.
+Features that use only native Kubernetes resources (Garage S3 via ConfigMap/Job, Grafana dashboards via ConfigMap) do not require checks.
 
 :::tip Offline rendering
 When using `helm template` or rendering in CI/CD, pass `--api-versions` to simulate available APIs:
@@ -72,7 +69,7 @@ helm template my-app ./helm/platform \
 
 With the right operators running on your cluster, the platform chart provides **plug-and-play infrastructure** — enable Postgres in one toggle and get a managed database without manually deploying StatefulSets.
 
-Resources with multiple backends support a **provider switch** (e.g., `s3.provider: aws` vs `s3.provider: gcp`).
+Resources with multiple backends support a **provider switch** (e.g., `s3.provider: crossplane` vs `s3.provider: garage`).
 
 ## Base Chart (`helm/base/`)
 
@@ -83,9 +80,9 @@ The base chart follows the **near-native** principle: if the application has an 
 - **Operator CRs** — Direct references to CRs from a supported operator (e.g., a `Keycloak` CR for the Keycloak operator)
 - **A from-scratch chart** — Only when no adequate upstream chart or operator exists
 
-In most cases the base chart is just an upstream third-party chart. Okura doesn't rewrite what already works — the upstream maintainers know their app best.
+In most cases the base chart is just an upstream third-party chart. Hiroba doesn't rewrite what already works — the upstream maintainers know their app best.
 
-The base chart works on **any Kubernetes cluster** — including managed cloud services and hybrid distributions — with no special operators installed (beyond a Gateway API implementation if HTTPRoutes are enabled).
+The base chart works on **any Kubernetes cluster** — including single-node k3s, kind, or microk8s — with no special operators installed (beyond a Gateway API implementation if HTTPRoutes are enabled).
 
 ## Deployment Flow
 
@@ -101,7 +98,7 @@ The base chart does not depend on the platform chart. If platform resources are 
 
 ## When to Skip Platform
 
-The platform chart is the default for Okura apps. You'd skip it when:
+The platform chart is the default for Hiroba apps. You'd skip it when:
 
 - You're connecting to an existing database you already run
 - The cluster doesn't have the required operators installed yet

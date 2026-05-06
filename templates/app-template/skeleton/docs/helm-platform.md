@@ -21,7 +21,7 @@ Leave it empty to match by name only — acceptable when only one release of the
 
 > PodDisruptionBudget lives in the [base chart](./helm-base.md#poddisruptionbudget), not here — it's tightly coupled to the Deployment's lifecycle.
 
-Values reference: [`helm/platform/values.yaml`](https://github.com/7K-Okura/${{ values.name }}/blob/main/helm/platform/values.yaml)
+Values reference: [`helm/platform/values.yaml`](https://github.com/7KGroup/${{ values.name }}/blob/main/helm/platform/values.yaml)
 
 ## Install
 
@@ -33,17 +33,14 @@ helm install ${{ values.name }}-platform ./helm/platform \
 
 ## PostgreSQL
 
-Okura supports **in-cluster** PostgreSQL via [CloudNativePG](https://cloudnative-pg.io/) and **managed** PostgreSQL via Crossplane-backed cloud providers.
+Provisions a PostgreSQL cluster via [CloudNativePG](https://cloudnative-pg.io/).
 
 ### Prerequisites
 
-- CloudNativePG operator installed (for `provider: cnpg`)
-- Crossplane installed with the AWS or GCP provider (for `provider: aws`/`gcp`)
-- A `StorageClass` available for the data volume (CNPG only)
+- CloudNativePG operator installed in the cluster
+- A `StorageClass` available for the data volume
 
 ### Configuration
-
-#### In-cluster (CNPG)
 
 ```yaml
 postgres:
@@ -61,81 +58,32 @@ postgres:
     retentionPolicy: "7d"
 ```
 
-#### AWS RDS (Crossplane)
+Connection credentials are published to a `Secret` named `${{ values.name }}-app` that the base chart can pull via `envFrom`.
 
-```yaml
-postgres:
-  enabled: true
-  provider: aws
-  aws:
-    region: us-east-1
-    providerConfigRef: aws-provider
-    instanceClass: db.t3.micro
-    allocatedStorage: 20
-    engine: postgres
-    engineVersion: "15.5"
-    masterUsername: app
-    masterUserPasswordSecretRef:
-      name: rds-master
-      namespace: default
-      key: password
-    writeConnectionSecretToRef:
-      name: ${{ values.name }}-pg-conn
-      namespace: default
-```
+## S3 / Object storage
 
-#### GCP Cloud SQL (Crossplane)
+Provisions an S3-compatible bucket. Two providers are supported:
 
-```yaml
-postgres:
-  enabled: true
-  provider: gcp
-  gcp:
-    region: us-central1
-    providerConfigRef: gcp-provider
-    databaseVersion: POSTGRES_13
-    tier: db-custom-1-3840
-    writeConnectionSecretToRef:
-      name: ${{ values.name }}-pg-conn
-      namespace: default
-```
-
-## Object storage
-
-Provisions a managed object storage bucket via Crossplane providers.
+- **`crossplane`** — provisions a real bucket on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
+- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment
 
 ### Configuration
-
-#### AWS S3
 
 ```yaml
 s3:
   enabled: true
-  provider: aws
+  provider: crossplane   # or "garage"
   bucketName: assets
-  aws:
+  acl: private
+  crossplane:
     region: us-east-1
     providerConfigRef: aws-provider
-    acl: private
     lifecycle:
       enabled: true
       expirationDays: 90
 ```
 
-#### GCP Cloud Storage
-
-```yaml
-s3:
-  enabled: true
-  provider: gcp
-  bucketName: assets
-  gcp:
-    location: US
-    storageClass: STANDARD
-    providerConfigRef: gcp-provider
-```
-
-Swap the provider by changing `s3.provider` — the provider-specific blocks configure the chosen backend.
+Swap the provider by changing `s3.provider` — the provider-specific blocks (`crossplane`, `garage`) configure the chosen backend.
 
 ## ExternalSecrets
 
@@ -190,13 +138,13 @@ The double-brace escape (`{{ ` ... ` }}`) is needed because Helm processes the v
 
 ### Wiring back into the base chart
 
-The generated `Secret` is named after the application (`${{ values.name }}-secrets`). Reference it from the base chart's `envFrom`:
+The generated `Secret` is named after the application (`${{ values.name }}`). Reference it from the base chart's `envFrom`:
 
 ```yaml
 # helm/base values override
 envFrom:
   - secretRef:
-      name: ${{ values.name }}-secrets
+      name: ${{ values.name }}
 ```
 
 See the [base chart injecting-secrets section](./helm-base.md#injecting-secrets) for which variables to map.
