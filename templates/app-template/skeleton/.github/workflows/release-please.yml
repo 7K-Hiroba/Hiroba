@@ -30,7 +30,7 @@ jobs:
       crossplane--tag_name: ${{ steps.release.outputs['crossplane--tag_name'] }}
       crossplane--version: ${{ steps.release.outputs['crossplane--version'] }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -87,8 +87,8 @@ jobs:
       base: ${{ steps.filter.outputs.base }}
       platform: ${{ steps.filter.outputs.platform }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
