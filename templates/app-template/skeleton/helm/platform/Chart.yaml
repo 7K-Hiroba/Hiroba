@@ -26,6 +26,6 @@ annotations:
       url: https://github.com/7K-Hiroba/${{ values.name }}/issues
   artifacthub.io/images: |
     - name: ${{ values.name }}-platform
-      image: https://platform.7kgroup.org/static/media/7K.79ddfff5fb29a50e3165ccfcec442d4f.svg
+      image: https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/${{ values.name }}.svg
   artifacthub.io/maintainers: |
     - name: 7k-hiroba

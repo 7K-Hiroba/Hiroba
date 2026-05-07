@@ -144,6 +144,10 @@ The scope in the commit message should match the component path or name. Release
 - Every chart **must** include a `values.schema.json` — CI will fail without it. Helm lint and template rendering validate values against this schema automatically
 - Every chart **must** include unit tests under `tests/` using [helm-unittest](https://github.com/helm-unittest/helm-unittest). Test files follow the naming convention `<template>_test.yaml`
 
+### Chart icons
+
+When setting the `icon:` field in `Chart.yaml`, look up the application on [selfh.st/icons](https://selfh.st/icons/) and use the SVG URL if available (e.g., `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/<app>.svg`). If the application is not listed there, omit the `icon:` field entirely — do not substitute a generic icon or guess a URL.
+
 ### Values schema conventions
 
 - Use [JSON Schema draft-07](https://json-schema.org/draft-07/schema#)
