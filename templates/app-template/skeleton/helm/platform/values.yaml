@@ -73,6 +73,9 @@ s3:
       expirationDays: 90
 
   # -- Garage-specific settings (provider: garage)
+  # Provisions a bucket + key via the garage-operator
+  # (https://github.com/rajsinghtech/garage-operator). The operator generates
+  # the credentials Secret directly, so no init Job is needed.
   garage:
     # -- GarageCluster resource name to reference
     clusterRef: garage

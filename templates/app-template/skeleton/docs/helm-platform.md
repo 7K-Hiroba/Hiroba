@@ -65,12 +65,7 @@ Connection credentials are published to a `Secret` named `${{ values.name }}-app
 Provisions an S3-compatible bucket. Two providers are supported:
 
 - **`crossplane`** — provisions a real bucket on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
-- **`garage`** — creates a bucket and S3 credentials via the [garage-operator](https://github.com/rajsinghtech/garage-operator) CRDs
-
-### Prerequisites
-
-- **Crossplane**: Crossplane with the AWS S3 provider installed
-- **Garage**: [garage-operator](https://github.com/rajsinghtech/garage-operator) installed and a `GarageCluster` resource present
+- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment via the [garage-operator](https://github.com/rajsinghtech/garage-operator)
 
 ### Configuration
 
@@ -79,7 +74,7 @@ s3:
   enabled: true
   provider: crossplane   # or "garage"
   bucketName: assets
-  acl: private
+  acl: private           # crossplane only
   crossplane:
     region: us-east-1
     providerConfigRef: aws-provider
