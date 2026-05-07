@@ -37,7 +37,7 @@ The **Platform Chart** is where Hiroba focuses its effort — it's always custom
 
 The platform chart is Hiroba's core contribution — it's **always custom** and always present. It wires third-party operator-managed infrastructure alongside your app:
 - **CNPG** — PostgreSQL clusters (CloudNativePG operator)
-- **S3 Buckets** — Object storage (Crossplane AWS provider or Garage)
+- **S3 Buckets** — Object storage (Crossplane AWS provider or Garage via garage-operator)
 - **Keycloak Realms** — Identity and access management (Crossplane Keycloak provider)
 
 This is what you'd otherwise have to figure out yourself: how to connect your app to a managed database, provision storage, and set up auth — all declared in Helm values.

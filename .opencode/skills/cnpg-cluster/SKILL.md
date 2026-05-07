@@ -65,25 +65,57 @@ resources:
     memory: 256Mi
 ```
 
-## Backup via Barman — mandatory when `postgres.backup.enabled: true`
+## Backup via barman-cloud plugin — mandatory when `postgres.backup.enabled: true`
 
-When backup is enabled (`{{- if .Values.postgres.backup.enabled }}`), the cluster **must** include a `spec.backup.barmanObjectStore` block. Backup without a barman store is invalid.
+The platform chart uses the **barman-cloud plugin** strategy (`barman-cloud.cloudnative-pg.io`) rather than the legacy inline `barmanObjectStore` block. This requires the barman-cloud plugin to be installed in the cluster alongside the CNPG operator.
 
-### Required backup shape
+When backup is enabled, **three resources** are required:
+
+1. `spec.plugins` on the Cluster referencing the plugin and ObjectStore name
+2. A `barmancloud.cnpg.io/v1` `ObjectStore` resource with the Garage S3 config
+3. A `postgresql.cnpg.io/v1` `ScheduledBackup` resource for scheduled base backups
+
+### Cluster backup shape
 
 ```yaml
+plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    parameters:
+      barmanObjectName: {{ include "platform.name" . }}-pg-barman
+
 backup:
-  barmanObjectStore:
-    destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
-    s3Credentials:
-      accessKeyId:
-        name: {{ include "platform.name" . }}-pg-backup-creds
-        key: ACCESS_KEY_ID
-      secretAccessKey:
-        name: {{ include "platform.name" . }}-pg-backup-creds
-        key: ACCESS_SECRET_KEY
   retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
 ```
+
+### ObjectStore resource
+
+Emitted in the same file (`cnpg-cluster.yaml`) as a second YAML document, gated by `{{- if .Values.postgres.backup.enabled }}`:
+
+```yaml
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "platform.name" . }}-pg-barman
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  configuration:
+    destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
+    endpointURL: {{ .Values.postgres.backup.garage.endpoint | quote }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.garage.credentialsSecret.accessKeyKey }}
+      secretAccessKey:
+        name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.garage.credentialsSecret.secretKeyKey }}
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+```
+
+The `wal` block enables **continuous WAL archiving**, which allows point-in-time recovery (PITR). It must always be present when backup is enabled.
 
 ### `retentionPolicy`
 
@@ -94,23 +126,36 @@ backup:
 ### `destinationPath`
 
 - Must be an `s3://` URI.
-- The convention is `s3://<platform.name>-pg-backups/`.
+- Convention: `s3://<platform.name>-pg-backups/`.
 - Do not use a local path or a generic bucket name that could collide across apps.
 
-### Secret reference convention
+### `endpointURL`
 
-The credential Secret is named `{{ include "platform.name" . }}-pg-backup-creds` and must contain:
+Must be sourced from `values.postgres.backup.garage.endpoint`. Defaults to the cluster-internal Garage address:
 
-| Key | Value |
-| --- | --- |
-| `ACCESS_KEY_ID` | S3 access key |
-| `ACCESS_SECRET_KEY` | S3 secret key |
+```
+http://garage.garage.svc.cluster.local:3900
+```
 
-This Secret is **not** created by the platform chart. It must be provisioned externally (e.g., via an ExternalSecret) and exist in the same namespace before the Cluster is created.
+### Credential secret convention
+
+Credentials are sourced from a single pre-existing Kubernetes Secret — typically the Secret produced by a GarageKey resource — referenced via:
+
+```yaml
+postgres:
+  backup:
+    garage:
+      credentialsSecret:
+        name: <app>-pg-garage-key   # Set to the actual Secret name
+        accessKeyKey: accessKey
+        secretKeyKey: secretKey
+```
+
+The platform chart does **not** create this Secret. It must be provisioned externally (e.g., via a GarageKey + ExternalSecret) and exist in the namespace before the Cluster is created.
 
 ## ScheduledBackup resource
 
-When backup is enabled, a `postgresql.cnpg.io/v1` `ScheduledBackup` resource should accompany the Cluster:
+When backup is enabled, a `postgresql.cnpg.io/v1` `ScheduledBackup` resource must exist in `templates/database/cnpg-scheduled-backup.yaml`:
 
 ```yaml
 apiVersion: postgresql.cnpg.io/v1
@@ -124,9 +169,15 @@ spec:
   backupOwnerReference: self
   cluster:
     name: {{ include "platform.name" . }}-pg
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      barmanObjectName: {{ include "platform.name" . }}-pg-barman
 ```
 
-Gate it with the same `{{- if .Values.postgres.backup.enabled }}` condition.
+Gate with `{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled }}`.
+
+The `pluginConfiguration` block is mandatory — without it the ScheduledBackup does not know which ObjectStore to target.
 
 ## Labels
 
@@ -139,15 +190,64 @@ labels:
 
 ## CRD capability check
 
-`templates/checks.yaml` already guards `postgres.enabled` against the `postgresql.cnpg.io/v1` API group. Do not add a duplicate check — verify the existing one covers any new CNPG resource kinds you introduce.
+`templates/checks.yaml` already guards `postgres.enabled` against the `postgresql.cnpg.io/v1` API group. Do not add a duplicate check — verify the existing one covers any new CNPG resource kinds you introduce. The `barmancloud.cnpg.io/v1` ObjectStore does not require a separate CRD guard; it ships with the barman-cloud plugin.
+
+## `values.yaml` shape
+
+```yaml
+postgres:
+  backup:
+    enabled: false
+    schedule: "0 2 * * *"
+    retentionPolicy: "7d"
+    garage:
+      endpoint: "http://garage.garage.svc.cluster.local:3900"
+      credentialsSecret:
+        name: ""
+        accessKeyKey: accessKey
+        secretKeyKey: secretKey
+```
+
+## `values.schema.json` shape
+
+```json
+"backup": {
+  "type": "object",
+  "properties": {
+    "enabled": { "type": "boolean" },
+    "schedule": { "type": "string" },
+    "retentionPolicy": { "type": "string" },
+    "garage": {
+      "type": "object",
+      "properties": {
+        "endpoint": { "type": "string" },
+        "credentialsSecret": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "accessKeyKey": { "type": "string" },
+            "secretKeyKey": { "type": "string" }
+          },
+          "required": ["name", "accessKeyKey", "secretKeyKey"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["endpoint", "credentialsSecret"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+```
 
 ## Checklist before committing
 
 - [ ] `instances`, `imageName`, `bootstrap.initdb`, `storage.size`, `resources` all present
 - [ ] Image tag is pinned (not `:latest`)
-- [ ] If `backup.enabled`, `barmanObjectStore` block is present with `destinationPath` and `s3Credentials`
-- [ ] If `backup.enabled`, a `ScheduledBackup` resource exists with `schedule` from values
+- [ ] If `backup.enabled`: `spec.plugins` references `barman-cloud.cloudnative-pg.io` on the Cluster
+- [ ] If `backup.enabled`: `ObjectStore` resource present in `cnpg-cluster.yaml` with `endpointURL`, `s3Credentials`, `wal.compression`, `data.compression`
+- [ ] If `backup.enabled`: `ScheduledBackup` resource present in `cnpg-scheduled-backup.yaml` with `pluginConfiguration`
 - [ ] `retentionPolicy` is non-empty
-- [ ] Credential secret name follows `<platform.name>-pg-backup-creds` convention
+- [ ] `credentialsSecret.name` points to a pre-provisioned Secret (not created by the chart)
 - [ ] `values.schema.json` updated if any new `postgres.*` values added
-- [ ] helm-unittest test covers backup-enabled and backup-disabled cases
+- [ ] helm-unittest tests cover: backup-disabled (1 doc), backup-enabled (2 docs), plugin ref, ObjectStore endpoint/credentials/compression, ScheduledBackup schedule and pluginConfiguration

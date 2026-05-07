@@ -1,0 +1,187 @@
+suite: S3 Garage
+templates:
+  - templates/storage/s3-garage.yaml
+capabilities:
+  apiVersions:
+    - garage.rajsingh.info/v1beta1
+tests:
+  - it: is not created when s3 is disabled
+    set:
+      s3.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when provider is crossplane
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders GarageBucket and GarageKey when enabled with garage provider
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: GarageBucket
+        documentIndex: 0
+      - isKind:
+          of: GarageKey
+        documentIndex: 1
+
+  - it: GarageBucket uses clusterRef from values
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.bucketName: assets
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-assets
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.name
+          value: my-cluster
+        documentIndex: 0
+
+  - it: GarageKey references cluster and bucket
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.bucketName: assets
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-s3-key
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.name
+          value: my-cluster
+        documentIndex: 1
+      - equal:
+          path: spec.secretTemplate.name
+          value: RELEASE-NAME-s3-key
+        documentIndex: 1
+      - equal:
+          path: spec.bucketPermissions[0].bucketRef.name
+          value: RELEASE-NAME-assets
+        documentIndex: 1
+      - equal:
+          path: spec.bucketPermissions[0].read
+          value: true
+        documentIndex: 1
+      - equal:
+          path: spec.bucketPermissions[0].write
+          value: true
+        documentIndex: 1
+
+  - it: GarageKey includes bucket name in additionalData
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.bucketName: assets
+    asserts:
+      - equal:
+          path: spec.secretTemplate.additionalData.S3_BUCKET
+          value: "RELEASE-NAME-assets"
+        documentIndex: 1
+
+  - it: GarageBucket includes quotas when configured
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage:
+        clusterRef: my-cluster
+        quotas:
+          maxSize: 10Gi
+          maxObjects: 100000
+    asserts:
+      - equal:
+          path: spec.quotas.maxSize
+          value: 10Gi
+        documentIndex: 0
+      - equal:
+          path: spec.quotas.maxObjects
+          value: 100000
+        documentIndex: 0
+
+  - it: GarageBucket includes website config when configured
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage:
+        clusterRef: my-cluster
+        website:
+          enabled: true
+          indexDocument: index.html
+          errorDocument: error.html
+    asserts:
+      - equal:
+          path: spec.website.enabled
+          value: true
+        documentIndex: 0
+      - equal:
+          path: spec.website.indexDocument
+          value: index.html
+        documentIndex: 0
+
+  - it: GarageBucket includes lifecycle rules when configured
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage:
+        clusterRef: my-cluster
+        lifecycle:
+          rules:
+            - id: expire-logs
+              status: Enabled
+              filter:
+                prefix: "logs/"
+              expirationDays: 30
+    asserts:
+      - equal:
+          path: spec.lifecycle.rules[0].id
+          value: expire-logs
+        documentIndex: 0
+      - equal:
+          path: spec.lifecycle.rules[0].expirationDays
+          value: 30
+        documentIndex: 0
+
+  - it: GarageBucket omits quotas website and lifecycle when not set
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+    asserts:
+      - isNull:
+          path: spec.quotas
+        documentIndex: 0
+      - isNull:
+          path: spec.website
+        documentIndex: 0
+      - isNull:
+          path: spec.lifecycle
+        documentIndex: 0
+
+  - it: applies standard labels
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+    asserts:
+      - isNotNull:
+          path: metadata.labels
+        documentIndex: 0
+      - isNotNull:
+          path: metadata.labels
+        documentIndex: 1

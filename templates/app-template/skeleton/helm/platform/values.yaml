@@ -47,6 +47,12 @@ postgres:
     enabled: false
     schedule: "0 2 * * *"
     retentionPolicy: "7d"
+    # -- Garage S3 settings for WAL archiving and base backups (barman-cloud plugin)
+    garage:
+      # -- GarageCluster resource name to reference
+      clusterRef: garage
+      # -- Garage S3 API endpoint (must match the GarageCluster's service)
+      endpoint: "http://garage.garage.svc.cluster.local:3900"
 
 # -- S3-compatible object storage
 s3:
@@ -71,28 +77,25 @@ s3:
   # (https://github.com/rajsinghtech/garage-operator). The operator generates
   # the credentials Secret directly, so no init Job is needed.
   garage:
-    # -- Reference to the GarageCluster the bucket belongs to
-    clusterRef:
-      name: garage
-      # -- Namespace of the GarageCluster (defaults to release namespace)
-      namespace: ""
-    # -- Name of the generated credentials Secret. Empty means
-    # "<appName>-s3-credentials". The Secret carries AWS_ACCESS_KEY_ID,
-    # AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_ENDPOINT, and S3_BUCKET.
-    secretName: ""
-    # -- Permissions granted to the generated key on this bucket
-    permissions:
-      read: true
-      write: true
-      owner: false
+    # -- GarageCluster resource name to reference
+    clusterRef: garage
     # -- Optional bucket quotas
-    quotas:
-      maxSize: ""        # e.g. "10Gi"
-      maxObjects: 0      # 0 = unlimited
-    # -- Optional lifecycle rule (object expiration)
-    lifecycle:
-      enabled: false
-      expirationDays: 90
+    quotas: {}
+    #  maxSize: 10Gi
+    #  maxObjects: 100000
+    # -- Optional website hosting configuration
+    website: {}
+    #  enabled: true
+    #  indexDocument: index.html
+    #  errorDocument: error.html
+    # -- Optional bucket lifecycle rules
+    lifecycle: {}
+    #  rules:
+    #    - id: expire-logs
+    #      status: Enabled
+    #      filter:
+    #        prefix: "logs/"
+    #      expirationDays: 30
 
 # -- External Secrets (external-secrets.io)
 externalSecrets:

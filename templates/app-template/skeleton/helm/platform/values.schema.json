@@ -54,7 +54,16 @@
           "properties": {
             "enabled": { "type": "boolean" },
             "schedule": { "type": "string" },
-            "retentionPolicy": { "type": "string" }
+            "retentionPolicy": { "type": "string" },
+            "garage": {
+              "type": "object",
+              "properties": {
+                "clusterRef": { "type": "string" },
+                "endpoint": { "type": "string" }
+              },
+              "required": ["clusterRef", "endpoint"],
+              "additionalProperties": false
+            }
           },
           "additionalProperties": false
         }
@@ -87,42 +96,34 @@
         "garage": {
           "type": "object",
           "properties": {
-            "clusterRef": {
+            "clusterRef": { "type": "string" },
+            "quotas": {
               "type": "object",
               "required": ["name"],
               "properties": {
-                "name": { "type": "string", "minLength": 1 },
-                "namespace": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
-            "secretName": { "type": "string" },
-            "permissions": {
-              "type": "object",
-              "properties": {
-                "read": { "type": "boolean" },
-                "write": { "type": "boolean" },
-                "owner": { "type": "boolean" }
-              },
-              "additionalProperties": false
-            },
-            "quotas": {
-              "type": "object",
-              "properties": {
                 "maxSize": { "type": "string" },
-                "maxObjects": { "type": "integer", "minimum": 0 }
+                "maxObjects": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "website": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "indexDocument": { "type": "string" },
+                "errorDocument": { "type": "string" }
               },
               "additionalProperties": false
             },
             "lifecycle": {
               "type": "object",
               "properties": {
-                "enabled": { "type": "boolean" },
-                "expirationDays": { "type": "integer", "minimum": 1 }
+                "rules": { "type": "array" }
               },
               "additionalProperties": false
             }
           },
+          "required": ["clusterRef"],
           "additionalProperties": false
         }
       },

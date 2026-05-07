@@ -87,7 +87,7 @@ Swap the provider by changing `s3.provider` — the provider-specific blocks (`c
 
 ### Garage provider
 
-Requires the [garage-operator](https://github.com/rajsinghtech/garage-operator) and a `GarageCluster` already running in the cluster. The chart emits a `GarageBucket` and a `GarageKey`; the operator provisions the bucket, mints credentials, and writes them to a Kubernetes `Secret` — no init Job is needed.
+The garage-operator creates a `GarageBucket` and `GarageKey` for your app. The `GarageKey` auto-generates a Secret containing S3 credentials and connection info. Reference this Secret from the base chart's `envFrom`:
 
 ```yaml
 s3:
@@ -95,29 +95,28 @@ s3:
   provider: garage
   bucketName: assets
   garage:
-    clusterRef:
-      name: garage          # name of the GarageCluster CR
-      namespace: ""         # defaults to the release namespace
-    secretName: ""          # defaults to "<appName>-s3-credentials"
-    permissions:
-      read: true
-      write: true
-      owner: false
-    quotas:
-      maxSize: "10Gi"       # omit for unlimited
-      maxObjects: 0         # 0 = unlimited
-    lifecycle:
-      enabled: false
-      expirationDays: 90
+    clusterRef: garage     # name of the GarageCluster resource
 ```
 
-The generated Secret carries `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_ENDPOINT`, and `S3_BUCKET`. Pull it into the base chart via `envFrom`:
+Optional features:
 
 ```yaml
-# helm/base values override
-envFrom:
-  - secretRef:
-      name: ${{ values.name }}-s3-credentials
+s3:
+  garage:
+    clusterRef: garage
+    quotas:
+      maxSize: 10Gi
+      maxObjects: 100000
+    website:
+      enabled: true
+      indexDocument: index.html
+    lifecycle:
+      rules:
+        - id: expire-logs
+          status: Enabled
+          filter:
+            prefix: "logs/"
+          expirationDays: 30
 ```
 
 ## ExternalSecrets

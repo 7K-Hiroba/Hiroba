@@ -55,6 +55,16 @@ spec:
       baseInstance: ""
     postgres:
       enabled: ${{ values.enablePostgres }}
+      # instances: 1
+      # storage:
+      #   size: 10Gi
+      # backup:
+      #   enabled: true
+      #   schedule: "0 2 * * *"
+      #   retentionPolicy: "7d"
+      #   garage:
+      #     clusterRef: garage
+      #     endpoint: "http://garage.garage.svc.cluster.local:3900"
     s3:
       enabled: ${{ values.enableS3 }}
     observability:

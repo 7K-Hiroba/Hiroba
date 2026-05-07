@@ -1,70 +1,43 @@
 {{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
-{{- $bucketName := printf "%s-%s" (include "platform.name" .) .Values.s3.bucketName -}}
-{{- $secretName := default (printf "%s-s3-credentials" (include "platform.name" .)) .Values.s3.garage.secretName -}}
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
 metadata:
-  name: {{ $bucketName }}
+  name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
     {{- include "platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .Values.s3.garage.clusterRef.name | quote }}
-    {{- with .Values.s3.garage.clusterRef.namespace }}
-    namespace: {{ . | quote }}
-    {{- end }}
+    name: {{ .Values.s3.garage.clusterRef }}
   {{- with .Values.s3.garage.quotas }}
-  {{- if or .maxSize .maxObjects }}
   quotas:
-    {{- if .maxSize }}
-    maxSize: {{ .maxSize | quote }}
-    {{- end }}
-    {{- if .maxObjects }}
-    maxObjects: {{ .maxObjects }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- with .Values.s3.garage.website }}
+  website:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- if .Values.s3.garage.lifecycle.enabled }}
+  {{- with .Values.s3.garage.lifecycle }}
   lifecycle:
-    rules:
-      - id: default-expiration
-        status: Enabled
-        expirationDays: {{ .Values.s3.garage.lifecycle.expirationDays }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  keyPermissions:
-    - keyRef:
-        name: {{ $bucketName }}
-      read: {{ .Values.s3.garage.permissions.read }}
-      write: {{ .Values.s3.garage.permissions.write }}
-      owner: {{ .Values.s3.garage.permissions.owner }}
 ---
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageKey
 metadata:
-  name: {{ $bucketName }}
+  name: {{ include "platform.name" . }}-s3-key
   labels:
     {{- include "platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .Values.s3.garage.clusterRef.name | quote }}
-    {{- with .Values.s3.garage.clusterRef.namespace }}
-    namespace: {{ . | quote }}
-    {{- end }}
-  name: {{ include "platform.name" . | quote }}
+    name: {{ .Values.s3.garage.clusterRef }}
+  name: "{{ include "platform.name" . }} S3 Key"
   secretTemplate:
-    name: {{ $secretName }}
-    accessKeyIdKey: AWS_ACCESS_KEY_ID
-    secretAccessKeyKey: AWS_SECRET_ACCESS_KEY
-    endpointKey: S3_ENDPOINT
-    regionKey: AWS_REGION
-    includeEndpoint: true
-    includeRegion: true
+    name: {{ include "platform.name" . }}-s3-key
     additionalData:
-      S3_BUCKET: {{ $bucketName | quote }}
+      S3_BUCKET: "{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}"
   bucketPermissions:
     - bucketRef:
-        name: {{ $bucketName }}
-      read: {{ .Values.s3.garage.permissions.read }}
-      write: {{ .Values.s3.garage.permissions.write }}
-      owner: {{ .Values.s3.garage.permissions.owner }}
+        name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+      read: true
+      write: true
 {{- end }}
