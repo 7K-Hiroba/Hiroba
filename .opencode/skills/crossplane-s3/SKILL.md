@@ -19,7 +19,7 @@ S3 resources use a `provider` enum with two supported values:
 | `s3.provider` | Template file | Backend |
 | --- | --- | --- |
 | `crossplane` | `storage/s3-crossplane.yaml` | AWS S3 via Crossplane AWS provider |
-| `garage` | `storage/s3-garage.yaml` | Self-hosted Garage via native API |
+| `garage` | `storage/s3-garage.yaml` | Self-hosted Garage via garage-operator CRDs |
 
 Gate each template:
 
@@ -75,39 +75,77 @@ Must reference a named `ProviderConfig` object — never use the implicit defaul
 
 ## Garage (`provider: garage`)
 
-Garage is a self-hosted S3-compatible object store. Resources are created via Garage's native Kubernetes operator CRDs (not Crossplane).
+Garage is a self-hosted S3-compatible object store managed by the [garage-operator](https://github.com/rajsinghtech/garage-operator). Resources are created via the operator's CRDs (`GarageBucket`, `GarageKey`) — not Crossplane.
 
-### Bucket resource
+### CRD guard
+
+`checks.yaml` must guard `s3.enabled + provider=garage` against `garage.rajsingh.info/v1beta1`.
+
+### Bucket resource (GarageBucket)
 
 ```yaml
-apiVersion: garage.deuxfleurs.fr/v1
+apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
 metadata:
   name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
     {{- include "platform.labels" . | nindent 4 }}
 spec:
-  endpoint: {{ .Values.s3.garage.endpoint }}
-  replicationFactor: {{ .Values.s3.garage.replicationFactor }}
-  accessKeySecret:
-    name: {{ .Values.s3.garage.accessKeySecret.name }}
-    key: {{ .Values.s3.garage.accessKeySecret.key }}
-  secretKeySecret:
-    name: {{ .Values.s3.garage.secretKeySecret.name }}
-    key: {{ .Values.s3.garage.secretKeySecret.key }}
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef }}
+  {{- with .Values.s3.garage.quotas }}
+  quotas:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.s3.garage.website }}
+  website:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.s3.garage.lifecycle }}
+  lifecycle:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 ```
 
-### `replicationFactor`
+### Key resource (GarageKey)
 
-Must be `1`, `2`, or `3`. Production clusters should use `3` for data durability. The schema should enforce `minimum: 1`, `maximum: 3`.
+The GarageKey creates S3 credentials and auto-generates a Secret containing `access-key-id`, `secret-access-key`, `endpoint`, `host`, `scheme`, `region`, and custom `additionalData` (e.g. `S3_BUCKET`). The application references this Secret via `envFrom`.
+
+```yaml
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageKey
+metadata:
+  name: {{ include "platform.name" . }}-s3-key
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef }}
+  name: "{{ include "platform.name" . }} S3 Key"
+  secretTemplate:
+    name: {{ include "platform.name" . }}-s3-key
+    additionalData:
+      S3_BUCKET: "{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}"
+  bucketPermissions:
+    - bucketRef:
+        name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+      read: true
+      write: true
+```
+
+### `clusterRef`
+
+Required. References an existing `GarageCluster` by name in the same namespace. The `GarageCluster` manages the actual Garage deployment (storage, networking, replication). The platform chart does not create `GarageCluster` resources.
 
 ### Credential secrets
 
-The access key and secret key are referenced from existing Kubernetes Secrets. These Secrets must be provisioned externally (e.g., via ExternalSecret) before the GarageBucket resource is applied. The platform chart does not create credential secrets.
+The operator auto-generates a Secret from the `GarageKey` spec. No pre-provisioned credential secrets are needed — unlike the previous aws-cli Job pattern. The generated Secret is named via `secretTemplate.name` and contains all S3 connection info.
 
-### Endpoint format
+### Optional features
 
-Must be a full URL including scheme and port: `http://garage.garage.svc.cluster.local:3900`. Source from values — never hardcode.
+- **Quotas** (`s3.garage.quotas`) — `maxSize` and `maxObjects`
+- **Website hosting** (`s3.garage.website`) — `enabled`, `indexDocument`, `errorDocument`
+- **Lifecycle rules** (`s3.garage.lifecycle`) — object expiration, multipart upload cleanup
 
 ## Adding a new S3 provider
 
@@ -143,7 +181,8 @@ Must be a full URL including scheme and port: `http://garage.garage.svc.cluster.
 - [ ] Bucket name includes `platform.name` prefix
 - [ ] `acl` sourced from values, not hardcoded
 - [ ] Crossplane: `providerConfigRef` sourced from values
-- [ ] Garage: credential secrets referenced from values, not created by chart
+- [ ] Garage: `clusterRef` sourced from values, required in schema
+- [ ] Garage: GarageKey includes `secretTemplate.additionalData.S3_BUCKET`
 - [ ] `values.schema.json` has provider in `enum`
 - [ ] `checks.yaml` has CRD guard for providers that use CRDs
 - [ ] Unit tests cover both provider variants

@@ -65,7 +65,12 @@ Connection credentials are published to a `Secret` named `${{ values.name }}-app
 Provisions an S3-compatible bucket. Two providers are supported:
 
 - **`crossplane`** — provisions a real bucket on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
-- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment
+- **`garage`** — creates a bucket and S3 credentials via the [garage-operator](https://github.com/rajsinghtech/garage-operator) CRDs
+
+### Prerequisites
+
+- **Crossplane**: Crossplane with the AWS S3 provider installed
+- **Garage**: [garage-operator](https://github.com/rajsinghtech/garage-operator) installed and a `GarageCluster` resource present
 
 ### Configuration
 
@@ -84,6 +89,40 @@ s3:
 ```
 
 Swap the provider by changing `s3.provider` — the provider-specific blocks (`crossplane`, `garage`) configure the chosen backend.
+
+### Garage provider
+
+The garage-operator creates a `GarageBucket` and `GarageKey` for your app. The `GarageKey` auto-generates a Secret containing S3 credentials and connection info. Reference this Secret from the base chart's `envFrom`:
+
+```yaml
+s3:
+  enabled: true
+  provider: garage
+  bucketName: assets
+  garage:
+    clusterRef: garage     # name of the GarageCluster resource
+```
+
+Optional features:
+
+```yaml
+s3:
+  garage:
+    clusterRef: garage
+    quotas:
+      maxSize: 10Gi
+      maxObjects: 100000
+    website:
+      enabled: true
+      indexDocument: index.html
+    lifecycle:
+      rules:
+        - id: expire-logs
+          status: Enabled
+          filter:
+            prefix: "logs/"
+          expirationDays: 30
+```
 
 ## ExternalSecrets
 

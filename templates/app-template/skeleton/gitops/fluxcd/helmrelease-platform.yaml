@@ -63,11 +63,8 @@ spec:
       #   schedule: "0 2 * * *"
       #   retentionPolicy: "7d"
       #   garage:
+      #     clusterRef: garage
       #     endpoint: "http://garage.garage.svc.cluster.local:3900"
-      #     credentialsSecret:
-      #       name: <app>-pg-garage-key   # Pre-provisioned Secret (e.g. from GarageKey)
-      #       accessKeyKey: accessKey
-      #       secretKeyKey: secretKey
     s3:
       enabled: ${{ values.enableS3 }}
     observability:

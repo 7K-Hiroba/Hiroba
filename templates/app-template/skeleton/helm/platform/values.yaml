@@ -49,13 +49,10 @@ postgres:
     retentionPolicy: "7d"
     # -- Garage S3 settings for WAL archiving and base backups (barman-cloud plugin)
     garage:
-      # -- Garage API endpoint
+      # -- GarageCluster resource name to reference
+      clusterRef: garage
+      # -- Garage S3 API endpoint (must match the GarageCluster's service)
       endpoint: "http://garage.garage.svc.cluster.local:3900"
-      # -- Pre-existing Secret containing Garage credentials (e.g. from a GarageKey resource)
-      credentialsSecret:
-        name: ""
-        accessKeyKey: accessKey
-        secretKeyKey: secretKey
 
 # -- S3-compatible object storage
 s3:
@@ -77,18 +74,25 @@ s3:
 
   # -- Garage-specific settings (provider: garage)
   garage:
-    # -- Garage API endpoint
-    endpoint: "http://garage.garage.svc.cluster.local:3900"
-    # -- Garage access key Secret reference
-    accessKeySecret:
-      name: ""
-      key: accessKey
-    # -- Garage secret key Secret reference
-    secretKeySecret:
-      name: ""
-      key: secretKey
-    # -- Number of data/parity replicas in Garage
-    replicationFactor: 3
+    # -- GarageCluster resource name to reference
+    clusterRef: garage
+    # -- Optional bucket quotas
+    quotas: {}
+    #  maxSize: 10Gi
+    #  maxObjects: 100000
+    # -- Optional website hosting configuration
+    website: {}
+    #  enabled: true
+    #  indexDocument: index.html
+    #  errorDocument: error.html
+    # -- Optional bucket lifecycle rules
+    lifecycle: {}
+    #  rules:
+    #    - id: expire-logs
+    #      status: Enabled
+    #      filter:
+    #        prefix: "logs/"
+    #      expirationDays: 30
 
 # -- External Secrets (external-secrets.io)
 externalSecrets:

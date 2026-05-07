@@ -1,6 +1,6 @@
 ---
 name: garage-s3
-description: Standards for self-hosted Garage S3 object storage in the platform chart using the aws-cli Job hook pattern
+description: Standards for self-hosted Garage S3 object storage in the platform chart using the garage-operator CRDs
 license: MIT
 compatibility: opencode
 metadata:
@@ -10,143 +10,190 @@ metadata:
 
 ## What I cover
 
-The Garage-specific implementation of S3 storage in the platform chart. Garage is a self-hosted, lightweight S3-compatible object store. Unlike Crossplane, Garage has no Kubernetes operator — bucket creation is handled via a Helm post-install `Job` using the AWS CLI pointed at the Garage API endpoint.
+The Garage-specific implementation of S3 storage in the platform chart using the [garage-operator](https://github.com/rajsinghtech/garage-operator) CRDs (`GarageBucket`, `GarageKey`). The operator manages bucket creation, S3 credential provisioning, and secret generation — replacing the previous aws-cli Job hook pattern.
 
 For general S3 provider switching rules see the `crossplane-s3` skill. This skill covers only Garage-specific patterns.
 
-## How Garage bucket creation works
+## Operator installation
 
-Garage does not have CRDs. The platform chart creates buckets by running a one-shot `batch/v1` Job as a Helm post-install hook. The Job uses the `amazon/aws-cli` image to call `aws s3 mb` against the Garage endpoint.
+The garage-operator must be installed in the cluster before using `s3.provider: garage`. Install via Helm:
 
-This means:
+```bash
+helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator \
+  --namespace garage-operator-system \
+  --create-namespace
+```
 
-- There is **no CRD guard** needed in `checks.yaml` for Garage (no operator required).
-- Bucket creation is **idempotent** — the `|| true` in the command means re-running the Job on upgrade is safe.
-- The Job is **self-deleting** on success (`hook-delete-policy: hook-succeeded`).
-- Bucket deletion on `helm uninstall` is **not automatic** — buckets are retained to prevent accidental data loss.
+The operator registers the following CRDs under `garage.rajsingh.info/v1beta1`:
+- `GarageCluster` — deploys and manages a Garage storage or gateway cluster
+- `GarageBucket` — creates buckets with quotas, website hosting, and lifecycle rules
+- `GarageKey` — provisions S3 access keys with per-bucket permissions and generates a Secret
+- `GarageNode` — fine-grained node layout control
+- `GarageAdminToken` — manages admin API tokens
+- `GarageReferenceGrant` — grants cross-namespace access
+
+The platform chart only creates `GarageBucket` and `GarageKey` resources — it assumes a `GarageCluster` already exists.
+
+## CRD guard
+
+`checks.yaml` must guard `s3.enabled + provider=garage` against `garage.rajsingh.info/v1beta1`. It must also guard `postgres.backup.enabled` against the same CRD (the CNPG backup template creates GarageBucket/GarageKey for backup storage).
+
+```yaml
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") (not (.Capabilities.APIVersions.Has "garage.rajsingh.info/v1beta1")) }}
+  {{- fail "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed..." }}
+{{- end }}
+```
 
 ## Resource shape
 
 The Garage provider produces two resources gated by `{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}`:
 
-### 1. ConfigMap — connection info for the application
+### 1. GarageBucket — declarative bucket creation
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageBucket
 metadata:
-  name: {{ include "platform.name" . }}-s3-config
+  name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
     {{- include "platform.labels" . | nindent 4 }}
-data:
-  S3_ENDPOINT: {{ .Values.s3.garage.endpoint | quote }}
-  S3_BUCKET: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
-  S3_REGION: "garage"
-```
-
-The region value is always the string `"garage"` — this is the conventional pseudo-region used with Garage's S3-compatible API. Do not make it configurable.
-
-### 2. Job — bucket provisioner
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {{ include "platform.name" . }}-s3-init
-  labels:
-    {{- include "platform.labels" . | nindent 4 }}
-  annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-weight: "0"
-    helm.sh/hook-delete-policy: hook-succeeded
 spec:
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-        - name: create-bucket
-          image: amazon/aws-cli:2.15.0
-          env:
-            - name: AWS_ENDPOINT_URL
-              value: {{ .Values.s3.garage.endpoint | quote }}
-            - name: AWS_DEFAULT_REGION
-              value: "garage"
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.s3.garage.accessKeySecret.name }}
-                  key: {{ .Values.s3.garage.accessKeySecret.key }}
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.s3.garage.secretKeySecret.name }}
-                  key: {{ .Values.s3.garage.secretKeySecret.key }}
-          command:
-            - sh
-            - -c
-            - |
-              aws s3 mb "s3://{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}" \
-                --endpoint-url "$AWS_ENDPOINT_URL" || true
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef }}
+  {{- with .Values.s3.garage.quotas }}
+  quotas:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.s3.garage.website }}
+  website:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.s3.garage.lifecycle }}
+  lifecycle:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 ```
 
-## AWS CLI image version
+The operator handles bucket creation, idempotency, and deletion lifecycle. No Job hook is needed.
 
-The Job uses `amazon/aws-cli:2.15.0`. This is tracked by Renovate — do not pin to a digest manually, let Renovate open the update PR. Never use `:latest`.
+### 2. GarageKey — S3 credentials with auto-generated Secret
 
-## Hook annotations — all three are required
+```yaml
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageKey
+metadata:
+  name: {{ include "platform.name" . }}-s3-key
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef }}
+  name: "{{ include "platform.name" . }} S3 Key"
+  secretTemplate:
+    name: {{ include "platform.name" . }}-s3-key
+    additionalData:
+      S3_BUCKET: "{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}"
+  bucketPermissions:
+    - bucketRef:
+        name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+      read: true
+      write: true
+```
 
-| Annotation | Value | Purpose |
-| --- | --- | --- |
-| `helm.sh/hook` | `post-install` | Runs after all chart resources are created |
-| `helm.sh/hook-weight` | `"0"` | Execution order within the hook phase |
-| `helm.sh/hook-delete-policy` | `hook-succeeded` | Deletes the Job pod after successful completion |
+The operator generates a Secret containing:
+- `access-key-id` — S3 access key
+- `secret-access-key` — S3 secret key
+- `endpoint` — S3 API endpoint URL (derived from the GarageCluster)
+- `host` — host without scheme
+- `scheme` — http or https
+- `region` — region from the GarageCluster
+- `S3_BUCKET` — added via `additionalData` from Helm rendering
 
-Do not use `hook-failed` in the delete policy — a failed Job must remain visible for debugging.
+The application references this Secret via `envFrom` in the base chart.
 
-## Credential secrets
+## clusterRef
 
-The Job reads AWS credentials from two Kubernetes Secrets referenced by name and key in values:
+The `clusterRef` field references an existing `GarageCluster` by name. This is the single required value for the Garage provider:
 
 ```yaml
 s3:
   garage:
-    accessKeySecret:
-      name: ""      # Secret name — must be pre-provisioned
-      key: accessKey
-    secretKeySecret:
-      name: ""      # Secret name — must be pre-provisioned
-      key: secretKey
+    clusterRef: garage
 ```
 
-These Secrets must exist in the same namespace before `helm install` is run. They are typically provisioned via an ExternalSecret. The platform chart does not create them.
-
-If the Secret names are empty, the Job will fail. Consider adding a `required` check in the template when both `s3.enabled` and `provider=garage`:
-
-```yaml
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
-{{- if not .Values.s3.garage.accessKeySecret.name }}
-{{- fail "s3.garage.accessKeySecret.name is required when s3.provider is garage" }}
-{{- end }}
-{{- end }}
-```
-
-## Endpoint format
-
-Must be a full URL with scheme and port. The cluster-internal address for a standard Garage install:
-
-```
-http://garage.garage.svc.cluster.local:3900
-```
-
-Source always from `values.s3.garage.endpoint`. The endpoint is also exposed to the application via the ConfigMap's `S3_ENDPOINT` key.
+The `GarageCluster` is expected to exist in the same namespace. For cross-namespace access, create a `GarageReferenceGrant` in the cluster's namespace.
 
 ## Bucket naming
 
 Bucket name is always `{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}`. This matches the Crossplane convention and prevents name collisions across apps sharing a Garage instance.
 
-## `replicationFactor`
+## Optional bucket features
 
-Garage replication is configured at the cluster level, not per-bucket. The `replicationFactor` value in `values.yaml` is informational/documentation only for the current implementation — it is not passed to the `aws s3 mb` command (the AWS CLI does not support Garage-native replication settings). If the Garage admin API is used in future to set per-bucket replication, this value becomes the source of truth.
+### Quotas
+
+```yaml
+s3:
+  garage:
+    clusterRef: garage
+    quotas:
+      maxSize: 10Gi
+      maxObjects: 100000
+```
+
+### Website hosting
+
+```yaml
+s3:
+  garage:
+    clusterRef: garage
+    website:
+      enabled: true
+      indexDocument: index.html
+      errorDocument: error.html
+```
+
+### Lifecycle rules
+
+```yaml
+s3:
+  garage:
+    clusterRef: garage
+    lifecycle:
+      rules:
+        - id: expire-logs
+          status: Enabled
+          filter:
+            prefix: "logs/"
+          expirationDays: 30
+```
+
+## CNPG backup integration
+
+When `postgres.backup.enabled` is true, the CNPG template also creates `GarageBucket` and `GarageKey` resources for the backup bucket. The GarageKey generates a Secret that the CNPG `ObjectStore` references for S3 credentials.
+
+Values for CNPG backup:
+
+```yaml
+postgres:
+  backup:
+    garage:
+      clusterRef: garage
+      endpoint: "http://garage.garage.svc.cluster.local:3900"
+```
+
+The `endpoint` value is required because the CNPG `ObjectStore` needs `endpointURL` as a string (it cannot reference a Secret for this field). The endpoint must match the GarageCluster's S3 API service address.
+
+The ObjectStore references the GarageKey's generated Secret using the default key names:
+
+```yaml
+s3Credentials:
+  accessKeyId:
+    name: <app>-pg-s3-key
+    key: access-key-id
+  secretAccessKey:
+    name: <app>-pg-s3-key
+    key: secret-access-key
+```
 
 ## `values.schema.json` requirements
 
@@ -154,43 +201,62 @@ Garage replication is configured at the cluster level, not per-bucket. The `repl
 "garage": {
   "type": "object",
   "properties": {
-    "endpoint": { "type": "string" },
-    "replicationFactor": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 3
-    },
-    "accessKeySecret": {
+    "clusterRef": { "type": "string" },
+    "quotas": {
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "key": { "type": "string" }
+        "maxSize": { "type": "string" },
+        "maxObjects": { "type": "integer" }
       },
-      "required": ["name", "key"]
+      "additionalProperties": false
     },
-    "secretKeySecret": {
+    "website": {
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "key": { "type": "string" }
+        "enabled": { "type": "boolean" },
+        "indexDocument": { "type": "string" },
+        "errorDocument": { "type": "string" }
       },
-      "required": ["name", "key"]
+      "additionalProperties": false
+    },
+    "lifecycle": {
+      "type": "object",
+      "properties": {
+        "rules": { "type": "array" }
+      },
+      "additionalProperties": false
     }
   },
-  "required": ["endpoint", "accessKeySecret", "secretKeySecret"]
+  "required": ["clusterRef"],
+  "additionalProperties": false
+}
+```
+
+For CNPG backup:
+
+```json
+"garage": {
+  "type": "object",
+  "properties": {
+    "clusterRef": { "type": "string" },
+    "endpoint": { "type": "string" }
+  },
+  "required": ["clusterRef", "endpoint"],
+  "additionalProperties": false
 }
 ```
 
 ## Checklist before committing
 
-- [ ] Both ConfigMap and Job gated by `s3.enabled` AND `eq .Values.s3.provider "garage"`
-- [ ] Job has all three hook annotations (`post-install`, weight, `hook-succeeded` delete policy)
-- [ ] AWS CLI image is pinned to a version (not `:latest`)
-- [ ] `restartPolicy: Never` on the Job pod template
-- [ ] `|| true` present in the `aws s3 mb` command (idempotent)
-- [ ] Credential Secrets referenced from values, not hardcoded
-- [ ] Validation fail added for empty `accessKeySecret.name` when provider is garage
-- [ ] ConfigMap `S3_REGION` is hardcoded `"garage"` (not from values)
+- [ ] Both GarageBucket and GarageKey gated by `s3.enabled` AND `eq .Values.s3.provider "garage"`
+- [ ] `checks.yaml` has CRD guard for `garage.rajsingh.info/v1beta1`
+- [ ] `checks.yaml` has CRD guard for `postgres.backup.enabled` against `garage.rajsingh.info/v1beta1`
+- [ ] GarageKey `secretTemplate.additionalData` includes `S3_BUCKET`
+- [ ] GarageKey `bucketPermissions` grants read+write on the bucket
+- [ ] GarageBucket `clusterRef` sourced from values
+- [ ] No ConfigMap or Job resources (operator handles bucket creation and credential generation)
+- [ ] No `endpoint`, `accessKeySecret`, `secretKeySecret`, or `replicationFactor` in values (operator-internal)
 - [ ] Bucket name includes `platform.name` prefix
-- [ ] `values.schema.json` updated with Garage-specific fields
-- [ ] Unit test covers Garage provider rendering and Crossplane provider is absent
+- [ ] `values.schema.json` updated with `clusterRef` as required field
+- [ ] Unit test covers GarageBucket and GarageKey rendering
+- [ ] CNPG backup test covers GarageBucket, GarageKey, and ObjectStore credential references

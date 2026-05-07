@@ -232,7 +232,7 @@ Available skills and when they apply:
 | `helm-platform` | Editing `helm/platform/` templates, values, or schema |
 | `cnpg-cluster` | Adding or modifying a CNPG `Cluster` resource |
 | `crossplane-s3` | Adding or modifying S3 storage resources |
-| `garage-s3` | Working with the Garage S3 provider specifically |
+| `garage-s3` | Working with the Garage S3 provider (garage-operator CRDs) specifically |
 | `external-secrets` | Adding or modifying `ExternalSecret` resources |
 | `observability` | Adding or modifying ServiceMonitor, PrometheusRules, or Grafana dashboards |
 | `gitops` | Editing ArgoCD or FluxCD manifests under `gitops/` |

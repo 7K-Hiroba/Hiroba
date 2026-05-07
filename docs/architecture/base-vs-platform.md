@@ -27,7 +27,7 @@ It contains third-party CRs organized into subdirectories:
 | Category | Examples | Operators |
 |---|---|---|
 | `database/` | CNPG Cluster |
-| `storage/` | S3 Bucket | Crossplane (AWS) | GarageBucket |
+| `storage/` | S3 Bucket | Crossplane (AWS) | GarageBucket + GarageKey (garage-operator) |
 | `secrets/` | ExternalSecret | 
 | `observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule |
 
@@ -52,11 +52,13 @@ The checks cover all operator-backed features:
 |---|---|
 | `postgres.enabled` | `postgresql.cnpg.io/v1` (CloudNativePG) |
 | `s3.enabled` + `provider: crossplane` | `s3.aws.crossplane.io/v1beta1` (Crossplane AWS) |
+| `s3.enabled` + `provider: garage` | `garage.rajsingh.info/v1beta1` (garage-operator) |
+| `postgres.backup.enabled` | `garage.rajsingh.info/v1beta1` (garage-operator) |
 | `externalSecrets.enabled` | `external-secrets.io/v1beta1` (External Secrets Operator) |
 | `observability.serviceMonitor.enabled` | `monitoring.coreos.com/v1` (Prometheus Operator) |
 | `observability.prometheusRules.enabled` | `monitoring.coreos.com/v1` (Prometheus Operator) |
 
-Features that use only native Kubernetes resources (Garage S3 via ConfigMap/Job, Grafana dashboards via ConfigMap) do not require checks.
+Features that use only native Kubernetes resources (Grafana dashboards via ConfigMap) do not require checks. All operator-backed features (including Garage S3 via the garage-operator) require the relevant CRD to be registered.
 
 :::tip Offline rendering
 When using `helm template` or rendering in CI/CD, pass `--api-versions` to simulate available APIs:

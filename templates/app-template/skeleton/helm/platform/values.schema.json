@@ -58,19 +58,10 @@
             "garage": {
               "type": "object",
               "properties": {
-                "endpoint": { "type": "string" },
-                "credentialsSecret": {
-                  "type": "object",
-                  "properties": {
-                    "name": { "type": "string" },
-                    "accessKeyKey": { "type": "string" },
-                    "secretKeyKey": { "type": "string" }
-                  },
-                  "required": ["name", "accessKeyKey", "secretKeyKey"],
-                  "additionalProperties": false
-                }
+                "clusterRef": { "type": "string" },
+                "endpoint": { "type": "string" }
               },
-              "required": ["endpoint", "credentialsSecret"],
+              "required": ["clusterRef", "endpoint"],
               "additionalProperties": false
             }
           },
@@ -105,25 +96,33 @@
         "garage": {
           "type": "object",
           "properties": {
-            "endpoint": { "type": "string" },
-            "accessKeySecret": {
+            "clusterRef": { "type": "string" },
+            "quotas": {
               "type": "object",
               "properties": {
-                "name": { "type": "string" },
-                "key": { "type": "string" }
+                "maxSize": { "type": "string" },
+                "maxObjects": { "type": "integer" }
               },
               "additionalProperties": false
             },
-            "secretKeySecret": {
+            "website": {
               "type": "object",
               "properties": {
-                "name": { "type": "string" },
-                "key": { "type": "string" }
+                "enabled": { "type": "boolean" },
+                "indexDocument": { "type": "string" },
+                "errorDocument": { "type": "string" }
               },
               "additionalProperties": false
             },
-            "replicationFactor": { "type": "integer", "minimum": 1 }
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "rules": { "type": "array" }
+              },
+              "additionalProperties": false
+            }
           },
+          "required": ["clusterRef"],
           "additionalProperties": false
         }
       },
