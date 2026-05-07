@@ -40,6 +40,15 @@ spec:
           ui:options:
             catalogFilter:
               kind: Group
+        upstreamImage:
+          title: Upstream Image (optional)
+          type: string
+          description: >-
+            Docker repo for the upstream image this app packages
+            (e.g. `vikunja/vikunja`). When set, Renovate tracks the upstream
+            via Chart.yaml's appVersion. Leave blank for in-house apps with
+            no external upstream.
+          default: ""
 
     - title: Platform Chart Examples
       description: >-
@@ -85,6 +94,7 @@ spec:
           displayName: ${{ parameters.name | replace("-", " ") | title }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
+          upstreamImage: ${{ parameters.upstreamImage }}
           enablePlatform: ${{ parameters.enablePlatform }}
           enablePostgres: ${{ parameters.enablePostgres }}
           enableS3: ${{ parameters.enableS3 }}

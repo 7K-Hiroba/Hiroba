@@ -8,29 +8,19 @@
   "separateMinorPatch": false,
 
   "customManagers": [
+    {%- if values.upstreamImage %}
     {
       "customType": "regex",
-      "description": "Container image references in Helm values (imageName field)",
-      "managerFilePatterns": ["/helm/.+/values\\.yaml$/"],
+      "description": "Track upstream ${{ values.upstreamImage }} image via Chart.yaml appVersion",
+      "managerFilePatterns": ["/helm/(base|platform)/Chart\\.yaml$/"],
       "matchStrings": [
-        "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+        "appVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
       ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "Container image references in Helm values (split repository/tag form)",
-      "managerFilePatterns": ["/helm/.+/values\\.yaml$/"],
-      // Matches the standard Helm split-image block, tolerating intervening
-      // sibling keys like `pullPolicy:` between `repository:` and `tag:`.
-      // Empty tags (e.g. `tag: ""`, which falls back to .Chart.AppVersion)
-      // are intentionally skipped — those are app-self-references bumped by
-      // the app's release pipeline, not Renovate.
-      "matchStrings": [
-        "repository:\\s*[\"']?(?<depName>[a-zA-Z0-9.\\-_/:]+?)[\"']?\\s*(?:#[^\\n]*)?\\n(?:\\s*[a-zA-Z][a-zA-Z0-9]*:[^\\n]*\\n){0,5}?\\s*tag:\\s*[\"']?(?<currentValue>[a-zA-Z0-9.\\-_+]+)[\"']?"
-      ],
-      "datasourceTemplate": "docker"
+      "depNameTemplate": "${{ values.upstreamImage }}",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
+    {%- endif %}
   ],
 
   "packageRules": [
@@ -47,6 +37,15 @@
       "groupName": "github-actions",
       "semanticCommitType": "ci"
     },
+    {%- if values.upstreamImage %}
+    {
+      "description": "Bump both charts together when upstream ${{ values.upstreamImage }} image moves",
+      "matchPackageNames": ["${{ values.upstreamImage }}"],
+      "groupName": "${{ values.name }}-upstream",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "helm"
+    },
+    {%- endif %}
     {
       "description": "Platform chart dependency updates",
       "matchFileNames": ["helm/platform/**"],
