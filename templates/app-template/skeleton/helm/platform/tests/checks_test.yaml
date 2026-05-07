@@ -21,12 +21,23 @@ tests:
       - failedTemplate:
           errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false."
 
-  - it: passes for s3 garage provider without Crossplane CRD
+  - it: fails when s3 with garage provider is enabled without Garage Operator CRD
     set:
       s3.enabled: true
       s3.provider: garage
     capabilities:
       apiVersions: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator (https://github.com/rajsinghtech/garage-operator) first, or switch to s3.provider=crossplane, or set s3.enabled=false."
+
+  - it: passes for s3 garage provider when Garage Operator CRD is present
+    set:
+      s3.enabled: true
+      s3.provider: garage
+    capabilities:
+      apiVersions:
+        - garage.rajsingh.info/v1beta1
     asserts:
       - hasDocuments:
           count: 0

@@ -67,19 +67,32 @@ s3:
       expirationDays: 90
 
   # -- Garage-specific settings (provider: garage)
+  # Provisions a bucket + key via the garage-operator
+  # (https://github.com/rajsinghtech/garage-operator). The operator generates
+  # the credentials Secret directly, so no init Job is needed.
   garage:
-    # -- Garage API endpoint
-    endpoint: "http://garage.garage.svc.cluster.local:3900"
-    # -- Garage access key Secret reference
-    accessKeySecret:
-      name: ""
-      key: accessKey
-    # -- Garage secret key Secret reference
-    secretKeySecret:
-      name: ""
-      key: secretKey
-    # -- Number of data/parity replicas in Garage
-    replicationFactor: 3
+    # -- Reference to the GarageCluster the bucket belongs to
+    clusterRef:
+      name: garage
+      # -- Namespace of the GarageCluster (defaults to release namespace)
+      namespace: ""
+    # -- Name of the generated credentials Secret. Empty means
+    # "<appName>-s3-credentials". The Secret carries AWS_ACCESS_KEY_ID,
+    # AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_ENDPOINT, and S3_BUCKET.
+    secretName: ""
+    # -- Permissions granted to the generated key on this bucket
+    permissions:
+      read: true
+      write: true
+      owner: false
+    # -- Optional bucket quotas
+    quotas:
+      maxSize: ""        # e.g. "10Gi"
+      maxObjects: 0      # 0 = unlimited
+    # -- Optional lifecycle rule (object expiration)
+    lifecycle:
+      enabled: false
+      expirationDays: 90
 
 # -- External Secrets (external-secrets.io)
 externalSecrets:
