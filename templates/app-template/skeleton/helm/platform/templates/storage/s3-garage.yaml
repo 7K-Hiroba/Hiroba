@@ -1,51 +1,70 @@
 {{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
-apiVersion: v1
-kind: ConfigMap
+{{- $bucketName := printf "%s-%s" (include "platform.name" .) .Values.s3.bucketName -}}
+{{- $secretName := default (printf "%s-s3-credentials" (include "platform.name" .)) .Values.s3.garage.secretName -}}
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageBucket
 metadata:
-  name: {{ include "platform.name" . }}-s3-config
+  name: {{ $bucketName }}
   labels:
     {{- include "platform.labels" . | nindent 4 }}
-data:
-  S3_ENDPOINT: {{ .Values.s3.garage.endpoint | quote }}
-  S3_BUCKET: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
-  S3_REGION: "garage"
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {{ include "platform.name" . }}-s3-init
-  labels:
-    {{- include "platform.labels" . | nindent 4 }}
-  annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-weight: "0"
-    helm.sh/hook-delete-policy: hook-succeeded
 spec:
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-        - name: create-bucket
-          image: amazon/aws-cli:2.15.0
-          env:
-            - name: AWS_ENDPOINT_URL
-              value: {{ .Values.s3.garage.endpoint | quote }}
-            - name: AWS_DEFAULT_REGION
-              value: "garage"
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.s3.garage.accessKeySecret.name }}
-                  key: {{ .Values.s3.garage.accessKeySecret.key }}
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.s3.garage.secretKeySecret.name }}
-                  key: {{ .Values.s3.garage.secretKeySecret.key }}
-          command:
-            - sh
-            - -c
-            - |
-              aws s3 mb "s3://{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}" \
-                --endpoint-url "$AWS_ENDPOINT_URL" || true
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef.name | quote }}
+    {{- with .Values.s3.garage.clusterRef.namespace }}
+    namespace: {{ . | quote }}
+    {{- end }}
+  {{- with .Values.s3.garage.quotas }}
+  {{- if or .maxSize .maxObjects }}
+  quotas:
+    {{- if .maxSize }}
+    maxSize: {{ .maxSize | quote }}
+    {{- end }}
+    {{- if .maxObjects }}
+    maxObjects: {{ .maxObjects }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.s3.garage.lifecycle.enabled }}
+  lifecycle:
+    rules:
+      - id: default-expiration
+        status: Enabled
+        expirationDays: {{ .Values.s3.garage.lifecycle.expirationDays }}
+  {{- end }}
+  keyPermissions:
+    - keyRef:
+        name: {{ $bucketName }}
+      read: {{ .Values.s3.garage.permissions.read }}
+      write: {{ .Values.s3.garage.permissions.write }}
+      owner: {{ .Values.s3.garage.permissions.owner }}
+---
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageKey
+metadata:
+  name: {{ $bucketName }}
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  clusterRef:
+    name: {{ .Values.s3.garage.clusterRef.name | quote }}
+    {{- with .Values.s3.garage.clusterRef.namespace }}
+    namespace: {{ . | quote }}
+    {{- end }}
+  name: {{ include "platform.name" . | quote }}
+  secretTemplate:
+    name: {{ $secretName }}
+    accessKeyIdKey: AWS_ACCESS_KEY_ID
+    secretAccessKeyKey: AWS_SECRET_ACCESS_KEY
+    endpointKey: S3_ENDPOINT
+    regionKey: AWS_REGION
+    includeEndpoint: true
+    includeRegion: true
+    additionalData:
+      S3_BUCKET: {{ $bucketName | quote }}
+  bucketPermissions:
+    - bucketRef:
+        name: {{ $bucketName }}
+      read: {{ .Values.s3.garage.permissions.read }}
+      write: {{ .Values.s3.garage.permissions.write }}
+      owner: {{ .Values.s3.garage.permissions.owner }}
 {{- end }}

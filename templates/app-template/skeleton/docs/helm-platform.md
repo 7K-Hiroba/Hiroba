@@ -65,7 +65,7 @@ Connection credentials are published to a `Secret` named `${{ values.name }}-app
 Provisions an S3-compatible bucket. Two providers are supported:
 
 - **`crossplane`** — provisions a real bucket on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
-- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment
+- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment via the [garage-operator](https://github.com/rajsinghtech/garage-operator)
 
 ### Configuration
 
@@ -74,7 +74,7 @@ s3:
   enabled: true
   provider: crossplane   # or "garage"
   bucketName: assets
-  acl: private
+  acl: private           # crossplane only
   crossplane:
     region: us-east-1
     providerConfigRef: aws-provider
@@ -84,6 +84,41 @@ s3:
 ```
 
 Swap the provider by changing `s3.provider` — the provider-specific blocks (`crossplane`, `garage`) configure the chosen backend.
+
+### Garage provider
+
+Requires the [garage-operator](https://github.com/rajsinghtech/garage-operator) and a `GarageCluster` already running in the cluster. The chart emits a `GarageBucket` and a `GarageKey`; the operator provisions the bucket, mints credentials, and writes them to a Kubernetes `Secret` — no init Job is needed.
+
+```yaml
+s3:
+  enabled: true
+  provider: garage
+  bucketName: assets
+  garage:
+    clusterRef:
+      name: garage          # name of the GarageCluster CR
+      namespace: ""         # defaults to the release namespace
+    secretName: ""          # defaults to "<appName>-s3-credentials"
+    permissions:
+      read: true
+      write: true
+      owner: false
+    quotas:
+      maxSize: "10Gi"       # omit for unlimited
+      maxObjects: 0         # 0 = unlimited
+    lifecycle:
+      enabled: false
+      expirationDays: 90
+```
+
+The generated Secret carries `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_ENDPOINT`, and `S3_BUCKET`. Pull it into the base chart via `envFrom`:
+
+```yaml
+# helm/base values override
+envFrom:
+  - secretRef:
+      name: ${{ values.name }}-s3-credentials
+```
 
 ## ExternalSecrets
 
