@@ -16,6 +16,20 @@
         "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Container image references in Helm values (split repository/tag form)",
+      "managerFilePatterns": ["/helm/.+/values\\.yaml$/"],
+      // Matches the standard Helm split-image block, tolerating intervening
+      // sibling keys like `pullPolicy:` between `repository:` and `tag:`.
+      // Empty tags (e.g. `tag: ""`, which falls back to .Chart.AppVersion)
+      // are intentionally skipped — those are app-self-references bumped by
+      // the app's release pipeline, not Renovate.
+      "matchStrings": [
+        "repository:\\s*[\"']?(?<depName>[a-zA-Z0-9.\\-_/:]+?)[\"']?\\s*(?:#[^\\n]*)?\\n(?:\\s*[a-zA-Z][a-zA-Z0-9]*:[^\\n]*\\n){0,5}?\\s*tag:\\s*[\"']?(?<currentValue>[a-zA-Z0-9.\\-_+]+)[\"']?"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
 
