@@ -109,6 +109,9 @@ spec:
       secretAccessKey:
         name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
         key: {{ .Values.postgres.backup.garage.credentialsSecret.secretKeyKey }}
+      region:
+        name: {{ .Values.postgres.backup.garage.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.garage.credentialsSecret.regionKey }}
     wal:
       compression: gzip
     data:
@@ -116,6 +119,8 @@ spec:
 ```
 
 The `wal` block enables **continuous WAL archiving**, which allows point-in-time recovery (PITR). It must always be present when backup is enabled.
+
+The `region` reference is **mandatory for Garage**. Without it, Garage rejects bucket access with a signature/region mismatch even if credentials are valid. The Secret must therefore carry a `region` key alongside `accessKey` / `secretKey` (Garage's region defaults to `garage`, but match whatever the GarageKey/cluster is configured with).
 
 ### `retentionPolicy`
 
@@ -149,9 +154,10 @@ postgres:
         name: <app>-pg-garage-key   # Set to the actual Secret name
         accessKeyKey: accessKey
         secretKeyKey: secretKey
+        regionKey: region
 ```
 
-The platform chart does **not** create this Secret. It must be provisioned externally (e.g., via a GarageKey + ExternalSecret) and exist in the namespace before the Cluster is created.
+The platform chart does **not** create this Secret. It must be provisioned externally (e.g., via a GarageKey + ExternalSecret) and exist in the namespace before the Cluster is created. The Secret must contain three keys: access key, secret key, and region.
 
 ## ScheduledBackup resource
 
@@ -206,6 +212,7 @@ postgres:
         name: ""
         accessKeyKey: accessKey
         secretKeyKey: secretKey
+        regionKey: region
 ```
 
 ## `values.schema.json` shape
@@ -226,9 +233,10 @@ postgres:
           "properties": {
             "name": { "type": "string" },
             "accessKeyKey": { "type": "string" },
-            "secretKeyKey": { "type": "string" }
+            "secretKeyKey": { "type": "string" },
+            "regionKey": { "type": "string" }
           },
-          "required": ["name", "accessKeyKey", "secretKeyKey"],
+          "required": ["name", "accessKeyKey", "secretKeyKey", "regionKey"],
           "additionalProperties": false
         }
       },
@@ -245,7 +253,7 @@ postgres:
 - [ ] `instances`, `imageName`, `bootstrap.initdb`, `storage.size`, `resources` all present
 - [ ] Image tag is pinned (not `:latest`)
 - [ ] If `backup.enabled`: `spec.plugins` references `barman-cloud.cloudnative-pg.io` on the Cluster
-- [ ] If `backup.enabled`: `ObjectStore` resource present in `cnpg-cluster.yaml` with `endpointURL`, `s3Credentials`, `wal.compression`, `data.compression`
+- [ ] If `backup.enabled`: `ObjectStore` resource present in `cnpg-cluster.yaml` with `endpointURL`, `s3Credentials` (including `region` ref — required by Garage), `wal.compression`, `data.compression`
 - [ ] If `backup.enabled`: `ScheduledBackup` resource present in `cnpg-scheduled-backup.yaml` with `pluginConfiguration`
 - [ ] `retentionPolicy` is non-empty
 - [ ] `credentialsSecret.name` points to a pre-provisioned Secret (not created by the chart)
