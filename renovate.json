@@ -3,6 +3,21 @@
   "separateMajorMinor": false,
   "separateMinorPatch": false,
 
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    },
+    {
+      "matchManagers": ["flux"],
+      "groupName": "flux"
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "groupName": "custom regex tooling"
+    }
+  ],
+
   "flux": {
     "managerFilePatterns": [
       "templates/stack-template/skeleton/gitops/fluxcd/.+\\.yaml$"
