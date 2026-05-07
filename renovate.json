@@ -4,13 +4,13 @@
   "separateMinorPatch": false,
 
   "flux": {
-    "fileMatch": [
+    "managerFilePatterns": [
       "templates/stack-template/skeleton/gitops/fluxcd/.+\\.yaml$"
     ]
   },
 
   "github-actions": {
-    "fileMatch": ["\\.github/workflows/.+\\.ya?ml$"]
+    "managerFilePatterns": ["\\.github/workflows/.+\\.ya?ml$"]
   },
 
   "customManagers": [
