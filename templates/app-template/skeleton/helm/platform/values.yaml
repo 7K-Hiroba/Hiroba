@@ -149,32 +149,32 @@ observability:
     folderLabel: ""
 
   # -- PrometheusRule alerts. `groups` is passed through `tpl` so values can
-  # reference `.Release.Namespace`, `include "platform.name" .`, etc. Override
+  # reference `.Release.Namespace`, `include "hiroba-platform.name" .`, etc. Override
   # entirely to replace the defaults, or append to extend them.
   prometheusRules:
     enabled: false
     groups:
-      - name: '{{ include "platform.name" . }}.rules'
+      - name: '{{ include "hiroba-platform.name" . }}.rules'
         rules:
           - alert: HighErrorRate
             expr: |
-              sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}", status=~"5.."}[5m]))
+              sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}", status=~"5.."}[5m]))
               /
-              sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}"}[5m]))
+              sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}"}[5m]))
               > 0.05
             for: 5m
             labels:
               severity: warning
             annotations:
-              summary: 'High error rate for {{ include "platform.name" . }}'
+              summary: 'High error rate for {{ include "hiroba-platform.name" . }}'
               description: "Error rate is above 5% for the last 5 minutes."
           - alert: HighLatency
             expr: |
-              histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", service="{{ include "platform.name" . }}"}[5m]))
+              histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}"}[5m]))
               > 1
             for: 5m
             labels:
               severity: warning
             annotations:
-              summary: 'High p99 latency for {{ include "platform.name" . }}'
+              summary: 'High p99 latency for {{ include "hiroba-platform.name" . }}'
               description: "p99 latency is above 1 second for the last 5 minutes."

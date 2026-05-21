@@ -6,6 +6,8 @@ sidebar_position: 2
 
 This is a core architectural decision in Hiroba: every application gets **two separate Helm charts**. The platform chart is Hiroba's main focus.
 
+The template content of both charts comes from two Helm library charts (`hiroba-app-lib`, `hiroba-platform-lib`) maintained in this repo — see [Helm Libraries](./helm-libraries.md). Each scaffolded app keeps only a thin per-resource wrapper, so a library bump propagates to every consumer.
+
 ## Why Two Charts?
 
 Most Helm charts in the ecosystem bundle everything together. A "PostgreSQL-backed app" chart might include the app Deployment *and* a PostgreSQL StatefulSet. This creates problems:
@@ -35,7 +37,7 @@ It contains third-party CRs organized into subdirectories:
 
 ### Operator Dependency Checks
 
-Because Operator CRDs are submitted to the API server but reconciled by controllers that may not be running, a missing operator causes **silent failures** — resources appear healthy but nothing happens. To prevent this, the platform chart includes a `_checks.yaml` template that validates operator availability at install time.
+Because Operator CRDs are submitted to the API server but reconciled by controllers that may not be running, a missing operator causes **silent failures** — resources appear healthy but nothing happens. To prevent this, the platform chart includes a `checks.yaml` wrapper that invokes the library's `hiroba-platform.checks` template at install time.
 
 When a feature is **enabled** and its required CRD is **not registered** in the cluster, `helm install` fails immediately with a clear error message. When the feature is **disabled**, the check is skipped entirely.
 

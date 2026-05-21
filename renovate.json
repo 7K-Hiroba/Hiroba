@@ -15,6 +15,18 @@
     {
       "matchManagers": ["custom.regex"],
       "groupName": "custom regex tooling"
+    },
+    {
+      "description": "Library chart commits drive release-please bumps; tag accordingly",
+      "matchFileNames": ["helm/lib/app/**"],
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "helm-app-lib"
+    },
+    {
+      "description": "Library chart commits drive release-please bumps; tag accordingly",
+      "matchFileNames": ["helm/lib/platform/**"],
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "helm-platform-lib"
     }
   ],
 
@@ -26,6 +38,13 @@
 
   "github-actions": {
     "managerFilePatterns": ["\\.github/workflows/.+\\.ya?ml$"]
+  },
+
+  "helmv3": {
+    "managerFilePatterns": [
+      "helm/lib/.+/Chart\\.yaml$",
+      "templates/app-template/skeleton/helm/.+/Chart\\.yaml$"
+    ]
   },
 
   "customManagers": [

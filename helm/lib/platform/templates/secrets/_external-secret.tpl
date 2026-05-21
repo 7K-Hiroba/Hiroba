@@ -1,0 +1,41 @@
+{{/*
+hiroba-platform.external-secret — external-secrets.io ExternalSecret,
+gated on externalSecrets.enabled.
+*/}}
+{{- define "hiroba-platform.external-secret" -}}
+{{- if .Values.externalSecrets.enabled -}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ include "hiroba-platform.name" . }}
+  labels:
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
+spec:
+  refreshInterval: {{ .Values.externalSecrets.refreshInterval }}
+  secretStoreRef:
+    name: {{ .Values.externalSecrets.storeRef.name }}
+    kind: {{ .Values.externalSecrets.storeRef.kind }}
+  target:
+    name: {{ include "hiroba-platform.name" . }}
+    creationPolicy: Owner
+    {{- with .Values.externalSecrets.target.template }}
+    template:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- with .Values.externalSecrets.data }}
+  data:
+    {{- range . }}
+    - secretKey: {{ .secretKey }}
+      remoteRef:
+        key: {{ .remoteKey }}
+        {{- if .property }}
+        property: {{ .property }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.externalSecrets.dataFrom }}
+  dataFrom:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

@@ -4,6 +4,13 @@ description: Platform dependencies for ${{ values.name }} — provisions databas
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+kubeVersion: ">=1.24.0-0"
+dependencies:
+  # Renovate keeps this in sync with the latest hiroba-platform-lib release
+  # published from https://github.com/7K-Hiroba/Hiroba
+  - name: hiroba-platform-lib
+    version: ^0.1.0
+    repository: oci://harbor.7kgroup.org/7khiroba/charts
 maintainers:
   - name: 7k-hiroba
 keywords:

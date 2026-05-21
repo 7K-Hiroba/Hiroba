@@ -1,0 +1,37 @@
+apiVersion: v2
+name: hiroba-platform-lib
+description: |
+  Helm library chart for Hiroba application platform (cross-cutting
+  dependencies) charts. Defines reusable named templates for CloudNativePG
+  Clusters, S3 buckets (Crossplane / Garage), ExternalSecrets, ServiceMonitor,
+  Grafana dashboards, PrometheusRules, and operator presence checks.
+type: library
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.24.0-0"
+home: https://hiroba.7kgroup.org
+sources:
+  - https://github.com/7K-Hiroba/Hiroba
+maintainers:
+  - name: 7k-hiroba
+    url: https://github.com/7K-Hiroba
+keywords:
+  - hiroba
+  - library
+  - platform
+  - cnpg
+  - external-secrets
+  - crossplane
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/links: |
+    - name: documentation
+      url: https://hiroba.7kgroup.org/docs/architecture/helm-libraries
+    - name: source
+      url: https://github.com/7K-Hiroba/Hiroba/tree/main/helm/lib/platform
+    - name: support
+      url: https://github.com/7K-Hiroba/Hiroba/issues
+  artifacthub.io/maintainers: |
+    - name: 7k-hiroba
+      email: hiroba@7kgroup.org

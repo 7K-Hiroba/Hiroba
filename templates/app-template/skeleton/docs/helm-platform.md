@@ -6,6 +6,8 @@ sidebar_position: 4
 
 The platform chart provisions resources that **surround** the application: databases, object storage, secrets, and observability. It is optional — install the [base chart](./helm-base.md) alone for a minimal deployment.
 
+Template content is provided by the [`hiroba-platform-lib`](https://hiroba.7kgroup.org/docs/architecture/helm-libraries) Helm library; the chart in this repo only ships a `values.yaml`, `values.schema.json`, and one thin `{{ include "hiroba-platform.<resource>" . }}` wrapper per resource. Run `helm dependency update helm/platform` before linting or rendering locally.
+
 Every section ships disabled by default so the chart is safe to install into clusters that don't have the relevant operators present. Enabling a feature without its required CRDs causes `helm install` to fail early with a clear error, rather than silently creating Custom Resources nothing is reconciling.
 
 ## Matching the base chart
@@ -21,7 +23,7 @@ Leave it empty to match by name only — acceptable when only one release of the
 
 > PodDisruptionBudget lives in the [base chart](./helm-base.md#poddisruptionbudget), not here — it's tightly coupled to the Deployment's lifecycle.
 
-Values reference: [`helm/platform/values.yaml`](https://github.com/7KGroup/${{ values.name }}/blob/main/helm/platform/values.yaml)
+Values reference: [`helm/platform/values.yaml`](https://github.com/7K-Hiroba/${{ values.name }}/blob/main/helm/platform/values.yaml)
 
 ## Install
 
@@ -214,7 +216,7 @@ observability:
     folderLabel: "Applications"
 ```
 
-Dashboards are loaded from `helm/platform/dashboards/*.json`. Each JSON file becomes a key in the ConfigMap and is run through Helm's `tpl` function, so you can reference chart helpers inside the JSON — use backtick-quoted args for `include` (e.g. ``{{ include `platform.name` . }}``) since JSON escapes break inside Go template actions. Drop additional dashboards into the directory and they ship alongside the default.
+Dashboards are loaded from `helm/platform/dashboards/*.json`. Each JSON file becomes a key in the ConfigMap and is run through Helm's `tpl` function, so you can reference chart helpers inside the JSON — use backtick-quoted args for `include` (e.g. ``{{ include `hiroba-platform.name` . }}``) since JSON escapes break inside Go template actions. Drop additional dashboards into the directory and they ship alongside the default.
 
 <!-- TODO: Replace the default dashboard JSON with panels that match the metrics your app actually emits. -->
 
@@ -227,11 +229,11 @@ observability:
   prometheusRules:
     enabled: true
     groups:
-      - name: '{{ include "platform.name" . }}.rules'
+      - name: '{{ include "hiroba-platform.name" . }}.rules'
         rules:
           - alert: HighErrorRate
             expr: |
-              sum(rate(http_requests_total{service="{{ include "platform.name" . }}", status=~"5.."}[5m])) > 0.05
+              sum(rate(http_requests_total{service="{{ include "hiroba-platform.name" . }}", status=~"5.."}[5m])) > 0.05
             for: 5m
             labels:
               severity: warning

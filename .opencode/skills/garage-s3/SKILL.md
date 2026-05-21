@@ -14,6 +14,16 @@ The Garage-specific implementation of S3 storage in the platform chart using the
 
 For general S3 provider switching rules see the `crossplane-s3` skill. This skill covers only Garage-specific patterns.
 
+## Where the template lives
+
+The Garage S3 template is the `hiroba-platform.s3-garage` named template in `helm/lib/platform/templates/storage/_s3-garage.tpl` inside the Hiroba repo. Scaffolded apps only ship a one-line wrapper at `helm/platform/templates/storage/s3-garage.yaml`:
+
+```yaml
+{{- include "hiroba-platform.s3-garage" . }}
+```
+
+The same backup-storage flow is reused by `hiroba-platform.cnpg-cluster` (CNPG barman backups) — when fixing or extending the credential / bucket shape, check that both call sites still produce the right output. Library bumps use `fix(helm-platform-lib):` / `feat(helm-platform-lib):`.
+
 ## Operator installation
 
 The garage-operator must be installed in the cluster before using `s3.provider: garage`. Install via Helm:
@@ -54,9 +64,9 @@ The Garage provider produces two resources gated by `{{- if and .Values.s3.enabl
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
 metadata:
-  name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+  name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
@@ -82,20 +92,20 @@ The operator handles bucket creation, idempotency, and deletion lifecycle. No Jo
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageKey
 metadata:
-  name: {{ include "platform.name" . }}-s3-key
+  name: {{ include "hiroba-platform.name" . }}-s3-key
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
-  name: "{{ include "platform.name" . }} S3 Key"
+  name: "{{ include "hiroba-platform.name" . }} S3 Key"
   secretTemplate:
-    name: {{ include "platform.name" . }}-s3-key
+    name: {{ include "hiroba-platform.name" . }}-s3-key
     additionalData:
-      S3_BUCKET: "{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}"
+      S3_BUCKET: "{{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}"
   bucketPermissions:
     - bucketRef:
-        name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+        name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
       read: true
       write: true
 ```
@@ -125,7 +135,7 @@ The `GarageCluster` is expected to exist in the same namespace. For cross-namesp
 
 ## Bucket naming
 
-Bucket name is always `{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}`. This matches the Crossplane convention and prevents name collisions across apps sharing a Garage instance.
+Bucket name is always `{{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}`. This matches the Crossplane convention and prevents name collisions across apps sharing a Garage instance.
 
 ## Optional bucket features
 
@@ -256,7 +266,7 @@ For CNPG backup:
 - [ ] GarageBucket `clusterRef` sourced from values
 - [ ] No ConfigMap or Job resources (operator handles bucket creation and credential generation)
 - [ ] No `endpoint`, `accessKeySecret`, `secretKeySecret`, or `replicationFactor` in values (operator-internal)
-- [ ] Bucket name includes `platform.name` prefix
+- [ ] Bucket name includes `hiroba-platform.name` prefix
 - [ ] `values.schema.json` updated with `clusterRef` as required field
 - [ ] Unit test covers GarageBucket and GarageKey rendering
 - [ ] CNPG backup test covers GarageBucket, GarageKey, and ObjectStore credential references

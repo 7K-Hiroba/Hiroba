@@ -27,6 +27,10 @@ Thumbs.db
 
 # Helm
 templates/**/charts/*.tgz
+templates/**/Chart.lock
+templates/**/charts/
+helm/**/charts/
+helm/**/Chart.lock
 
 # Debug logs
 npm-debug.log*

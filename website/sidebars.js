@@ -10,7 +10,9 @@ const sidebars = {
       items: [
         'architecture/overview',
         'architecture/base-vs-platform',
+        'architecture/helm-libraries',
         'architecture/backstage-templates',
+        'architecture/gitops',
       ],
     },
     {

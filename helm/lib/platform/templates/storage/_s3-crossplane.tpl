@@ -1,0 +1,29 @@
+{{/*
+hiroba-platform.s3-crossplane — Crossplane S3 Bucket, gated on s3.enabled
+AND s3.provider == "crossplane".
+*/}}
+{{- define "hiroba-platform.s3-crossplane" -}}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") -}}
+apiVersion: s3.aws.crossplane.io/v1beta1
+kind: Bucket
+metadata:
+  name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
+  labels:
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
+spec:
+  forProvider:
+    region: {{ .Values.s3.crossplane.region }}
+    acl: {{ .Values.s3.acl }}
+    {{- if .Values.s3.crossplane.lifecycle.enabled }}
+    lifecycleConfiguration:
+      rules:
+        - status: Enabled
+          filter:
+            prefix: ""
+          expiration:
+            days: {{ .Values.s3.crossplane.lifecycle.expirationDays }}
+    {{- end }}
+  providerConfigRef:
+    name: {{ .Values.s3.crossplane.providerConfigRef }}
+{{- end }}
+{{- end }}

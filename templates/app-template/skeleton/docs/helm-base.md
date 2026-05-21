@@ -4,9 +4,11 @@ sidebar_position: 3
 
 # Helm base chart
 
-The base chart deploys the application itself: `Deployment`, `Service`, `ServiceAccount`, `HorizontalPodAutoscaler`, and a Gateway API `HTTPRoute`. It does **not** provision databases, secrets, or observability — see the [platform chart](./helm-platform.md) for those.
+The base chart deploys the application itself: `Deployment`, `Service`, `ServiceAccount`, `HorizontalPodAutoscaler`, `PodDisruptionBudget`, and a Gateway API `HTTPRoute`. It does **not** provision databases, secrets, or observability — see the [platform chart](./helm-platform.md) for those.
 
-Values reference: [`helm/base/values.yaml`](https://github.com/7KGroup/${{ values.name }}/blob/main/helm/base/values.yaml)
+Template content is provided by the [`hiroba-app-lib`](https://hiroba.7kgroup.org/docs/architecture/helm-libraries) Helm library; the chart in this repo only ships a `values.yaml`, `values.schema.json`, and one thin `{{ include "hiroba-app.<resource>" . }}` wrapper per resource. Run `helm dependency update helm/base` before linting or rendering locally.
+
+Values reference: [`helm/base/values.yaml`](https://github.com/7K-Hiroba/${{ values.name }}/blob/main/helm/base/values.yaml)
 
 ## Install
 
@@ -107,7 +109,7 @@ podDisruptionBudget:
   # maxUnavailable: "25%"   # mutually exclusive — set minAvailable: null to use this
 ```
 
-The selector reuses `app.selectorLabels`, so it matches the Deployment's pods automatically — no cross-release label coupling needed.
+The selector reuses `hiroba-app.selectorLabels`, so it matches the Deployment's pods automatically — no cross-release label coupling needed.
 
 ## Probes
 

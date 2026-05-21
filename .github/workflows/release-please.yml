@@ -1,0 +1,45 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  packages: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      helm-app-lib--release_created:      ${{ steps.release.outputs['helm/lib/app--release_created'] }}
+      helm-app-lib--tag_name:             ${{ steps.release.outputs['helm/lib/app--tag_name'] }}
+      helm-app-lib--version:              ${{ steps.release.outputs['helm/lib/app--version'] }}
+      helm-platform-lib--release_created: ${{ steps.release.outputs['helm/lib/platform--release_created'] }}
+      helm-platform-lib--tag_name:        ${{ steps.release.outputs['helm/lib/platform--tag_name'] }}
+      helm-platform-lib--version:         ${{ steps.release.outputs['helm/lib/platform--version'] }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-helm-app-lib:
+    needs: release-please
+    if: needs.release-please.outputs.helm-app-lib--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
+    with:
+      path: helm/lib/app
+      version: ${{ needs.release-please.outputs.helm-app-lib--version }}
+    secrets: inherit
+
+  publish-helm-platform-lib:
+    needs: release-please
+    if: needs.release-please.outputs.helm-platform-lib--release_created == 'true'
+    uses: 7K-Hiroba/workflows-library/.github/workflows/release-helm.yml@v1
+    with:
+      path: helm/lib/platform
+      version: ${{ needs.release-please.outputs.helm-platform-lib--version }}
+    secrets: inherit

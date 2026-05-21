@@ -1,0 +1,35 @@
+apiVersion: v2
+name: hiroba-app-lib
+description: |
+  Helm library chart for Hiroba application (workload-lifecycle) charts.
+  Defines reusable named templates for Deployment, Service, ServiceAccount,
+  HPA, PDB, and Gateway API HTTPRoute. Consumer charts add this as a
+  dependency and include the resources they need.
+type: library
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.24.0-0"
+home: https://hiroba.7kgroup.org
+sources:
+  - https://github.com/7K-Hiroba/Hiroba
+maintainers:
+  - name: 7k-hiroba
+    url: https://github.com/7K-Hiroba
+keywords:
+  - hiroba
+  - library
+  - workload
+  - gateway-api
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/links: |
+    - name: documentation
+      url: https://hiroba.7kgroup.org/docs/architecture/helm-libraries
+    - name: source
+      url: https://github.com/7K-Hiroba/Hiroba/tree/main/helm/lib/app
+    - name: support
+      url: https://github.com/7K-Hiroba/Hiroba/issues
+  artifacthub.io/maintainers: |
+    - name: 7k-hiroba
+      email: hiroba@7kgroup.org

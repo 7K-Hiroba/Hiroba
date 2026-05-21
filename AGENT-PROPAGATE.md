@@ -299,6 +299,7 @@ For each target repository, verify:
 - [ ] `.github/ISSUE_TEMPLATE/bug_report.md` synced
 - [ ] `AGENT.md` infrastructure sections synced
 - [ ] `LICENSE` synced
+- [ ] **Helm library migration** — `helm/base/templates/` and `helm/platform/templates/` are now thin `{{ include "hiroba-app.<resource>" . }}` wrappers; `Chart.yaml` declares the matching `hiroba-app-lib` / `hiroba-platform-lib` dependency from `oci://harbor.7kgroup.org/7khiroba/charts`. Any local divergence in the previous full templates must be ported into values overrides or kept as bespoke `*.yaml` files that replace the wrapper for that resource only.
 - [ ] No app-specific **content** was overwritten
 - [ ] Structural changes applied (file moves, renames, new required files)
 - [ ] Structural changes listed in PR description
@@ -308,3 +309,13 @@ For each target repository, verify:
 - [ ] PR created with clear description of changes
 - [ ] PR lists any intentional divergences found
 - [ ] Moved on to next repo (did NOT merge the PR)
+
+## Prerequisites in `workflows-library`
+
+The Helm library migration depends on three workflows-library changes:
+
+1. **`ci-helm.yml`** — add `helm dependency update <chart-path>` before lint / template / unittest. Consumer skeleton charts now declare a `dependencies:` entry and won't render without the library tarball pulled in first.
+2. **`release-helm.yml`** — add the same step before `helm package`, so the published consumer chart bundles the library.
+3. **`ci-helm-library.yml`** — new reusable workflow added in this migration. Runs `helm lint` + `values.schema.json` presence check + `ct lint` on Helm *library* charts (skips the template/kubeconform jobs that don't apply). The Hiroba repo's `charts-ci.yml` and `release-please.yml` reference this at `@v1`, so a workflows-library release that includes it must be cut before Hiroba CI can pass.
+
+Cut a workflows-library release that bundles all three changes, then re-point any pinned `@v1.x.y` refs.

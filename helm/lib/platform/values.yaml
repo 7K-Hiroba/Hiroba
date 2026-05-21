@@ -1,0 +1,82 @@
+# hiroba-platform-lib is a *library* chart — Helm does NOT merge these values
+# into the consumer chart's .Values. They are shipped only as a reference for
+# the value surface every named template expects. Consumer charts copy / extend
+# this in their own values.yaml.
+
+global:
+  # -- Application name, used as prefix for all platform resources
+  appName: example
+  # -- Release name of the base chart deployment. When set, the ServiceMonitor
+  # selector matches `app.kubernetes.io/instance: <baseInstance>` so multiple
+  # releases of the same app coexist safely. Leave empty to match by name only.
+  baseInstance: ""
+
+postgres:
+  enabled: false
+  provider: cnpg
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  database: app
+  owner: app
+  backup:
+    enabled: false
+    schedule: "0 2 * * *"
+    retentionPolicy: "7d"
+    garage:
+      clusterRef: garage
+      endpoint: "http://garage.garage.svc.cluster.local:3900"
+
+s3:
+  enabled: false
+  provider: crossplane
+  bucketName: assets
+  acl: private
+  crossplane:
+    region: us-east-1
+    providerConfigRef: aws-provider
+    lifecycle:
+      enabled: false
+      expirationDays: 90
+  garage:
+    clusterRef: garage
+    quotas: {}
+    website: {}
+    lifecycle: {}
+
+externalSecrets:
+  enabled: false
+  refreshInterval: 1h
+  storeRef:
+    name: cluster-secret-store
+    kind: ClusterSecretStore
+  data: []
+  dataFrom: []
+  target:
+    template: {}
+
+observability:
+  serviceMonitor:
+    enabled: false
+    additionalLabels: {}
+    port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+  grafanaDashboard:
+    enabled: false
+    folderLabel: ""
+
+  prometheusRules:
+    enabled: false
+    groups: []

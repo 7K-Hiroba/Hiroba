@@ -10,7 +10,27 @@ metadata:
 
 ## What I cover
 
-Every rule that applies when adding or modifying resources in `helm/platform/`.
+Every rule that applies when adding or modifying platform-chart resources, whether:
+
+- editing the `hiroba-platform-lib` library at `helm/lib/platform/` in the **Hiroba repo** (where templates live), or
+- editing a scaffolded app's `helm/platform/` consumer chart (thin wrappers around `hiroba-platform-lib`).
+
+## Library + consumer split
+
+Template content lives **once**, in the `hiroba-platform-lib` Helm library at `helm/lib/platform/` in the Hiroba repo. Scaffolded apps declare a `dependencies:` entry against the library and ship one thin wrapper per resource:
+
+```yaml
+# scaffolded-app/helm/platform/templates/database/cnpg-cluster.yaml
+{{- include "hiroba-platform.cnpg-cluster" . }}
+```
+
+Rules for choosing where a change goes:
+
+- **New resource kind, new provider, new operator check, defaults every app should adopt** → edit the library in `helm/lib/platform/templates/_<resource>.tpl` (or `_helpers.tpl` / `_checks.tpl`) and bump with `fix(helm-platform-lib):` / `feat(helm-platform-lib):`. Renovate opens a bump PR in every consumer.
+- **App-specific override of a single resource** → edit only that app's `helm/platform/templates/<category>/<resource>.yaml`, replacing the include with bespoke YAML.
+- **A brand-new resource only one app needs** → keep it in the consumer chart. Promote to the library only after a second app needs the same thing.
+
+Before linting or rendering a consumer chart locally, run `helm dependency update helm/platform`.
 
 ## Core philosophy
 
@@ -18,14 +38,39 @@ The platform chart is always **custom**. It wires in databases, storage, secrets
 
 ## Directory layout
 
+The **library** (`helm/lib/platform/` in the Hiroba repo) groups templates into the same category subfolders as the consumer for navigability — named-template names are global, so the include paths don't depend on the folder:
+
+```
+helm/lib/platform/
+├── Chart.yaml                # type: library
+├── values.yaml               # reference defaults (NOT merged into consumers)
+├── values.schema.json        # reference schema; consumers copy and own their own
+└── templates/
+    ├── _helpers.tpl          # hiroba-platform.{name, labels, baseSelectorLabels}
+    ├── _checks.tpl           # hiroba-platform.checks — operator CRD guards
+    ├── database/
+    │   ├── _cnpg-cluster.tpl
+    │   └── _cnpg-scheduled-backup.tpl
+    ├── storage/
+    │   ├── _s3-crossplane.tpl
+    │   └── _s3-garage.tpl
+    ├── secrets/
+    │   └── _external-secret.tpl
+    └── observability/
+        ├── _service-monitor.tpl
+        ├── _grafana-dashboard.tpl
+        └── _prometheus-rules.tpl
+```
+
+The **consumer** (`helm/platform/` in a scaffolded app) mirrors the same subfolders for wrapper files:
+
 ```
 helm/platform/
-├── Chart.yaml
+├── Chart.yaml                # dependencies: hiroba-platform-lib
 ├── values.yaml
 ├── values.schema.json        # required — CI fails without it
 ├── templates/
-│   ├── _helpers.tpl
-│   ├── checks.yaml           # operator CRD guards
+│   ├── checks.yaml           # {{ include "hiroba-platform.checks" . }}
 │   ├── database/             # CNPG clusters, etc.
 │   ├── storage/              # S3 via Crossplane, Garage, etc.
 │   ├── secrets/              # ExternalSecret
@@ -59,19 +104,19 @@ When a resource has multiple backend implementations, use a `provider` enum:
 
 ## Helpers — always use them
 
-Use helpers from `_helpers.tpl` for every resource:
+Use helpers from the library's `_helpers.tpl` for every resource:
 
 ```yaml
-name: {{ include "platform.name" . }}-<suffix>
+name: {{ include "hiroba-platform.name" . }}-<suffix>
 labels:
-  {{- include "platform.labels" . | nindent 4 }}
+  {{- include "hiroba-platform.labels" . | nindent 4 }}
 ```
 
-Never hard-code the app name or labels inline.
+Never hard-code the app name or labels inline. Helper changes go in `helm/lib/platform/templates/_helpers.tpl` in the Hiroba repo, not in a consumer chart.
 
-## Operator CRD checks (`checks.yaml`)
+## Operator CRD checks (`hiroba-platform.checks`)
 
-When adding a new resource kind backed by a CRD, add a guard in `templates/checks.yaml`:
+When adding a new resource kind backed by a CRD, add a guard in **the library** at `helm/lib/platform/templates/_checks.tpl` inside the `hiroba-platform.checks` `define`. Every consumer's `checks.yaml` calls that single named template, so a new guard reaches every app on the next library bump:
 
 ```yaml
 {{- if .Values.<resource>.enabled }}
@@ -93,22 +138,28 @@ Existing guards (do not duplicate):
 
 ## `values.schema.json` — keep in sync
 
-Every time a value is added or changed in `values.yaml`:
+Two schemas exist and must be updated together when adding a new value:
 
-1. Add the corresponding entry in `values.schema.json`.
-2. Use `additionalProperties: false` on every object.
-3. Mark required fields with `required: [...]`.
-4. Use `enum` for all fixed-choice fields (`provider`, `pullPolicy`, etc.).
-5. Use pattern constraints for size strings: `"^[0-9]+(Mi|Gi|Ti)$"`.
+1. The **library reference schema** at `helm/lib/platform/values.schema.json` (Hiroba repo) documents the surface the named templates expect. It's a copy-paste starting point for consumers — Helm does not enforce it on consumer renders.
+2. The **consumer schema** at `helm/platform/values.schema.json` (scaffolded app) is what Helm validates against. It must have a top-level `hiroba-platform-lib` property so the subchart values slot doesn't trip `additionalProperties: false`.
 
-CI runs `helm lint` which validates values against the schema — a missing schema entry will fail the build.
+For both:
+
+- Use `additionalProperties: false` on every object.
+- Mark required fields with `required: [...]`.
+- Use `enum` for all fixed-choice fields (`provider`, `pullPolicy`, etc.).
+- Use pattern constraints for size strings: `"^[0-9]+(Mi|Gi|Ti)$"`.
+
+CI runs `helm lint` (consumer side) and `ct lint` (library side) — a missing schema entry will fail the build.
 
 ## `global.appName` — required
 
-`global.appName` is required in the schema and must be set by the consumer. All resources derive their name from it via `platform.name`. Never hardcode an app name.
+`global.appName` is required in the schema and must be set by the consumer. All resources derive their name from it via `hiroba-platform.name`. Never hardcode an app name.
 
 ## Unit tests
 
+- Unit tests live in the **consumer** chart (scaffolded app's `helm/platform/tests/`) — the library has nothing renderable on its own.
+- Run `helm dependency update helm/platform` before `helm unittest`.
 - One test file per template: `tests/<template>_test.yaml`.
 - Always set `capabilities.apiVersions` to satisfy CRD checks:
 
@@ -121,14 +172,18 @@ capabilities:
 - Test the enabled and disabled states of every gated resource.
 - Test provider switching (e.g., crossplane vs. garage).
 - Test that `checks.yaml` fails when the CRD is absent (omit the capability).
+- When a library bump changes behaviour, add a regression test in at least one canonical consumer chart.
 
 ## Checklist before committing
 
+- [ ] Change made in the right place — library for shared behaviour, consumer chart for app-specific overrides
+- [ ] Conventional-commit scope matches: `helm-platform-lib` for library, `helm-platform` for consumer
 - [ ] New resource gated behind `<resource>.enabled: false`
 - [ ] Provider switch uses `eq .Values.<resource>.provider "<name>"` pattern
-- [ ] Template file named `<resource>-<provider>.yaml` in correct subfolder
+- [ ] Library named template called `hiroba-platform.<resource>-<provider>` and lives in `_<resource>-<provider>.tpl`
+- [ ] Consumer wrapper file named `<resource>-<provider>.yaml` inside the correct category subfolder
 - [ ] `values.yaml` has `enabled`, `provider`, and all resource-specific keys
-- [ ] `values.schema.json` updated with `additionalProperties: false` and `required`
-- [ ] `checks.yaml` has a CRD guard for any new CRD-backed resource
-- [ ] `_helpers.tpl` name and label helpers used throughout
-- [ ] `tests/` has a test file covering enabled, disabled, and provider variants
+- [ ] Both library reference schema and consumer schema updated with `additionalProperties: false` and `required`
+- [ ] `hiroba-platform.checks` in `_checks.tpl` extended for any new CRD-backed resource
+- [ ] `hiroba-platform.name` / `hiroba-platform.labels` helpers used throughout
+- [ ] Tests in a consumer chart cover enabled, disabled, and provider variants

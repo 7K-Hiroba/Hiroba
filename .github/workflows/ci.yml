@@ -15,10 +15,21 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v5
         with:
-          version: v3.14.0 # helm
+          version: v3.16.3 # helm
 
-      - name: Lint Helm chart templates
+      - name: Lint library charts
         run: |
+          for lib in helm/lib/*/; do
+            if [ -f "$lib/Chart.yaml" ]; then
+              echo "Linting $lib..."
+              helm lint "$lib"
+            fi
+          done
+
+      - name: Lint skeleton consumer charts (offline render)
+        run: |
+          # Skeleton charts depend on the library — wire them to the local
+          # copy and render to catch include/value-surface drift.
           for skeleton in templates/*/skeleton; do
             if [ -d "$skeleton/helm" ]; then
               for chart in "$skeleton"/helm/*/; do
