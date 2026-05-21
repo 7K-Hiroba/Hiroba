@@ -1,4 +1,4 @@
 {
-  "helm/lib/app": "0.1.0",
-  "helm/lib/platform": "0.1.0"
+  "helm/lib/app": "0.2.0",
+  "helm/lib/platform": "0.2.0"
 }
