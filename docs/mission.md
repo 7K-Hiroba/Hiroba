@@ -15,7 +15,7 @@ Hiroba exists to **standardize, containerize, and platform** open-source applica
 ## Principles
 
 ### Open by Default
-Everything we build is open-source under the Apache 2.0 license. Our governance, roadmaps, and decision-making are transparent.
+Everything we build is open-source under the Apache 2.0 license. Our governance, and decision-making are transparent.
 
 ### Security First
 Container images run as non-root. Charts include security contexts by default. We follow best practices even on homelab-grade deployments — your self-hosted infra deserves the same care.

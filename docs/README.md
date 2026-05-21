@@ -4,7 +4,7 @@ This directory contains project-level documentation that is also published to th
 
 ## Contents
 
-- Mission, governance, and roadmap content lives in `website/docs/`
+- Mission and governance content lives in `website/docs/`
 - This directory is for supplementary project docs, ADRs, and notes that may not be published to the website
 
 ## Architecture Decision Records

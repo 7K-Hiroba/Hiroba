@@ -38,7 +38,7 @@ const features = [
   {
     title: 'Community Driven',
     description:
-      'Open governance, transparent roadmaps, and contributions welcome from everyone.',
+      'Open governance and contributions welcome from everyone.',
   },
 ];
 
