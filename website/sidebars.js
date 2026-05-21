@@ -3,7 +3,6 @@ const sidebars = {
   docs: [
     'intro',
     'mission',
-    'roadmap',
     {
       type: 'category',
       label: 'Architecture',

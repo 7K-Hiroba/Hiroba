@@ -75,7 +75,7 @@ Want a chart for an app we don't cover yet? [Open a Chart Request issue](https:/
 
 ### Browse the Documentation
 
-Visit the [Hiroba docs site](https://7kgroup.github.io/hiroba) for guides, roadmaps, and reference material.
+Visit the [Hiroba docs site](https://7kgroup.github.io/hiroba) for guides, and reference material.
 
 ### Run the Docs Site Locally
 

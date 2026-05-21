@@ -12,8 +12,6 @@ permissions:
 
 jobs:
   app-lib:
-    # `ci-helm-library.yml` ships in workflows-library; pin to @v1 once the
-    # next workflows-library release that includes it is cut.
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-library.yml@v1
     with:
       path: helm/lib/app

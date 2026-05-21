@@ -52,11 +52,6 @@ const config = {
             label: 'Documentation',
           },
           {
-            to: '/docs/roadmap',
-            label: 'Roadmap',
-            position: 'left',
-          },
-          {
             href: 'https://github.com/7K-Hiroba/Hiroba',
             label: 'GitHub',
             position: 'right',
@@ -71,7 +66,6 @@ const config = {
             items: [
               { label: 'Getting Started', to: '/docs/intro' },
               { label: 'Mission', to: '/docs/mission' },
-              { label: 'Roadmap', to: '/docs/roadmap' },
             ],
           },
           {
