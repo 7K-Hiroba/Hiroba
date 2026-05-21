@@ -300,6 +300,7 @@ For each target repository, verify:
 - [ ] `AGENT.md` infrastructure sections synced
 - [ ] `LICENSE` synced
 - [ ] **Helm library migration** — `helm/base/templates/` and `helm/platform/templates/` are now thin `{{ include "hiroba-app.<resource>" . }}` wrappers; `Chart.yaml` declares the matching `hiroba-app-lib` / `hiroba-platform-lib` dependency from `oci://harbor.7kgroup.org/7khiroba/charts`. Any local divergence in the previous full templates must be ported into values overrides or kept as bespoke `*.yaml` files that replace the wrapper for that resource only.
+- [ ] **release-please bootstrap fix** — `release-please-config.json` top-level `changelog-type` is `"default"` (not `"github"`). The `github` value calls GitHub's `generate-release-notes` API, which fails with `Invalid previous_tag parameter` on the first run of any new component. `"default"` builds the changelog from commit messages locally and works on first run.
 - [ ] No app-specific **content** was overwritten
 - [ ] Structural changes applied (file moves, renames, new required files)
 - [ ] Structural changes listed in PR description
