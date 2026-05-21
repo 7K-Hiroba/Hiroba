@@ -11,13 +11,20 @@ global:
   # releases of the same app coexist safely. Leave empty to match by name only.
   baseInstance: ""
 
+# -- PostgreSQL database resources
 postgres:
+  # -- Render the database resources
   enabled: false
+  # -- Provider: "cnpg" (CloudNativePG operator)
   provider: cnpg
+  # -- Number of PostgreSQL instances in the cluster
   instances: 1
   storage:
+    # -- Persistent volume size per instance
     size: 10Gi
+    # -- StorageClass for the persistent volumes. Empty uses the cluster default.
     storageClass: ""
+  # -- Resource requests and limits for each PostgreSQL pod
   resources:
     limits:
       cpu: "1"
@@ -25,58 +32,98 @@ postgres:
     requests:
       cpu: 250m
       memory: 256Mi
+  # -- Container image (operator-compatible) used for PostgreSQL
   imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  # -- Database name to create
   database: app
+  # -- Database owner role
   owner: app
   backup:
+    # -- Render a ScheduledBackup + barman ObjectStore
     enabled: false
+    # -- Cron schedule for ScheduledBackup
     schedule: "0 2 * * *"
+    # -- Retention policy passed to barman
     retentionPolicy: "7d"
     garage:
+      # -- GarageCluster resource name to reference
       clusterRef: garage
+      # -- Garage S3 API endpoint (must match the GarageCluster's service)
       endpoint: "http://garage.garage.svc.cluster.local:3900"
 
+# -- S3-compatible object storage
 s3:
+  # -- Render the bucket resources
   enabled: false
+  # -- Provider: "crossplane" | "garage"
   provider: crossplane
+  # -- Bucket name (will be prefixed with app name)
   bucketName: assets
+  # -- Bucket ACL
   acl: private
+  # -- Crossplane-specific settings (provider: crossplane)
   crossplane:
+    # -- AWS region for the bucket
     region: us-east-1
+    # -- ProviderConfig reference for the crossplane AWS provider
     providerConfigRef: aws-provider
     lifecycle:
       enabled: false
       expirationDays: 90
+  # -- Garage-specific settings (provider: garage)
   garage:
+    # -- GarageCluster resource name to reference
     clusterRef: garage
+    # -- Optional bucket quotas (maxSize, maxObjects)
     quotas: {}
+    # -- Optional website hosting configuration
     website: {}
+    # -- Optional bucket lifecycle rules
     lifecycle: {}
 
+# -- ExternalSecret (external-secrets.io) resources
 externalSecrets:
+  # -- Render an ExternalSecret
   enabled: false
+  # -- How often to sync secrets
   refreshInterval: 1h
+  # -- SecretStore or ClusterSecretStore reference
   storeRef:
     name: cluster-secret-store
     kind: ClusterSecretStore
+  # -- Individual secret mappings (`secretKey` / `remoteKey` pairs)
   data: []
+  # -- Pull all keys from a remote path
   dataFrom: []
+  # -- Optional target Secret template for value transformation
   target:
     template: {}
 
+# -- Observability resources
 observability:
   serviceMonitor:
+    # -- Render a Prometheus ServiceMonitor
     enabled: false
+    # -- Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack)
     additionalLabels: {}
+    # -- Service port name to scrape
     port: http
+    # -- Metrics endpoint path
     path: /metrics
+    # -- Scrape interval
     interval: 30s
+    # -- Scrape timeout
     scrapeTimeout: 10s
 
   grafanaDashboard:
+    # -- Ship `dashboards/*.json` as a ConfigMap picked up by Grafana's sidecar
     enabled: false
+    # -- Grafana folder label
     folderLabel: ""
 
   prometheusRules:
+    # -- Render a PrometheusRule. `groups` is `tpl`-rendered so it can reference
+    # `.Release.Namespace`, helper templates, etc.
     enabled: false
+    # -- Rule groups passed straight to the PrometheusRule spec
     groups: []

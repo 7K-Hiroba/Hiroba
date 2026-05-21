@@ -1,0 +1,103 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.versionBadge" . }} {{ template "chart.typeBadge" . }} {{ template "chart.appVersionBadge" . }}
+
+This chart installs the workload (Deployment, Service, HPA, PDB, HTTPRoute). For cross-cutting platform dependencies (secrets, observability, databases), install the companion [`{{ template "chart.name" . }}-platform`](../platform/README.md) chart.
+
+**Documentation:** <https://hiroba.7kgroup.org/docs/apps/{{ template "chart.name" . }}/helm-base>
+
+## TL;DR
+
+```bash
+helm install {{ template "chart.name" . }} \
+  oci://harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }} \
+  --version {{ .Version }}
+```
+
+## Verify the chart signature
+
+Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via the Sigstore public-good Fulcio CA. To verify before installing:
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'github.com/7K-Hiroba/' \
+  harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}:{{ .Version }}
+```
+
+## Configuration examples
+
+**Minimal install** — just override the hostname:
+
+```yaml
+gateway:
+  hostnames:
+    - app.example.com
+```
+
+**Production-ish** — autoscaling + disruption budget + custom Gateway:
+
+```yaml
+replicaCount: 3
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+gateway:
+  parentRefs:
+    - name: public-gateway
+      namespace: gateway-system
+  hostnames:
+    - app.example.com
+```
+
+**Behind a path prefix**:
+
+```yaml
+gateway:
+  hostnames:
+    - example.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /{{ template "chart.name" . }}
+```
+
+## Prerequisites
+
+- Kubernetes 1.24+
+- Gateway API CRDs installed in the cluster (the chart provisions an `HTTPRoute`)
+- A running `Gateway` that your `HTTPRoute` can attach to
+
+## What gets installed
+
+| Resource | Purpose |
+|---|---|
+| `Deployment` | The application pod |
+| `Service` | ClusterIP fronting the deployment |
+| `HTTPRoute` | Gateway API routing |
+| `ServiceAccount` | Pod identity |
+| `HorizontalPodAutoscaler` | Optional — enabled via `autoscaling.enabled` |
+| `PodDisruptionBudget` | Optional — enabled via `podDisruptionBudget.enabled` |
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+All values are also validated against [`values.schema.json`](values.schema.json). Artifact Hub renders the schema as an interactive form on the chart page.
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+## Part of the Hiroba ecosystem
+
+Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba).
+
+{{ template "helm-docs.versionFooter" . }}

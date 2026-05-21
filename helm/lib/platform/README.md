@@ -1,8 +1,13 @@
 # hiroba-platform-lib
 
-Helm **library** chart for Hiroba application *platform* (cross-cutting dependency) charts. It defines named templates for the resources that surround a Hiroba workload but aren't part of its lifecycle — CloudNativePG `Cluster`, S3 `Bucket`s (Crossplane or Garage), `ExternalSecret`, `ServiceMonitor`, Grafana dashboard `ConfigMap`s, `PrometheusRule`, and operator-presence checks.
+Helm library chart for Hiroba application platform (cross-cutting
+dependencies) charts. Defines reusable named templates for CloudNativePG
+Clusters, S3 buckets (Crossplane / Garage), ExternalSecrets, ServiceMonitor,
+Grafana dashboards, PrometheusRules, and operator presence checks.
 
-> Library charts are not installable on their own. Add this as a `dependency` from your application platform chart and include the resources you need.
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+
+> Library charts are not installable on their own. Add this as a `dependency` from your application *platform* chart and include the resources you need.
 
 ## Quick start
 
@@ -16,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-platform-lib
-    version: ^0.1.0
+    version: ^0.2.0
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -24,6 +29,15 @@ Pull the dependency:
 
 ```bash
 helm dependency update
+```
+
+Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via the Sigstore public-good Fulcio CA. To verify the dependency before pulling:
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'github.com/7K-Hiroba/' \
+  harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib:0.2.0
 ```
 
 Wrappers (one per resource, following the Hiroba skeleton convention):
@@ -56,13 +70,9 @@ Wrappers (one per resource, following the Hiroba skeleton convention):
 
 Helper templates safe to reuse from consumer templates: `hiroba-platform.name`, `hiroba-platform.labels`, `hiroba-platform.baseSelectorLabels`.
 
-## Values surface
+## Changelog
 
-[`values.yaml`](values.yaml) ships the reference defaults and [`values.schema.json`](values.schema.json) documents the shape. Library values are **not** merged into the consumer — copy what you need into your own chart and validate there.
-
-## Versioning
-
-Semver, automated via [release-please](https://github.com/googleapis/release-please) in the [Hiroba repo](https://github.com/7K-Hiroba/Hiroba):
+See [`CHANGELOG.md`](CHANGELOG.md). Releases are automated via [release-please](https://github.com/googleapis/release-please) from the [Hiroba](https://github.com/7K-Hiroba/Hiroba) monorepo:
 
 - `fix(helm-platform-lib): ...` → patch
 - `feat(helm-platform-lib): ...` → minor
@@ -70,10 +80,82 @@ Semver, automated via [release-please](https://github.com/googleapis/release-ple
 
 Tagged releases publish the OCI artifact to `oci://harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib`.
 
+## Requirements
+
+Kubernetes: `>=1.24.0-0`
+
+## Values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| externalSecrets | object | `{"data":[],"dataFrom":[],"enabled":false,"refreshInterval":"1h","storeRef":{"kind":"ClusterSecretStore","name":"cluster-secret-store"},"target":{"template":{}}}` | ExternalSecret (external-secrets.io) resources |
+| externalSecrets.data | list | `[]` | Individual secret mappings (`secretKey` / `remoteKey` pairs) |
+| externalSecrets.dataFrom | list | `[]` | Pull all keys from a remote path |
+| externalSecrets.enabled | bool | `false` | Render an ExternalSecret |
+| externalSecrets.refreshInterval | string | `"1h"` | How often to sync secrets |
+| externalSecrets.storeRef | object | `{"kind":"ClusterSecretStore","name":"cluster-secret-store"}` | SecretStore or ClusterSecretStore reference |
+| externalSecrets.target | object | `{"template":{}}` | Optional target Secret template for value transformation |
+| global.appName | string | `"example"` | Application name, used as prefix for all platform resources |
+| global.baseInstance | string | `""` | Release name of the base chart deployment. When set, the ServiceMonitor selector matches `app.kubernetes.io/instance: <baseInstance>` so multiple releases of the same app coexist safely. Leave empty to match by name only. |
+| observability | object | `{"grafanaDashboard":{"enabled":false,"folderLabel":""},"prometheusRules":{"enabled":false,"groups":[]},"serviceMonitor":{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s"}}` | Observability resources |
+| observability.grafanaDashboard.enabled | bool | `false` | Ship `dashboards/*.json` as a ConfigMap picked up by Grafana's sidecar |
+| observability.grafanaDashboard.folderLabel | string | `""` | Grafana folder label |
+| observability.prometheusRules.enabled | bool | `false` | Render a PrometheusRule. `groups` is `tpl`-rendered so it can reference `.Release.Namespace`, helper templates, etc. |
+| observability.prometheusRules.groups | list | `[]` | Rule groups passed straight to the PrometheusRule spec |
+| observability.serviceMonitor.additionalLabels | object | `{}` | Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack) |
+| observability.serviceMonitor.enabled | bool | `false` | Render a Prometheus ServiceMonitor |
+| observability.serviceMonitor.interval | string | `"30s"` | Scrape interval |
+| observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
+| observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
+| observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
+| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
+| postgres.backup.enabled | bool | `false` | Render a ScheduledBackup + barman ObjectStore |
+| postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
+| postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
+| postgres.backup.retentionPolicy | string | `"7d"` | Retention policy passed to barman |
+| postgres.backup.schedule | string | `"0 2 * * *"` | Cron schedule for ScheduledBackup |
+| postgres.database | string | `"app"` | Database name to create |
+| postgres.enabled | bool | `false` | Render the database resources |
+| postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | Container image (operator-compatible) used for PostgreSQL |
+| postgres.instances | int | `1` | Number of PostgreSQL instances in the cluster |
+| postgres.owner | string | `"app"` | Database owner role |
+| postgres.provider | string | `"cnpg"` | Provider: "cnpg" (CloudNativePG operator) |
+| postgres.resources | object | `{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}}` | Resource requests and limits for each PostgreSQL pod |
+| postgres.storage.size | string | `"10Gi"` | Persistent volume size per instance |
+| postgres.storage.storageClass | string | `""` | StorageClass for the persistent volumes. Empty uses the cluster default. |
+| s3 | object | `{"acl":"private","bucketName":"assets","crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage |
+| s3.acl | string | `"private"` | Bucket ACL |
+| s3.bucketName | string | `"assets"` | Bucket name (will be prefixed with app name) |
+| s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane-specific settings (provider: crossplane) |
+| s3.crossplane.providerConfigRef | string | `"aws-provider"` | ProviderConfig reference for the crossplane AWS provider |
+| s3.crossplane.region | string | `"us-east-1"` | AWS region for the bucket |
+| s3.enabled | bool | `false` | Render the bucket resources |
+| s3.garage | object | `{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}}` | Garage-specific settings (provider: garage) |
+| s3.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
+| s3.garage.lifecycle | object | `{}` | Optional bucket lifecycle rules |
+| s3.garage.quotas | object | `{}` | Optional bucket quotas (maxSize, maxObjects) |
+| s3.garage.website | object | `{}` | Optional website hosting configuration |
+| s3.provider | string | `"crossplane"` | Provider: "crossplane" | "garage" |
+
+> Library values are **not** merged into the consumer chart. They are shipped as a reference — copy what you need into your own `values.yaml` and validate via the bundled [`values.schema.json`](values.schema.json).
+
 ## Companion chart
 
 For the workload itself (Deployment, Service, HPA, PDB, HTTPRoute) see [`hiroba-app-lib`](../app/README.md).
 
+## Maintainers
+
+| Name | Email | Url |
+| ---- | ------ | --- |
+| 7k-hiroba |  | <https://github.com/7K-Hiroba> |
+
+## Source Code
+
+* <https://github.com/7K-Hiroba/Hiroba>
+
 ## Documentation
 
 <https://hiroba.7kgroup.org/docs/architecture/helm-libraries>
+
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

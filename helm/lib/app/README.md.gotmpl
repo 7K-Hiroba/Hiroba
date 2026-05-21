@@ -1,0 +1,89 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.versionBadge" . }} {{ template "chart.typeBadge" . }} {{ template "chart.appVersionBadge" . }}
+
+> Library charts are not installable on their own. Add this as a `dependency` from your application chart and include the resources you need.
+
+## Quick start
+
+`Chart.yaml`:
+
+```yaml
+apiVersion: v2
+name: myapp
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: {{ template "chart.name" . }}
+    version: ^{{ .Version }}
+    repository: oci://harbor.7kgroup.org/7khiroba/charts
+```
+
+Pull the dependency:
+
+```bash
+helm dependency update
+```
+
+Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via the Sigstore public-good Fulcio CA. To verify the dependency before pulling:
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'github.com/7K-Hiroba/' \
+  harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}:{{ .Version }}
+```
+
+`templates/deployment.yaml` (one thin wrapper per resource, following the Hiroba skeleton convention):
+
+```yaml
+{{`{{- include "hiroba-app.deployment" . }}`}}
+```
+
+Repeat for `service.yaml`, `httproute.yaml`, `hpa.yaml`, `pdb.yaml`, `serviceaccount.yaml`. Override individual resources by replacing the wrapper with your own YAML — the library renders nothing on its own.
+
+## Named templates
+
+| Template | Renders | Gated on |
+| --- | --- | --- |
+| `hiroba-app.deployment` | `apps/v1` Deployment | always |
+| `hiroba-app.service` | `v1` Service | always |
+| `hiroba-app.serviceaccount` | `v1` ServiceAccount | `serviceAccount.create` |
+| `hiroba-app.hpa` | `autoscaling/v2` HorizontalPodAutoscaler | `autoscaling.enabled` |
+| `hiroba-app.pdb` | `policy/v1` PodDisruptionBudget | `podDisruptionBudget.enabled` |
+| `hiroba-app.httproute` | `gateway.networking.k8s.io/v1` HTTPRoute | `gateway.enabled` |
+
+Helper templates used internally and safe to re-use from consumer templates: `hiroba-app.name`, `hiroba-app.fullname`, `hiroba-app.chart`, `hiroba-app.labels`, `hiroba-app.selectorLabels`, `hiroba-app.serviceAccountName`.
+
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md). Releases are automated via [release-please](https://github.com/googleapis/release-please) from the [Hiroba](https://github.com/7K-Hiroba/Hiroba) monorepo:
+
+- `fix(helm-app-lib): ...` → patch
+- `feat(helm-app-lib): ...` → minor
+- `feat(helm-app-lib)!: ...` or `BREAKING CHANGE:` → major
+
+Tagged releases publish the OCI artifact to `oci://harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}`.
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+> Library values are **not** merged into the consumer chart. They are shipped as a reference — copy what you need into your own `values.yaml` and validate via the bundled [`values.schema.json`](values.schema.json).
+
+## Companion chart
+
+For cross-cutting platform dependencies (ESO, CNPG, ServiceMonitor, S3 buckets) see [`hiroba-platform-lib`](../platform/README.md).
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+## Documentation
+
+<https://hiroba.7kgroup.org/docs/architecture/helm-libraries>
+
+{{ template "helm-docs.versionFooter" . }}

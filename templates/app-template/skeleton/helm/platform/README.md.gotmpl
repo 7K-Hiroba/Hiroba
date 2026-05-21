@@ -1,0 +1,124 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.versionBadge" . }} {{ template "chart.typeBadge" . }} {{ template "chart.appVersionBadge" . }}
+
+Install this **alongside** the base chart, typically in the same namespace.
+
+{{- /* Chart name post-scaffold is `<app>-platform`; strip the suffix for doc URLs. */ -}}
+{{- $appName := trimSuffix "-platform" .Name -}}
+**Documentation:** <https://hiroba.7kgroup.org/docs/apps/{{ $appName }}/helm-platform>
+
+## TL;DR
+
+```bash
+helm install {{ template "chart.name" . }} \
+  oci://harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }} \
+  --version {{ .Version }}
+```
+
+## Verify the chart signature
+
+Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via the Sigstore public-good Fulcio CA. To verify before installing:
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'github.com/7K-Hiroba/' \
+  harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}:{{ .Version }}
+```
+
+## Configuration examples
+
+**Bare ServiceMonitor only**:
+
+```yaml
+observability:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+```
+
+**PostgreSQL with daily Garage-backed backups**:
+
+```yaml
+postgres:
+  enabled: true
+  instances: 2
+  storage:
+    size: 20Gi
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retentionPolicy: "14d"
+```
+
+**App secrets sourced from an external store**:
+
+```yaml
+externalSecrets:
+  enabled: true
+  storeRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  data:
+    - secretKey: DATABASE_URL
+      remoteKey: {{ trimSuffix "-platform" .Name }}/db
+      property: url
+    - secretKey: API_KEY
+      remoteKey: {{ trimSuffix "-platform" .Name }}/api
+      property: key
+```
+
+## Prerequisites
+
+- Kubernetes 1.24+
+- [External Secrets Operator](https://external-secrets.io/) — for the `ExternalSecret` resource
+- [Prometheus Operator](https://prometheus-operator.dev/) — for the `ServiceMonitor` resource
+- Grafana with dashboard sidecar enabled (optional, for shipped dashboards)
+- [CloudNativePG](https://cloudnative-pg.io/) — if enabling the PostgreSQL example
+- [Crossplane](https://www.crossplane.io/) — if enabling the S3 example
+
+## What gets installed
+
+| Resource | Purpose |
+|---|---|
+| `ExternalSecret` | Sources app secrets from your secret backend |
+| `ServiceMonitor` | Scrape config for the workload's metrics endpoint |
+| Grafana dashboards | Shipped as `ConfigMap`s in `dashboards/`, picked up by the Grafana sidecar |
+| `Cluster` (CNPG) | Optional — PostgreSQL database, enabled via values |
+| Crossplane `Bucket` | Optional — S3-compatible object storage, enabled via values |
+
+The chart is split so that **workload-lifecycle** resources (Deployment, HPA, PDB, HTTPRoute) live in the [base chart](../base/README.md), while **cross-cutting dependencies** (ESO, ServiceMonitor, dashboards, DB, storage) live here. This keeps each chart focused and lets operators opt out of platform wiring without losing the app.
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+Full schema in [`values.schema.json`](values.schema.json). Artifact Hub renders the schema as an interactive form.
+
+## Uninstall caveats
+
+`helm uninstall` does **not** clean up everything this chart provisions. Operators intentionally keep stateful resources around so they're not wiped by accident — you must remove them by hand:
+
+| Resource | What stays | How to remove |
+|---|---|---|
+| CNPG `Cluster` PVCs | PostgreSQL data volumes | `kubectl delete pvc -l cnpg.io/cluster={{ trimSuffix "-platform" .Name }}` |
+| Garage backup bucket | WAL archives / base backups | Delete the `GarageBucket` resource, then the bucket contents |
+| Crossplane `Bucket` | S3 bucket and its contents | Set `deletionPolicy: Delete` *before* uninstall, or remove the bucket manually after |
+| `ExternalSecret` target | The synced `Secret` in-cluster | `kubectl delete secret <target-name>` |
+| Grafana dashboard ConfigMap | The dashboard JSON (no impact, but lingers) | `kubectl delete cm -l grafana_dashboard=1 -l app.kubernetes.io/instance=<release>` |
+
+Tip: do a dry run with `helm uninstall --dry-run` first to see what *will* be removed.
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+## Part of the Hiroba ecosystem
+
+Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba).
+
+{{ template "helm-docs.versionFooter" . }}
