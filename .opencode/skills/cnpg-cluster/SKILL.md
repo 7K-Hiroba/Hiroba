@@ -12,6 +12,16 @@ metadata:
 
 Standards and required patterns for every `postgresql.cnpg.io/v1` Cluster resource in the platform chart.
 
+## Where the template lives
+
+The Cluster template (plus the companion `GarageBucket` / `GarageKey` / barman `ObjectStore` resources for backups) is defined as the `hiroba-platform.cnpg-cluster` named template in `helm/lib/platform/templates/database/_cnpg-cluster.tpl` inside the Hiroba repo. The accompanying `ScheduledBackup` is `hiroba-platform.cnpg-scheduled-backup` in `database/_cnpg-scheduled-backup.tpl`. Scaffolded apps only ship one-line wrappers under `helm/platform/templates/database/`:
+
+```yaml
+{{- include "hiroba-platform.cnpg-cluster" . }}
+```
+
+Edits to the resource itself go in the library; only override a wrapper when one specific app needs a divergent shape. Library bumps use `fix(helm-platform-lib):` / `feat(helm-platform-lib):`.
+
 ## Mandatory fields
 
 Every Cluster **must** include all of the following. Missing any one is a blocking error.
@@ -81,7 +91,7 @@ When backup is enabled, **three resources** are required:
 plugins:
   - name: barman-cloud.cloudnative-pg.io
     parameters:
-      barmanObjectName: {{ include "platform.name" . }}-pg-barman
+      barmanObjectName: {{ include "hiroba-platform.name" . }}-pg-barman
 
 backup:
   retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
@@ -95,12 +105,12 @@ Emitted in the same file (`cnpg-cluster.yaml`) as a second YAML document, gated 
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: {{ include "platform.name" . }}-pg-barman
+  name: {{ include "hiroba-platform.name" . }}-pg-barman
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   configuration:
-    destinationPath: "s3://{{ include "platform.name" . }}-pg-backups/"
+    destinationPath: "s3://{{ include "hiroba-platform.name" . }}-pg-backups/"
     endpointURL: {{ .Values.postgres.backup.garage.endpoint | quote }}
     s3Credentials:
       accessKeyId:
@@ -131,7 +141,7 @@ The `region` reference is **mandatory for Garage**. Without it, Garage rejects b
 ### `destinationPath`
 
 - Must be an `s3://` URI.
-- Convention: `s3://<platform.name>-pg-backups/`.
+- Convention: `s3://<hiroba-platform.name>-pg-backups/`.
 - Do not use a local path or a generic bucket name that could collide across apps.
 
 ### `endpointURL`
@@ -167,18 +177,18 @@ When backup is enabled, a `postgresql.cnpg.io/v1` `ScheduledBackup` resource mus
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: {{ include "platform.name" . }}-pg-backup
+  name: {{ include "hiroba-platform.name" . }}-pg-backup
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.postgres.backup.schedule | quote }}
   backupOwnerReference: self
   cluster:
-    name: {{ include "platform.name" . }}-pg
+    name: {{ include "hiroba-platform.name" . }}-pg
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      barmanObjectName: {{ include "platform.name" . }}-pg-barman
+      barmanObjectName: {{ include "hiroba-platform.name" . }}-pg-barman
 ```
 
 Gate with `{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled }}`.
@@ -187,11 +197,11 @@ The `pluginConfiguration` block is mandatory — without it the ScheduledBackup 
 
 ## Labels
 
-All resources must use `platform.labels` from `_helpers.tpl`:
+All resources must use `hiroba-platform.labels` from `_helpers.tpl`:
 
 ```yaml
 labels:
-  {{- include "platform.labels" . | nindent 4 }}
+  {{- include "hiroba-platform.labels" . | nindent 4 }}
 ```
 
 ## CRD capability check

@@ -99,7 +99,6 @@
             "clusterRef": { "type": "string" },
             "quotas": {
               "type": "object",
-              "required": ["name"],
               "properties": {
                 "maxSize": { "type": "string" },
                 "maxObjects": { "type": "integer" }
@@ -213,6 +212,10 @@
         }
       },
       "additionalProperties": false
+    },
+    "hiroba-platform-lib": {
+      "description": "Subchart values override slot — empty by default; library charts have no consumable values.",
+      "type": "object"
     }
   },
   "additionalProperties": false

@@ -12,13 +12,23 @@ metadata:
 
 Standards for every `external-secrets.io/v1` ExternalSecret resource in the platform chart.
 
+## Where the template lives
+
+The ExternalSecret template is the `hiroba-platform.external-secret` named template in `helm/lib/platform/templates/secrets/_external-secret.tpl` inside the Hiroba repo. Scaffolded apps only ship a one-line wrapper at `helm/platform/templates/secrets/external-secret.yaml`:
+
+```yaml
+{{- include "hiroba-platform.external-secret" . }}
+```
+
+Edits to the resource shape go in the library; library bumps use `fix(helm-platform-lib):` / `feat(helm-platform-lib):`. The corresponding CRD guard lives in `hiroba-platform.checks` (`_checks.tpl`).
+
 ## API version
 
 Always `external-secrets.io/v1`. Do not use `v1beta1`.
 
 ## Gating
 
-The ExternalSecret is gated by `externalSecrets.enabled` (default `false`). The CRD guard in `checks.yaml` enforces the operator is installed before this can be enabled.
+The ExternalSecret is gated by `externalSecrets.enabled` (default `false`). The CRD guard in `hiroba-platform.checks` enforces the operator is installed before this can be enabled.
 
 ## Standard shape
 
@@ -26,16 +36,16 @@ The ExternalSecret is gated by `externalSecrets.enabled` (default `false`). The 
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: {{ include "platform.name" . }}-secrets
+  name: {{ include "hiroba-platform.name" . }}-secrets
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   refreshInterval: {{ .Values.externalSecrets.refreshInterval }}
   secretStoreRef:
     name: {{ .Values.externalSecrets.storeRef.name }}
     kind: {{ .Values.externalSecrets.storeRef.kind }}
   target:
-    name: {{ include "platform.name" . }}-secrets
+    name: {{ include "hiroba-platform.name" . }}-secrets
     creationPolicy: Owner
     {{- with .Values.externalSecrets.target.template }}
     template:
@@ -53,7 +63,7 @@ spec:
 
 ## Naming convention
 
-The target Kubernetes Secret is named `{{ include "platform.name" . }}-secrets`. This is the name that application Deployments reference via `envFrom` or `env.valueFrom`. Do not deviate from this pattern without updating the base chart values as well.
+The target Kubernetes Secret is named `{{ include "hiroba-platform.name" . }}-secrets`. This is the name that application Deployments reference via `envFrom` or `env.valueFrom`. Do not deviate from this pattern without updating the base chart values as well.
 
 ## SecretStore reference
 
@@ -95,7 +105,7 @@ Note the double-braces escaping — the outer `{{ }}` is Helm, the inner `{{ `{{
 
 - [ ] API version is `external-secrets.io/v1`
 - [ ] Resource gated by `externalSecrets.enabled`
-- [ ] Target Secret named `{{ include "platform.name" . }}-secrets`
+- [ ] Target Secret named `{{ include "hiroba-platform.name" . }}-secrets`
 - [ ] `creationPolicy: Owner` set
 - [ ] `refreshInterval` sourced from values, non-zero
 - [ ] `storeRef` sourced from values, not hardcoded

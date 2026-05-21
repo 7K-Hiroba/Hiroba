@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "hiroba-platform-lib values reference",
+  "description": "Reference schema for the value surface consumed by hiroba-platform-lib named templates. Library values are NOT merged into the consumer; consumer charts should ship and validate their own values.schema.json (this file is a copy-paste starting point).",
+  "type": "object",
+  "required": ["global"],
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": ["appName"],
+      "properties": {
+        "appName": { "type": "string", "minLength": 1 },
+        "baseInstance": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "postgres": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "enum": ["cnpg"] },
+        "instances": { "type": "integer", "minimum": 1 },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$" },
+            "storageClass": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "resources": { "type": "object" },
+        "imageName": { "type": "string" },
+        "database": { "type": "string" },
+        "owner": { "type": "string" },
+        "backup": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "schedule": { "type": "string" },
+            "retentionPolicy": { "type": "string" },
+            "garage": {
+              "type": "object",
+              "required": ["clusterRef", "endpoint"],
+              "properties": {
+                "clusterRef": { "type": "string" },
+                "endpoint": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
+        "bucketName": { "type": "string" },
+        "acl": { "type": "string" },
+        "crossplane": { "type": "object" },
+        "garage": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "externalSecrets": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "refreshInterval": { "type": "string" },
+        "storeRef": {
+          "type": "object",
+          "required": ["name", "kind"],
+          "properties": {
+            "name": { "type": "string" },
+            "kind": { "type": "string", "enum": ["SecretStore", "ClusterSecretStore"] }
+          },
+          "additionalProperties": false
+        },
+        "data": { "type": "array" },
+        "dataFrom": { "type": "array" },
+        "target": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "serviceMonitor": { "type": "object" },
+        "grafanaDashboard": { "type": "object" },
+        "prometheusRules": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

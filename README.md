@@ -19,13 +19,17 @@ Great open-source software deserves packaging that just works on a single-node c
 
 ```
 hiroba/
+├── helm/
+│   └── lib/
+│       ├── app/                       # hiroba-app-lib  — Helm library (workload-lifecycle templates)
+│       └── platform/                  # hiroba-platform-lib — Helm library (cross-cutting deps)
 ├── templates/
 │   ├── app-template/                  # Application template
 │   │   ├── template.yaml              # Template definition (parameters, steps)
 │   │   └── skeleton/                  # App repo structure
 │   │       ├── helm/
-│   │       │   ├── base/              # Core k8s resources (Deployment, Service, Ingress)
-│   │       │   └── platform/          # Platform deps (CNPG, S3, Keycloak via Crossplane)
+│   │       │   ├── base/              # Consumer chart — depends on hiroba-app-lib
+│   │       │   └── platform/          # Consumer chart — depends on hiroba-platform-lib
 │   │       ├── Dockerfile
 │   │       ├── crossplane/             # App-specific Crossplane compositions
 │   │       ├── gitops/
@@ -42,6 +46,8 @@ hiroba/
 
 - **Platform chart** (`helm/platform/`) — Hiroba's focus. Always custom. Wires in databases (CNPG), storage (S3), auth (Keycloak), and observability using cluster operators — plug-and-play infrastructure without manual setup.
 - **Base chart** (`helm/base/`) — The application itself. Often just an upstream third-party Helm chart used as a dependency — Hiroba doesn't rewrite what already works.
+
+Template content for both charts lives in two **Helm library charts** in this repo — `hiroba-app-lib` and `hiroba-platform-lib`, published to `oci://harbor.7kgroup.org/7khiroba/charts`. Scaffolded apps depend on the libraries and ship only thin per-resource wrappers, so a fix or feature in one place propagates to every consumer via Renovate. See [Helm Libraries](docs/architecture/helm-libraries.md).
 
 ## Quick Start
 

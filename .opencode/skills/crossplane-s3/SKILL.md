@@ -12,11 +12,22 @@ metadata:
 
 Standards for all S3 object storage resources under `helm/platform/templates/storage/`.
 
+## Where the templates live
+
+S3 templates are defined as named templates in the `hiroba-platform-lib` library inside the Hiroba repo:
+
+| Provider | Library file | Named template | Consumer wrapper |
+| --- | --- | --- | --- |
+| Crossplane | `helm/lib/platform/templates/storage/_s3-crossplane.tpl` | `hiroba-platform.s3-crossplane` | `helm/platform/templates/storage/s3-crossplane.yaml` |
+| Garage | `helm/lib/platform/templates/storage/_s3-garage.tpl` | `hiroba-platform.s3-garage` | `helm/platform/templates/storage/s3-garage.yaml` |
+
+Each consumer wrapper is a one-line include. Edits to the resource shape go in the library; library bumps use `fix(helm-platform-lib):` / `feat(helm-platform-lib):`.
+
 ## Provider switch
 
 S3 resources use a `provider` enum with two supported values:
 
-| `s3.provider` | Template file | Backend |
+| `s3.provider` | Wrapper file | Backend |
 | --- | --- | --- |
 | `crossplane` | `storage/s3-crossplane.yaml` | AWS S3 via Crossplane AWS provider |
 | `garage` | `storage/s3-garage.yaml` | Self-hosted Garage via garage-operator CRDs |
@@ -43,9 +54,9 @@ Gate each template:
 apiVersion: s3.aws.crossplane.io/v1beta1
 kind: Bucket
 metadata:
-  name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+  name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   forProvider:
     region: {{ .Values.s3.crossplane.region }}
@@ -63,7 +74,7 @@ spec:
 
 ### Bucket naming
 
-Bucket name is `{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}`. This prevents collisions across apps sharing a cluster. Never use a bare `bucketName` without the app prefix.
+Bucket name is `{{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}`. This prevents collisions across apps sharing a cluster. Never use a bare `bucketName` without the app prefix.
 
 ### ACL
 
@@ -87,9 +98,9 @@ Garage is a self-hosted S3-compatible object store managed by the [garage-operat
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
 metadata:
-  name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+  name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
@@ -115,20 +126,20 @@ The GarageKey creates S3 credentials and auto-generates a Secret containing `acc
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageKey
 metadata:
-  name: {{ include "platform.name" . }}-s3-key
+  name: {{ include "hiroba-platform.name" . }}-s3-key
   labels:
-    {{- include "platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
-  name: "{{ include "platform.name" . }} S3 Key"
+  name: "{{ include "hiroba-platform.name" . }} S3 Key"
   secretTemplate:
-    name: {{ include "platform.name" . }}-s3-key
+    name: {{ include "hiroba-platform.name" . }}-s3-key
     additionalData:
-      S3_BUCKET: "{{ include "platform.name" . }}-{{ .Values.s3.bucketName }}"
+      S3_BUCKET: "{{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}"
   bucketPermissions:
     - bucketRef:
-        name: {{ include "platform.name" . }}-{{ .Values.s3.bucketName }}
+        name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
       read: true
       write: true
 ```
@@ -178,7 +189,7 @@ The operator auto-generates a Secret from the `GarageKey` spec. No pre-provision
 
 - [ ] Template gated by both `s3.enabled` AND `eq .Values.s3.provider "<name>"`
 - [ ] Template file named `s3-<provider>.yaml`
-- [ ] Bucket name includes `platform.name` prefix
+- [ ] Bucket name includes `hiroba-platform.name` prefix
 - [ ] `acl` sourced from values, not hardcoded
 - [ ] Crossplane: `providerConfigRef` sourced from values
 - [ ] Garage: `clusterRef` sourced from values, required in schema
