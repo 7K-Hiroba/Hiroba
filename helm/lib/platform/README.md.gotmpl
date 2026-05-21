@@ -1,0 +1,98 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.versionBadge" . }} {{ template "chart.typeBadge" . }} {{ template "chart.appVersionBadge" . }}
+
+> Library charts are not installable on their own. Add this as a `dependency` from your application *platform* chart and include the resources you need.
+
+## Quick start
+
+`Chart.yaml`:
+
+```yaml
+apiVersion: v2
+name: myapp-platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: {{ template "chart.name" . }}
+    version: ^{{ .Version }}
+    repository: oci://harbor.7kgroup.org/7khiroba/charts
+```
+
+Pull the dependency:
+
+```bash
+helm dependency update
+```
+
+Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via the Sigstore public-good Fulcio CA. To verify the dependency before pulling:
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'github.com/7K-Hiroba/' \
+  harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}:{{ .Version }}
+```
+
+Wrappers (one per resource, following the Hiroba skeleton convention):
+
+```yaml
+# templates/checks.yaml
+{{`{{- include "hiroba-platform.checks" . }}`}}
+```
+
+```yaml
+# templates/database/cnpg-cluster.yaml
+{{`{{- include "hiroba-platform.cnpg-cluster" . }}`}}
+```
+
+…and so on. Delete or replace any wrapper whose resource you don't want.
+
+## Named templates
+
+| Template | Renders | Gated on |
+| --- | --- | --- |
+| `hiroba-platform.checks` | Render-time `fail` calls when an enabled feature's Operator CRD is missing | always (no-op if all features disabled) |
+| `hiroba-platform.cnpg-cluster` | CNPG `Cluster` + optional Garage backup bucket / key / barman ObjectStore | `postgres.enabled` (+ `postgres.backup.enabled`) |
+| `hiroba-platform.cnpg-scheduled-backup` | CNPG `ScheduledBackup` | `postgres.enabled` AND `postgres.backup.enabled` |
+| `hiroba-platform.s3-crossplane` | Crossplane S3 `Bucket` | `s3.enabled` AND `s3.provider==crossplane` |
+| `hiroba-platform.s3-garage` | Garage `GarageBucket` + `GarageKey` | `s3.enabled` AND `s3.provider==garage` |
+| `hiroba-platform.external-secret` | external-secrets.io `ExternalSecret` | `externalSecrets.enabled` |
+| `hiroba-platform.service-monitor` | Prometheus `ServiceMonitor` targeting the base chart's pods | `observability.serviceMonitor.enabled` |
+| `hiroba-platform.grafana-dashboard` | `ConfigMap` shipping consumer's `dashboards/*.json` | `observability.grafanaDashboard.enabled` |
+| `hiroba-platform.prometheus-rules` | Prometheus `PrometheusRule` (`groups` are `tpl`-rendered) | `observability.prometheusRules.enabled` |
+
+Helper templates safe to reuse from consumer templates: `hiroba-platform.name`, `hiroba-platform.labels`, `hiroba-platform.baseSelectorLabels`.
+
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md). Releases are automated via [release-please](https://github.com/googleapis/release-please) from the [Hiroba](https://github.com/7K-Hiroba/Hiroba) monorepo:
+
+- `fix(helm-platform-lib): ...` → patch
+- `feat(helm-platform-lib): ...` → minor
+- `feat(helm-platform-lib)!: ...` or `BREAKING CHANGE:` → major
+
+Tagged releases publish the OCI artifact to `oci://harbor.7kgroup.org/7khiroba/charts/{{ template "chart.name" . }}`.
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+> Library values are **not** merged into the consumer chart. They are shipped as a reference — copy what you need into your own `values.yaml` and validate via the bundled [`values.schema.json`](values.schema.json).
+
+## Companion chart
+
+For the workload itself (Deployment, Service, HPA, PDB, HTTPRoute) see [`hiroba-app-lib`](../app/README.md).
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+## Documentation
+
+<https://hiroba.7kgroup.org/docs/architecture/helm-libraries>
+
+{{ template "helm-docs.versionFooter" . }}

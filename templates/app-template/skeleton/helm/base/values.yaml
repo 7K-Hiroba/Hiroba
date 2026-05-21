@@ -1,28 +1,41 @@
 # Default values for ${{ values.name }}
 
+# -- Number of pod replicas. Ignored when `autoscaling.enabled` is true.
 replicaCount: 1
 
 image:
+  # -- Container image repository
   repository: ghcr.io/7k-hiroba/${{ values.name }}
+  # -- Image pull policy. One of: Always, IfNotPresent, Never
   pullPolicy: IfNotPresent
+  # -- Image tag. Defaults to `.Chart.AppVersion` when unset.
   tag: ""
 
+# -- Secrets used to pull from private registries
 imagePullSecrets: []
+# -- Override the chart name used in resource names
 nameOverride: ""
+# -- Fully override the generated fullname used in resource names
 fullnameOverride: ""
 
 serviceAccount:
+  # -- Create a dedicated ServiceAccount for the workload
   create: true
+  # -- Annotations to add to the ServiceAccount
   annotations: {}
+  # -- Name to use. If unset and `create: true`, a name is generated from fullname.
   name: ""
 
+# -- Annotations applied to every pod
 podAnnotations: {}
 
+# -- Pod-level security context
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   fsGroup: 1000
 
+# -- Container-level security context
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
@@ -31,12 +44,17 @@ securityContext:
       - ALL
 
 service:
+  # -- Service type. One of: ClusterIP, NodePort, LoadBalancer
   type: ClusterIP
+  # -- Service port exposed inside the cluster
   port: 80
+  # -- Container port the service targets (named `http`)
   targetPort: 8080
 
 gateway:
+  # -- Render the Gateway API `HTTPRoute` resource
   enabled: true
+  # -- Annotations applied to the HTTPRoute
   annotations: {}
   # -- Parent Gateway references
   parentRefs:
@@ -59,6 +77,7 @@ gateway:
   #            - name: X-Forwarded-Prefix
   #              value: /api
 
+# -- Pod resource requests and limits
 resources:
   limits:
     cpu: 500m
@@ -67,6 +86,7 @@ resources:
     cpu: 100m
     memory: 128Mi
 
+# -- Liveness probe (passed straight to the container spec)
 livenessProbe:
   httpGet:
     path: /healthz
@@ -74,6 +94,7 @@ livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 10
 
+# -- Readiness probe (passed straight to the container spec)
 readinessProbe:
   httpGet:
     path: /readyz
@@ -82,9 +103,13 @@ readinessProbe:
   periodSeconds: 5
 
 autoscaling:
+  # -- Render a HorizontalPodAutoscaler. When true, `replicaCount` is ignored.
   enabled: false
+  # -- Minimum replicas the HPA may scale to
   minReplicas: 1
+  # -- Maximum replicas the HPA may scale to
   maxReplicas: 10
+  # -- Target average CPU utilization across replicas
   targetCPUUtilizationPercentage: 80
 
 # -- Pod Disruption Budget. Only meaningful when running more than one replica
@@ -95,9 +120,15 @@ podDisruptionBudget:
   minAvailable: 1
   # maxUnavailable: 1
 
+# -- nodeSelector applied to the workload pods
 nodeSelector: {}
+# -- tolerations applied to the workload pods
 tolerations: []
+# -- affinity applied to the workload pods
 affinity: {}
+# -- Extra environment variables, passed directly to the container
 env: []
+# -- Extra volumes added to the pod spec
 extraVolumes: []
+# -- Extra volume mounts added to the workload container
 extraVolumeMounts: []
