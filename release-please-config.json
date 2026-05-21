@@ -15,7 +15,7 @@
     }
   },
   "separate-pull-requests": false,
-  "changelog-type": "github",
+  "changelog-type": "default",
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true
 }
