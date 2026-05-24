@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.0...helm-app-lib-v0.2.1) (2026-05-21)
+
+
+### Features
+
+* add helm-docs generation to skeleton charts ([#57](https://github.com/7K-Hiroba/Hiroba/issues/57)) ([c7025bb](https://github.com/7K-Hiroba/Hiroba/commit/c7025bb1a744672b69fa229f41b964cfa34714a4))
+
 ## [0.2.0](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.1.0...helm-app-lib-v0.2.0) (2026-05-21)
 
 

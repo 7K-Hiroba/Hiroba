@@ -6,7 +6,7 @@ description: |
   HPA, PDB, and Gateway API HTTPRoute. Consumer charts add this as a
   dependency and include the resources they need.
 type: library
-version: 0.2.0
+version: 0.2.1
 appVersion: "0.1.0"
 kubeVersion: ">=1.24.0-0"
 home: https://hiroba.7kgroup.org
