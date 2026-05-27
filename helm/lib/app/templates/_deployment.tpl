@@ -37,6 +37,16 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if and .Values.config.enabled .Values.config.overrideArgs }}
+          args:
+            {{- if .Values.config.args }}
+            {{- toYaml .Values.config.args | nindent 12 }}
+            {{- else if .Values.config.configs }}
+            - "packages/backend"
+            - "--config"
+            - "{{ (index .Values.config.configs 0).mountPath }}"
+            {{- end }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
@@ -55,13 +65,32 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.extraVolumeMounts }}
+          {{- if or .Values.config.enabled .Values.extraVolumeMounts }}
           volumeMounts:
+            {{- if .Values.config.enabled }}
+            {{- range $i, $cfg := .Values.config.configs }}
+            - name: config-{{ $i }}
+              mountPath: {{ $cfg.mountPath }}
+              subPath: {{ $cfg.subPath }}
+              readOnly: {{ $cfg.readOnly }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
-      {{- with .Values.extraVolumes }}
+      {{- if or .Values.config.enabled .Values.extraVolumes }}
       volumes:
+        {{- if .Values.config.enabled }}
+        {{- range $i, $cfg := .Values.config.configs }}
+        - name: config-{{ $i }}
+          configMap:
+            name: {{ default (printf "%s-app-config" (include "hiroba-app.fullname" $)) $cfg.configMapName }}
+        {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
