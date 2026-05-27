@@ -135,6 +135,8 @@ config:
 
 # -- Extra environment variables, passed directly to the container
 env: []
+# -- envFrom sources (ConfigMapRef / SecretRef) injected into the container
+envFrom: []
 # -- Extra volumes added to the pod spec
 extraVolumes: []
 # -- Extra volume mounts added to the workload container
