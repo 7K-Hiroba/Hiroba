@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/example/app
+  pullPolicy: IfNotPresent
+  tag: ""
+
+serviceAccount:
+  create: true
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+gateway:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false
+
+# -- Container args override. When empty, the container uses the image's default CMD.
+args: []
+
+config:
+  enabled: false
+  configs:
+    - configMapName: ""
+      mountPath: "/app/app-config.yaml"
+      subPath: "app-config.yaml"
+      readOnly: true

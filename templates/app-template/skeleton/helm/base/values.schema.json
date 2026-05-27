@@ -175,6 +175,31 @@
     "env": { "type": "array" },
     "extraVolumes": { "type": "array" },
     "extraVolumeMounts": { "type": "array" },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Container args override. When empty, the container uses the image's default CMD."
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "configs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "configMapName": { "type": "string" },
+              "mountPath": { "type": "string" },
+              "subPath": { "type": "string" },
+              "readOnly": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "hiroba-app-lib": {
       "description": "Subchart values override slot — empty by default; library charts have no consumable values.",
       "type": "object"
