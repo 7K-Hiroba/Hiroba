@@ -37,15 +37,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if and .Values.config.enabled .Values.config.overrideArgs }}
+          {{- with .Values.args }}
           args:
-            {{- if .Values.config.args }}
-            {{- toYaml .Values.config.args | nindent 12 }}
-            {{- else if .Values.config.configs }}
-            - "packages/backend"
-            - "--config"
-            - "{{ (index .Values.config.configs 0).mountPath }}"
-            {{- end }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           ports:
             - name: http

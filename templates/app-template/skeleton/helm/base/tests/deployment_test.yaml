@@ -111,7 +111,7 @@ tests:
           path: spec.template.metadata.annotations.prometheus\\.io/scrape
           value: "true"
 
-  - it: mounts config volume and overrides args when config is enabled
+  - it: mounts config volume when config is enabled
     set:
       config.enabled: true
     asserts:
@@ -128,12 +128,6 @@ tests:
             mountPath: /app/app-config.yaml
             subPath: app-config.yaml
             readOnly: true
-      - equal:
-          path: spec.template.spec.containers[0].args
-          value:
-            - "packages/backend"
-            - "--config"
-            - "/app/app-config.yaml"
 
   - it: does not render config when disabled
     set:
@@ -145,8 +139,6 @@ tests:
             name: config-0
       - isNull:
           path: spec.template.spec.containers[0].volumeMounts
-      - isNull:
-          path: spec.template.spec.containers[0].args
 
   - it: uses custom configMapName when set
     set:
@@ -160,19 +152,6 @@ tests:
       - equal:
           path: spec.template.spec.volumes[0].configMap.name
           value: my-custom-config
-
-  - it: uses custom args when config.args is set
-    set:
-      config.enabled: true
-      config.args:
-        - "custom-cmd"
-        - "--flag"
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].args
-          value:
-            - "custom-cmd"
-            - "--flag"
 
   - it: mounts multiple config volumes
     set:
@@ -213,3 +192,44 @@ tests:
             mountPath: /app/config-b.yaml
             subPath: config-b.yaml
             readOnly: true
+
+  - it: renders top-level args when set
+    set:
+      args:
+        - "custom-cmd"
+        - "--flag"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - "custom-cmd"
+            - "--flag"
+
+  - it: renders args independently of config
+    set:
+      args:
+        - "node"
+        - "server.js"
+      config.enabled: true
+      config.configs:
+        - configMapName: my-config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+          readOnly: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - "node"
+            - "server.js"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config-0
+            configMap:
+              name: my-config
+
+  - it: does not render args when empty
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].args

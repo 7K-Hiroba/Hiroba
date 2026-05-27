@@ -175,6 +175,11 @@
     "env": { "type": "array" },
     "extraVolumes": { "type": "array" },
     "extraVolumeMounts": { "type": "array" },
+    "args": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Container args override. When empty, the container uses the image's default CMD."
+    },
     "config": {
       "type": "object",
       "properties": {
@@ -191,9 +196,7 @@
             },
             "additionalProperties": false
           }
-        },
-        "overrideArgs": { "type": "boolean" },
-        "args": { "type": "array", "items": { "type": "string" } }
+        }
       },
       "additionalProperties": false
     },

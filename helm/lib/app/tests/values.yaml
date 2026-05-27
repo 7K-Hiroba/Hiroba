@@ -40,6 +40,9 @@ autoscaling:
 podDisruptionBudget:
   enabled: false
 
+# -- Container args override. When empty, the container uses the image's default CMD.
+args: []
+
 config:
   enabled: false
   configs:
@@ -47,5 +50,3 @@ config:
       mountPath: "/app/app-config.yaml"
       subPath: "app-config.yaml"
       readOnly: true
-  overrideArgs: true
-  args: []

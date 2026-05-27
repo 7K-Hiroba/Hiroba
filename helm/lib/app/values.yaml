@@ -116,8 +116,11 @@ nodeSelector: {}
 tolerations: []
 # -- affinity applied to the workload pods
 affinity: {}
+# -- Container args override. When empty, the container uses the image's default CMD.
+args: []
+
 config:
-  # -- Mount ConfigMap(s) into the container and optionally override args to load them
+  # -- Mount ConfigMap(s) into the container as files
   enabled: false
   # -- List of ConfigMaps to mount as files
   configs:
@@ -129,10 +132,6 @@ config:
       subPath: "app-config.yaml"
       # -- Whether the mounted config file is read-only
       readOnly: true
-  # -- Override container args to load the mounted config file(s)
-  overrideArgs: true
-  # -- Custom args for the container. When empty and overrideArgs is true, uses sensible defaults
-  args: []
 
 # -- Extra environment variables, passed directly to the container
 env: []
