@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.2...helm-app-lib-v0.2.3) (2026-05-27)
+
+
+### Features
+
+* wire envFrom to helm base lib chart([#61](https://github.com/7K-Hiroba/Hiroba/issues/61)) ([ffc4e6f](https://github.com/7K-Hiroba/Hiroba/commit/ffc4e6f7b19361330cbb0a0b8457cae7526b89e8))
+
 ## [0.2.2](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.1...helm-app-lib-v0.2.2) (2026-05-27)
 
 
