@@ -132,3 +132,24 @@ tests:
     asserts:
       - isNull:
           path: spec.template.spec.containers[0].args
+
+  - it: renders envFrom when set
+    set:
+      envFrom:
+        - configMapRef:
+            name: my-config
+        - secretRef:
+            name: my-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - configMapRef:
+                name: my-config
+            - secretRef:
+                name: my-secret
+
+  - it: does not render envFrom when empty
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].envFrom
