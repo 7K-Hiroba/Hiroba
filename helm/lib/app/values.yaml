@@ -124,8 +124,8 @@ config:
   enabled: false
   # -- List of ConfigMaps to mount as files
   configs:
-    - # -- Name of the ConfigMap to mount. Defaults to fullname + "-app-config" when empty
-      configMapName: ""
+    # -- Name of the ConfigMap to mount. Defaults to fullname + "-app-config" when empty
+    - configMapName: ""
       # -- File path where the config is mounted inside the container
       mountPath: "/app/app-config.yaml"
       # -- The key inside the ConfigMap to mount as a file (required for readOnlyRootFilesystem)
