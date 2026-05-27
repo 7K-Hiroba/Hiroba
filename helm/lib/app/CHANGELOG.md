@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.1...helm-app-lib-v0.2.2) (2026-05-27)
+
+
+### Features
+
+* load config maps to deployment as mounts ([#59](https://github.com/7K-Hiroba/Hiroba/issues/59)) ([5e9bd43](https://github.com/7K-Hiroba/Hiroba/commit/5e9bd432ad73d37f5835860f038e3e3f7ace9431))
+
 ## [0.2.1](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.0...helm-app-lib-v0.2.1) (2026-05-21)
 
 
