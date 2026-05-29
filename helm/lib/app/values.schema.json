@@ -35,6 +35,7 @@
       "additionalProperties": false
     },
     "podAnnotations": { "type": "object" },
+    "envFrom": { "type": "array", "description": "envFrom sources (ConfigMapRef / SecretRef) injected into the container." },
     "podSecurityContext": { "type": "object" },
     "securityContext": { "type": "object" },
     "service": {

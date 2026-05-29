@@ -43,6 +43,9 @@ podDisruptionBudget:
 # -- Container args override. When empty, the container uses the image's default CMD.
 args: []
 
+# -- envFrom sources (ConfigMapRef / SecretRef) injected into the container
+envFrom: []
+
 config:
   enabled: false
   configs:
