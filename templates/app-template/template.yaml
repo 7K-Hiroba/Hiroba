@@ -49,6 +49,15 @@ spec:
             via Chart.yaml's appVersion. Leave blank for in-house apps with
             no external upstream.
           default: ""
+        hasCustomDockerfile:
+          title: Custom Dockerfile
+          type: boolean
+          default: false
+          description: >-
+            Enable if this app maintains a custom Dockerfile (not just using
+            an upstream image). This adds the `app` component to release-please
+            and CI workflows.
+          ui:widget: checkbox
 
     - title: Platform Chart Examples
       description: >-
@@ -95,6 +104,7 @@ spec:
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           upstreamImage: ${{ parameters.upstreamImage }}
+          hasCustomDockerfile: ${{ parameters.hasCustomDockerfile }}
           enablePlatform: ${{ parameters.enablePlatform }}
           enablePostgres: ${{ parameters.enablePostgres }}
           enableS3: ${{ parameters.enableS3 }}

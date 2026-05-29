@@ -4,7 +4,8 @@
 
 ## Type of Change
 
-- [ ] Update to existing template
+- [ ] New template / chart
+- [ ] Update to existing template / chart
 - [ ] Documentation
 - [ ] CI/CD / infrastructure
 - [ ] Bug fix
@@ -14,8 +15,17 @@
 
 <!-- List the key changes -->
 
-## Checklist
+-
+
+## Testing
+
+<!-- How were these changes tested? -->
+- [ ] Deployed and tested on a cluster
 - [ ] Documentation reviewed for accuracy
+- [ ] N/A
+
+## Checklist
+
 - [ ] I have read the [Contributing Guide](../CONTRIBUTING.md)
 - [ ] My changes follow the project conventions
 - [ ] I have updated documentation as needed

@@ -14,9 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
 {%- raw %}
+{% if values.hasCustomDockerfile %}
       app--release_created: ${{ steps.release.outputs['app--release_created'] }}
       app--tag_name: ${{ steps.release.outputs['app--tag_name'] }}
       app--version: ${{ steps.release.outputs['app--version'] }}
+{% endif %}
       helm-base--release_created: ${{ steps.release.outputs['helm/base--release_created'] }}
       helm-base--tag_name: ${{ steps.release.outputs['helm/base--tag_name'] }}
       helm-base--version: ${{ steps.release.outputs['helm/base--version'] }}
@@ -35,6 +37,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+{% if values.hasCustomDockerfile %}
   publish-app:
     needs: release-please
     if: needs.release-please.outputs.app--release_created == 'true'
@@ -45,6 +48,7 @@ jobs:
       version: ${{ needs.release-please.outputs.app--version }}
     secrets: inherit
 
+{% endif %}
   publish-helm-base:
     needs: release-please
     if: needs.release-please.outputs.helm-base--release_created == 'true'

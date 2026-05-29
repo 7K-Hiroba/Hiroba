@@ -3,7 +3,9 @@
 <!-- Brief description of the changes -->
 
 ## Type of Change
-- [ ] Update to existing chart
+
+- [ ] New Helm chart / template
+- [ ] Update to existing chart / template
 - [ ] Documentation
 - [ ] CI/CD / infrastructure
 - [ ] Bug fix
