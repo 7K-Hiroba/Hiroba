@@ -8,7 +8,18 @@
   "separateMinorPatch": false,
 
   "customManagers": [
-    {%- if values.upstreamImage %}
+    {
+      "customType": "regex",
+      "description": "Container image references in Helm values (imageName field)",
+      "managerFilePatterns": [
+        "/helm/.+/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+    {%- if values.upstreamImage %},
     {
       "customType": "regex",
       "description": "Track upstream ${{ values.upstreamImage }} image via Chart.yaml appVersion",
@@ -36,16 +47,16 @@
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
       "semanticCommitType": "ci"
-    },
-    {%- if values.upstreamImage %}
+    }
+    {%- if values.upstreamImage %},
     {
       "description": "Bump both charts together when upstream ${{ values.upstreamImage }} image moves",
       "matchPackageNames": ["${{ values.upstreamImage }}"],
       "groupName": "${{ values.name }}-upstream",
       "semanticCommitType": "fix",
       "semanticCommitScope": "helm"
-    },
-    {%- endif %}
+    }
+    {%- endif %},
     {
       "description": "Platform chart dependency updates",
       "matchFileNames": ["helm/platform/**"],

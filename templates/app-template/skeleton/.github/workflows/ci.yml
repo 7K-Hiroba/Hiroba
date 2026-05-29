@@ -11,6 +11,7 @@ jobs:
   lint-pr-title:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-lint-pr-title.yml@main
 
+{% if values.hasCustomDockerfile %}
   app:
     if: >-
       github.event_name == 'pull_request' ||
@@ -20,6 +21,7 @@ jobs:
       image-name: ${{ values.name }}
       path: .
 
+{% endif %}
   helm-base:
     if: >-
       github.event_name == 'pull_request' ||
