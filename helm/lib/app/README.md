@@ -5,7 +5,7 @@ Defines reusable named templates for Deployment, Service, ServiceAccount,
 HPA, PDB, and Gateway API HTTPRoute. Consumer charts add this as a
 dependency and include the resources they need.
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 > Library charts are not installable on their own. Add this as a `dependency` from your application chart and include the resources you need.
 
@@ -21,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-app-lib
-    version: ^0.2.0
+    version: ^0.2.3
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -37,7 +37,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.0
+  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.3
 ```
 
 `templates/deployment.yaml` (one thin wrapper per resource, following the Hiroba skeleton convention):
@@ -80,15 +80,25 @@ Kubernetes: `>=1.24.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | affinity applied to the workload pods |
+| args | list | `[]` | Container args override. When empty, the container uses the image's default CMD. |
 | autoscaling.enabled | bool | `false` | Render a HorizontalPodAutoscaler. When true, `replicaCount` is ignored. |
 | autoscaling.maxReplicas | int | `10` | Maximum replicas the HPA may scale to |
 | autoscaling.minReplicas | int | `1` | Minimum replicas the HPA may scale to |
+| autoscaling.scaleTargetKind | string | `"Deployment"` | Workload kind to scale. One of: Deployment, StatefulSet |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` | Target average CPU utilization across replicas |
+| config.configs | list | `[{"configMapName":"","mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml"}]` | List of ConfigMaps to mount as files |
+| config.configs[0] | object | `{"configMapName":"","mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml"}` | Name of the ConfigMap to mount. Defaults to fullname + "-app-config" when empty |
+| config.configs[0].mountPath | string | `"/app/app-config.yaml"` | File path where the config is mounted inside the container |
+| config.configs[0].readOnly | bool | `true` | Whether the mounted config file is read-only |
+| config.configs[0].subPath | string | `"app-config.yaml"` | The key inside the ConfigMap to mount as a file (required for readOnlyRootFilesystem) |
+| config.enabled | bool | `false` | Mount ConfigMap(s) into the container as files |
 | env | list | `[]` | Extra environment variables, passed directly to the container |
+| envFrom | list | `[]` | envFrom sources (ConfigMapRef / SecretRef) injected into the container |
 | extraVolumeMounts | list | `[]` | Extra volume mounts added to the workload container |
 | extraVolumes | list | `[]` | Extra volumes added to the pod spec |
 | fullnameOverride | string | `""` | Fully override the generated fullname used in resource names |
 | gateway.annotations | object | `{}` | Annotations applied to the HTTPRoute |
+| gateway.defaultFilters | list | `[{"responseHeaderModifier":{"set":[{"name":"Strict-Transport-Security","value":"max-age=63072000; includeSubDomains"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"X-Frame-Options","value":"DENY"},{"name":"Referrer-Policy","value":"strict-origin-when-cross-origin"}]},"type":"ResponseHeaderModifier"}]` | Filters prepended to every rule (e.g. response security headers). Set to [] to opt out. CSP in particular needs per-deployment tuning. |
 | gateway.enabled | bool | `true` | Render the Gateway API `HTTPRoute` resource |
 | gateway.hostnames | list | `["myapp.example.com"]` | Hostnames the route matches |
 | gateway.parentRefs | list | `[{"name":"default-gateway"}]` | Parent Gateway references the HTTPRoute attaches to |
@@ -115,6 +125,11 @@ Kubernetes: `>=1.24.0-0`
 | serviceAccount.annotations | object | `{}` | Annotations to add to the ServiceAccount (e.g. IRSA / Workload Identity) |
 | serviceAccount.create | bool | `true` | Create a dedicated ServiceAccount for the workload |
 | serviceAccount.name | string | `""` | Name to use. If unset and `create: true`, a name is generated from fullname. |
+| startupProbe | object | `{}` | Startup probe (passed straight to the container spec). When set, disables liveness and readiness checks until the container starts. |
+| statefulset.podManagementPolicy | string | `"OrderedReady"` | Pod management policy. One of: OrderedReady, Parallel |
+| statefulset.serviceName | string | `""` | Service name governing the StatefulSet. Defaults to the chart fullname. |
+| statefulset.updateStrategy | object | `{"type":"RollingUpdate"}` | StatefulSet update strategy |
+| statefulset.volumeClaimTemplates | list | `[]` | Volume claim templates for the StatefulSet |
 | tolerations | list | `[]` | tolerations applied to the workload pods |
 
 > Library values are **not** merged into the consumer chart. They are shipped as a reference — copy what you need into your own `values.yaml` and validate via the bundled [`values.schema.json`](values.schema.json).
