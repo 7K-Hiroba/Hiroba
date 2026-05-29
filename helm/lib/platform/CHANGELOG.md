@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.3...helm-platform-lib-v0.2.4) (2026-05-29)
+
+
+### Features
+
+* wire region to object store and garage key ([#67](https://github.com/7K-Hiroba/Hiroba/issues/67)) ([21be804](https://github.com/7K-Hiroba/Hiroba/commit/21be804126b8c770455da85a7adf68df4410a6fe))
+
 ## [0.2.3](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.2...helm-platform-lib-v0.2.3) (2026-05-29)
 
 
