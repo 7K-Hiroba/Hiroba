@@ -43,6 +43,7 @@
               "required": ["clusterRef", "endpoint"],
               "properties": {
                 "clusterRef": { "type": "string" },
+                "clusterRefNamespace": { "type": "string" },
                 "endpoint": { "type": "string" }
               },
               "additionalProperties": false
@@ -61,7 +62,39 @@
         "bucketName": { "type": "string" },
         "acl": { "type": "string" },
         "crossplane": { "type": "object" },
-        "garage": { "type": "object" }
+        "garage": {
+          "type": "object",
+          "properties": {
+            "clusterRef": { "type": "string" },
+            "clusterRefNamespace": { "type": "string" },
+            "quotas": {
+              "type": "object",
+              "properties": {
+                "maxSize": { "type": "string" },
+                "maxObjects": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "website": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "indexDocument": { "type": "string" },
+                "errorDocument": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "rules": { "type": "array" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["clusterRef"],
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },

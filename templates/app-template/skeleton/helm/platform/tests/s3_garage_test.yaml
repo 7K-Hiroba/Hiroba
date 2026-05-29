@@ -95,6 +95,45 @@ tests:
           value: "RELEASE-NAME-assets"
         documentIndex: 1
 
+  - it: GarageBucket and GarageKey include clusterRefNamespace when configured
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.garage.clusterRefNamespace: garage-system
+      s3.bucketName: assets
+    asserts:
+      - equal:
+          path: spec.clusterRef.name
+          value: my-cluster
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.name
+          value: my-cluster
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 1
+
+  - it: GarageBucket and GarageKey omit clusterRefNamespace when not set
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.bucketName: assets
+    asserts:
+      - isNull:
+          path: spec.clusterRef.namespace
+        documentIndex: 0
+      - isNull:
+          path: spec.clusterRef.namespace
+        documentIndex: 1
+
   - it: GarageBucket includes quotas when configured
     set:
       s3.enabled: true

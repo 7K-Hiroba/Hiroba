@@ -51,6 +51,8 @@ postgres:
     garage:
       # -- GarageCluster resource name to reference
       clusterRef: garage
+      # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
+      clusterRefNamespace: ""
       # -- Garage S3 API endpoint (must match the GarageCluster's service)
       endpoint: "http://garage.garage.svc.cluster.local:3900"
 
@@ -79,6 +81,8 @@ s3:
   garage:
     # -- GarageCluster resource name to reference
     clusterRef: garage
+    # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
+    clusterRefNamespace: ""
     # -- Optional bucket quotas
     quotas: {}
     #  maxSize: 10Gi

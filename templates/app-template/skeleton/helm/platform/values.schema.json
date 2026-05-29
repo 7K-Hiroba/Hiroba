@@ -59,6 +59,7 @@
               "type": "object",
               "properties": {
                 "clusterRef": { "type": "string" },
+                "clusterRefNamespace": { "type": "string" },
                 "endpoint": { "type": "string" }
               },
               "required": ["clusterRef", "endpoint"],
@@ -97,6 +98,7 @@
           "type": "object",
           "properties": {
             "clusterRef": { "type": "string" },
+            "clusterRefNamespace": { "type": "string" },
             "quotas": {
               "type": "object",
               "properties": {

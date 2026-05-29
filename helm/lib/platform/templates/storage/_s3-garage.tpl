@@ -14,6 +14,9 @@ metadata:
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
+    {{- with .Values.s3.garage.clusterRefNamespace }}
+    namespace: {{ . }}
+    {{- end }}
   {{- with .Values.s3.garage.quotas }}
   quotas:
     {{- toYaml . | nindent 4 }}
@@ -36,6 +39,9 @@ metadata:
 spec:
   clusterRef:
     name: {{ .Values.s3.garage.clusterRef }}
+    {{- with .Values.s3.garage.clusterRefNamespace }}
+    namespace: {{ . }}
+    {{- end }}
   name: "{{ include "hiroba-platform.name" . }} S3 Key"
   secretTemplate:
     name: {{ include "hiroba-platform.name" . }}-s3-key

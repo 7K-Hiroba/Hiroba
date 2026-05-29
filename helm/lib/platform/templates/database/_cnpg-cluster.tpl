@@ -49,6 +49,9 @@ metadata:
 spec:
   clusterRef:
     name: {{ .Values.postgres.backup.garage.clusterRef }}
+    {{- with .Values.postgres.backup.garage.clusterRefNamespace }}
+    namespace: {{ . }}
+    {{- end }}
 ---
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageKey
@@ -59,6 +62,9 @@ metadata:
 spec:
   clusterRef:
     name: {{ .Values.postgres.backup.garage.clusterRef }}
+    {{- with .Values.postgres.backup.garage.clusterRefNamespace }}
+    namespace: {{ . }}
+    {{- end }}
   name: "{{ include "hiroba-platform.name" . }} PG Backup Key"
   secretTemplate:
     name: {{ include "hiroba-platform.name" . }}-pg-s3-key

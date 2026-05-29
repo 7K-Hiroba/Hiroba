@@ -75,10 +75,10 @@ tests:
           count: 1
       - isNull:
           path: spec.backup
-         documentIndex: 0
+          documentIndex: 0
       - isNull:
           path: spec.plugins
-         documentIndex: 0
+          documentIndex: 0
 
   - it: renders four documents when backup is enabled
     set:
@@ -154,6 +154,53 @@ tests:
       - equal:
           path: spec.bucketPermissions[0].bucketRef.name
           value: RELEASE-NAME-pg-backups
+        documentIndex: 2
+
+  - it: GarageBucket and GarageKey include clusterRefNamespace when configured
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            clusterRefNamespace: garage-system
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+    asserts:
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 2
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 2
+
+  - it: GarageBucket and GarageKey omit clusterRefNamespace when not set
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+    asserts:
+      - isNull:
+          path: spec.clusterRef.namespace
+        documentIndex: 1
+      - isNull:
+          path: spec.clusterRef.namespace
         documentIndex: 2
 
   - it: objectstore references GarageKey generated secret for credentials

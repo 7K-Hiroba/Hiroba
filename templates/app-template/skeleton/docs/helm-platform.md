@@ -97,7 +97,8 @@ s3:
   provider: garage
   bucketName: assets
   garage:
-    clusterRef: garage     # name of the GarageCluster resource
+    clusterRef: garage              # name of the GarageCluster resource
+    clusterRefNamespace: ""         # namespace of the GarageCluster (defaults to same namespace)
 ```
 
 Optional features:
