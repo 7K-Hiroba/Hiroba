@@ -71,7 +71,6 @@
       },
       "additionalProperties": false
     },
-    
     "resources": { "type": "object" },
     "livenessProbe": { "type": "object" },
     "readinessProbe": { "type": "object" },
