@@ -5,7 +5,7 @@ dependencies) charts. Defines reusable named templates for CloudNativePG
 Clusters, S3 buckets (Crossplane / Garage), ExternalSecrets, ServiceMonitor,
 Grafana dashboards, PrometheusRules, and operator presence checks.
 
-![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 > Library charts are not installable on their own. Add this as a `dependency` from your application *platform* chart and include the resources you need.
 
@@ -21,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-platform-lib
-    version: ^0.2.1
+    version: ^0.2.3
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -37,7 +37,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib:0.2.1
+  harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib:0.2.3
 ```
 
 Wrappers (one per resource, following the Hiroba skeleton convention):
@@ -108,9 +108,10 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
+| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
 | postgres.backup.enabled | bool | `false` | Render a ScheduledBackup + barman ObjectStore |
 | postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
+| postgres.backup.garage.clusterRefNamespace | string | `""` | Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant |
 | postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
 | postgres.backup.garage.region | string | `"garage"` | S3 region (must match the GarageCluster's configured region) |
 | postgres.backup.retentionPolicy | string | `"7d"` | Retention policy passed to barman |
@@ -124,15 +125,16 @@ Kubernetes: `>=1.24.0-0`
 | postgres.resources | object | `{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}}` | Resource requests and limits for each PostgreSQL pod |
 | postgres.storage.size | string | `"10Gi"` | Persistent volume size per instance |
 | postgres.storage.storageClass | string | `""` | StorageClass for the persistent volumes. Empty uses the cluster default. |
-| s3 | object | `{"acl":"private","bucketName":"assets","crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage |
+| s3 | object | `{"acl":"private","bucketName":"assets","crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage |
 | s3.acl | string | `"private"` | Bucket ACL |
 | s3.bucketName | string | `"assets"` | Bucket name (will be prefixed with app name) |
 | s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane-specific settings (provider: crossplane) |
 | s3.crossplane.providerConfigRef | string | `"aws-provider"` | ProviderConfig reference for the crossplane AWS provider |
 | s3.crossplane.region | string | `"us-east-1"` | AWS region for the bucket |
 | s3.enabled | bool | `false` | Render the bucket resources |
-| s3.garage | object | `{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}}` | Garage-specific settings (provider: garage) |
+| s3.garage | object | `{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}}` | Garage-specific settings (provider: garage) |
 | s3.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
+| s3.garage.clusterRefNamespace | string | `""` | Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant |
 | s3.garage.lifecycle | object | `{}` | Optional bucket lifecycle rules |
 | s3.garage.quotas | object | `{}` | Optional bucket quotas (maxSize, maxObjects) |
 | s3.garage.website | object | `{}` | Optional website hosting configuration |
