@@ -120,6 +120,8 @@ autoscaling:
   maxReplicas: 10
   # -- Target average CPU utilization across replicas
   targetCPUUtilizationPercentage: 80
+  # -- Workload kind to scale. One of: Deployment, StatefulSet
+  scaleTargetKind: Deployment
 
 # -- Pod Disruption Budget. Only meaningful with replicaCount > 1 or HPA on.
 podDisruptionBudget:
