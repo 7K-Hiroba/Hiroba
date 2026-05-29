@@ -68,6 +68,8 @@ spec:
   name: "{{ include "hiroba-platform.name" . }} PG Backup Key"
   secretTemplate:
     name: {{ include "hiroba-platform.name" . }}-pg-s3-key
+    additionalData:
+      region: {{ .Values.postgres.backup.garage.region | quote }}
   bucketPermissions:
     - bucketRef:
         name: {{ include "hiroba-platform.name" . }}-pg-backups
@@ -91,6 +93,9 @@ spec:
       secretAccessKey:
         name: {{ include "hiroba-platform.name" . }}-pg-s3-key
         key: secret-access-key
+      region:
+        name: {{ include "hiroba-platform.name" . }}-pg-s3-key
+        key: region
     wal:
       compression: gzip
     data:

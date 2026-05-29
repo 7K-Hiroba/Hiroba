@@ -40,11 +40,12 @@
             "retentionPolicy": { "type": "string" },
             "garage": {
               "type": "object",
-              "required": ["clusterRef", "endpoint"],
+              "required": ["clusterRef", "endpoint", "region"],
               "properties": {
                 "clusterRef": { "type": "string" },
                 "clusterRefNamespace": { "type": "string" },
-                "endpoint": { "type": "string" }
+                "endpoint": { "type": "string" },
+                "region": { "type": "string" }
               },
               "additionalProperties": false
             }

@@ -108,10 +108,11 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
+| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
 | postgres.backup.enabled | bool | `false` | Render a ScheduledBackup + barman ObjectStore |
 | postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
 | postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
+| postgres.backup.garage.region | string | `"garage"` | S3 region (must match the GarageCluster's configured region) |
 | postgres.backup.retentionPolicy | string | `"7d"` | Retention policy passed to barman |
 | postgres.backup.schedule | string | `"0 2 * * *"` | Cron schedule for ScheduledBackup |
 | postgres.database | string | `"app"` | Database name to create |

@@ -60,9 +60,10 @@
               "properties": {
                 "clusterRef": { "type": "string" },
                 "clusterRefNamespace": { "type": "string" },
-                "endpoint": { "type": "string" }
+                "endpoint": { "type": "string" },
+                "region": { "type": "string" }
               },
-              "required": ["clusterRef", "endpoint"],
+              "required": ["clusterRef", "endpoint", "region"],
               "additionalProperties": false
             }
           },
