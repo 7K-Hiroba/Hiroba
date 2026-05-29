@@ -1,9 +1,9 @@
 {{/*
-hiroba-app.deployment — application Deployment.
+hiroba-app.statefulset — application StatefulSet.
 */}}
-{{- define "hiroba-app.deployment" -}}
+{{- define "hiroba-app.statefulset" -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "hiroba-app.fullname" . }}
   labels:
@@ -12,9 +12,17 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  serviceName: {{ default (include "hiroba-app.fullname" .) .Values.statefulset.serviceName }}
+  {{- with .Values.statefulset.podManagementPolicy }}
+  podManagementPolicy: {{ . }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "hiroba-app.selectorLabels" . | nindent 6 }}
+  {{- with .Values.statefulset.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -53,10 +61,6 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.startupProbe }}
-          startupProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.env }}
@@ -67,7 +71,7 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or .Values.config.enabled .Values.extraVolumeMounts }}
+          {{- if or .Values.config.enabled .Values.extraVolumeMounts .Values.statefulset.volumeClaimTemplates }}
           volumeMounts:
             {{- if .Values.config.enabled }}
             {{- range $i, $cfg := .Values.config.configs }}
@@ -79,6 +83,12 @@ spec:
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.statefulset.volumeClaimTemplates }}
+            {{- range $i, $vct := .Values.statefulset.volumeClaimTemplates }}
+            - name: {{ $vct.metadata.name }}
+              mountPath: {{ $vct.mountPath }}
+            {{- end }}
             {{- end }}
           {{- end }}
       {{- if or .Values.config.enabled .Values.extraVolumes }}
@@ -106,4 +116,17 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  {{- with .Values.statefulset.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- range . }}
+    - metadata:
+        name: {{ .metadata.name }}
+        {{- with .metadata.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      spec:
+        {{- toYaml .spec | nindent 8 }}
+    {{- end }}
+  {{- end }}
 {{- end }}

@@ -8,7 +8,7 @@ on:
       - ".github/workflows/charts-ci.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   app-lib:
@@ -20,3 +20,6 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-library.yml@v1
     with:
       path: helm/lib/platform
+  
+  helm-docs:
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-docs.yml@v1

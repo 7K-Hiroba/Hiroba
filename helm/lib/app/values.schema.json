@@ -66,20 +66,24 @@
           }
         },
         "hostnames": { "type": "array", "items": { "type": "string" } },
+        "defaultFilters": { "type": "array" },
         "rules": { "type": "array" }
       },
       "additionalProperties": false
     },
+    
     "resources": { "type": "object" },
     "livenessProbe": { "type": "object" },
     "readinessProbe": { "type": "object" },
+    "startupProbe": { "type": "object" },
     "autoscaling": {
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
         "minReplicas": { "type": "integer", "minimum": 1 },
         "maxReplicas": { "type": "integer", "minimum": 1 },
-        "targetCPUUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 }
+        "targetCPUUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "scaleTargetKind": { "type": "string", "enum": ["Deployment", "StatefulSet"] }
       },
       "additionalProperties": false
     },
@@ -102,6 +106,34 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "Container args override. When empty, the container uses the image's default CMD."
+    },
+    "statefulset": {
+      "type": "object",
+      "properties": {
+        "serviceName": { "type": "string", "description": "Service name governing the StatefulSet. Defaults to the chart fullname." },
+        "podManagementPolicy": { "type": "string", "enum": ["OrderedReady", "Parallel"] },
+        "updateStrategy": { "type": "object" },
+        "volumeClaimTemplates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "annotations": { "type": "object" }
+                },
+                "required": ["name"]
+              },
+              "spec": { "type": "object" },
+              "mountPath": { "type": "string" }
+            },
+            "required": ["metadata", "spec"]
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "config": {
       "type": "object",

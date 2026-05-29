@@ -46,7 +46,6 @@
       "templates/app-template/skeleton/helm/.+/Chart\\.yaml$"
     ]
   },
-
   "customManagers": [
     {
       "customType": "regex",
