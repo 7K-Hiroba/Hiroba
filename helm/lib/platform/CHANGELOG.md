@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.2...helm-platform-lib-v0.2.3) (2026-05-29)
+
+
+### Features
+
+* wire clusterRefNamespace to garage buckets ([06378a1](https://github.com/7K-Hiroba/Hiroba/commit/06378a1428ab061019afbfa9ad1715a3b47aaa12))
+
 ## [0.2.2](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.1...helm-platform-lib-v0.2.2) (2026-05-29)
 
 
