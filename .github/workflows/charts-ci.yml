@@ -8,7 +8,7 @@ on:
       - ".github/workflows/charts-ci.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   app-lib:
