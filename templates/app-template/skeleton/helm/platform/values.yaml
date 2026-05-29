@@ -55,6 +55,8 @@ postgres:
       clusterRefNamespace: ""
       # -- Garage S3 API endpoint (must match the GarageCluster's service)
       endpoint: "http://garage.garage.svc.cluster.local:3900"
+      # -- S3 region (must match the GarageCluster's configured region)
+      region: garage
 
 # -- S3-compatible object storage
 s3:

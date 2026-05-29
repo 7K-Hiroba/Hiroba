@@ -90,6 +90,7 @@ tests:
           garage:
             clusterRef: garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - hasDocuments:
           count: 4
@@ -104,6 +105,7 @@ tests:
           garage:
             clusterRef: garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - equal:
           path: spec.plugins[0].name
@@ -124,6 +126,7 @@ tests:
           garage:
             clusterRef: my-garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - isKind:
           of: GarageBucket
@@ -167,6 +170,7 @@ tests:
             clusterRef: my-garage
             clusterRefNamespace: garage-system
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - equal:
           path: spec.clusterRef.name
@@ -195,6 +199,7 @@ tests:
           garage:
             clusterRef: my-garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - isNull:
           path: spec.clusterRef.namespace
@@ -213,6 +218,7 @@ tests:
           garage:
             clusterRef: garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - isKind:
           of: ObjectStore
@@ -241,6 +247,14 @@ tests:
           path: spec.configuration.s3Credentials.secretAccessKey.key
           value: secret-access-key
         documentIndex: 3
+      - equal:
+          path: spec.configuration.s3Credentials.region.name
+          value: RELEASE-NAME-pg-s3-key
+        documentIndex: 3
+      - equal:
+          path: spec.configuration.s3Credentials.region.key
+          value: region
+        documentIndex: 3
 
   - it: objectstore enables wal and data compression
     set:
@@ -252,6 +266,7 @@ tests:
           garage:
             clusterRef: garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - equal:
           path: spec.configuration.wal.compression
@@ -297,6 +312,7 @@ tests:
           garage:
             clusterRef: garage
             endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
     asserts:
       - isKind:
           of: ScheduledBackup

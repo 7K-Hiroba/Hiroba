@@ -119,11 +119,12 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"${{ values.enablePostgres }}","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
-| postgres.backup | object | `{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900"},"retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
-| postgres.backup.garage | object | `{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900"}` | Garage S3 settings for WAL archiving and base backups (barman-cloud plugin) |
+| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"${{ values.enablePostgres }}","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
+| postgres.backup | object | `{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
+| postgres.backup.garage | object | `{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"}` | Garage S3 settings for WAL archiving and base backups (barman-cloud plugin) |
 | postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
 | postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
+| postgres.backup.garage.region | string | `"garage"` | S3 region (must match the GarageCluster's configured region) |
 | postgres.database | string | `"app"` | Database name to create |
 | postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | PostgreSQL version |
 | postgres.owner | string | `"app"` | Database owner |
