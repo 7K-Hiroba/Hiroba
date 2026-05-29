@@ -71,10 +71,10 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or .Values.config.enabled .Values.extraVolumeMounts .Values.statefulset.volumeClaimTemplates }}
+          {{- if or .Values.appConfig.enabled .Values.extraVolumeMounts .Values.statefulset.volumeClaimTemplates }}
           volumeMounts:
-            {{- if .Values.config.enabled }}
-            {{- range $i, $cfg := .Values.config.configs }}
+            {{- if .Values.appConfig.enabled }}
+            {{- range $i, $cfg := .Values.appConfig.configs }}
             - name: config-{{ $i }}
               mountPath: {{ $cfg.mountPath }}
               subPath: {{ $cfg.subPath }}
@@ -91,10 +91,10 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
-      {{- if or .Values.config.enabled .Values.extraVolumes }}
+      {{- if or .Values.appConfig.enabled .Values.extraVolumes }}
       volumes:
-        {{- if .Values.config.enabled }}
-        {{- range $i, $cfg := .Values.config.configs }}
+        {{- if .Values.appConfig.enabled }}
+        {{- range $i, $cfg := .Values.appConfig.configs }}
         - name: config-{{ $i }}
           configMap:
             name: {{ default (printf "%s-app-config" (include "hiroba-app.fullname" $)) $cfg.configMapName }}

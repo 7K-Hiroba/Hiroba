@@ -134,7 +134,7 @@
       },
       "additionalProperties": false
     },
-    "config": {
+    "appConfig": {
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
