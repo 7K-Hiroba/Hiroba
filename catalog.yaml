@@ -5,5 +5,5 @@ metadata:
   description: Collection of all Backstage templates
 spec:
   targets:
-    - ./app-template/template.yaml
-    - ./stack-template/template.yaml
+    - ./templates/app-template/template.yaml
+    - ./templates/stack-template/template.yaml
