@@ -37,6 +37,13 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm.yml@v1
     with:
       path: helm/platform
+   
+  helm-docs:
+    if: >-
+      github.event_name == 'pull_request' ||
+      contains(toJSON(github.event.commits.*.modified), 'helm/base/' ||
+      contains(toJSON(github.event.commits.*.modified), 'helm/platform/')
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-docs.yml@v1
 
   docs:
     if: >-

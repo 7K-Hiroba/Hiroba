@@ -22,4 +22,4 @@ jobs:
       path: helm/lib/platform
   
   helm-docs:
-    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-docs.yml@feature/create-helm-docs-reusable-workflow
+    uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm-docs.yml@v1
