@@ -43,6 +43,13 @@ podDisruptionBudget:
 # -- Container args override. When empty, the container uses the image's default CMD.
 args: []
 
+statefulset:
+  serviceName: ""
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates: []
+
 # -- envFrom sources (ConfigMapRef / SecretRef) injected into the container
 envFrom: []
 

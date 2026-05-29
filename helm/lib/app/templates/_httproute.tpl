@@ -50,9 +50,14 @@ spec:
       backendRefs:
         - name: {{ include "hiroba-app.fullname" $ }}
           port: {{ $.Values.service.port }}
-      {{- if .filters }}
+      {{- if or $.Values.gateway.defaultFilters .filters }}
       filters:
-        {{- toYaml .filters | nindent 8 }}
+        {{- with $.Values.gateway.defaultFilters }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .filters }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
     {{- end }}
     {{- else }}
@@ -63,6 +68,10 @@ spec:
       backendRefs:
         - name: {{ include "hiroba-app.fullname" . }}
           port: {{ .Values.service.port }}
+      {{- with .Values.gateway.defaultFilters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}

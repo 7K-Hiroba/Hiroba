@@ -65,6 +65,20 @@ gateway:
   # -- Hostnames the route matches
   hostnames:
     - myapp.example.com
+  # -- Filters prepended to every rule (e.g. response security headers).
+  # Set to [] to opt out. CSP in particular needs per-deployment tuning.
+  defaultFilters:
+    - type: ResponseHeaderModifier
+      responseHeaderModifier:
+        set:
+          - name: Strict-Transport-Security
+            value: "max-age=63072000; includeSubDomains"
+          - name: X-Content-Type-Options
+            value: nosniff
+          - name: X-Frame-Options
+            value: DENY
+          - name: Referrer-Policy
+            value: strict-origin-when-cross-origin
   # -- Routing rules. Leave empty for a catch-all forward to the service.
   rules: []
 
@@ -93,6 +107,10 @@ readinessProbe:
   initialDelaySeconds: 5
   periodSeconds: 5
 
+# -- Startup probe (passed straight to the container spec).
+# When set, disables liveness and readiness checks until the container starts.
+startupProbe: {}
+
 autoscaling:
   # -- Render a HorizontalPodAutoscaler. When true, `replicaCount` is ignored.
   enabled: false
@@ -118,6 +136,17 @@ tolerations: []
 affinity: {}
 # -- Container args override. When empty, the container uses the image's default CMD.
 args: []
+
+statefulset:
+  # -- Service name governing the StatefulSet. Defaults to the chart fullname.
+  serviceName: ""
+  # -- Pod management policy. One of: OrderedReady, Parallel
+  podManagementPolicy: OrderedReady
+  # -- StatefulSet update strategy
+  updateStrategy:
+    type: RollingUpdate
+  # -- Volume claim templates for the StatefulSet
+  volumeClaimTemplates: []
 
 config:
   # -- Mount ConfigMap(s) into the container as files
