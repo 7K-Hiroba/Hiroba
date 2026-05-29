@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.1...helm-platform-lib-v0.2.2) (2026-05-29)
+
+
+### Features
+
+* **helm-lib:** add startupProbe, defaultFilters, StatefulSet, and scaleTargetKind ([2ac54d8](https://github.com/7K-Hiroba/Hiroba/commit/2ac54d8135ca3a264ec4ea9b1f613967f82b72c6))
+
+
+### Bug Fixes
+
+* helm-docs workflow ([2ac54d8](https://github.com/7K-Hiroba/Hiroba/commit/2ac54d8135ca3a264ec4ea9b1f613967f82b72c6))
+
 ## [0.2.1](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.0...helm-platform-lib-v0.2.1) (2026-05-21)
 
 

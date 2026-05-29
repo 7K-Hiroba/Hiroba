@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.4](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.3...helm-app-lib-v0.2.4) (2026-05-29)
+
+
+### Features
+
+* add .gitignore and envFrom to deployment ([#63](https://github.com/7K-Hiroba/Hiroba/issues/63)) ([b0c471b](https://github.com/7K-Hiroba/Hiroba/commit/b0c471b1ffa5addc69d94198aca388ec588f1b70))
+* **helm-lib:** add startupProbe, defaultFilters, StatefulSet, and scaleTargetKind ([2ac54d8](https://github.com/7K-Hiroba/Hiroba/commit/2ac54d8135ca3a264ec4ea9b1f613967f82b72c6))
+
+
+### Bug Fixes
+
+* helm-docs workflow ([2ac54d8](https://github.com/7K-Hiroba/Hiroba/commit/2ac54d8135ca3a264ec4ea9b1f613967f82b72c6))
+
 ## [0.2.3](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.2...helm-app-lib-v0.2.3) (2026-05-27)
 
 
