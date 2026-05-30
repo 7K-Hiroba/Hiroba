@@ -1,0 +1,212 @@
+suite: CNPG Backup
+templates:
+  - templates/database/cnpg-backup.yaml
+capabilities:
+  apiVersions:
+    - garage.rajsingh.info/v1beta1
+    - barmancloud.cnpg.io/v1
+tests:
+  - it: is not created when postgres is disabled
+    set:
+      postgres.enabled: false
+      postgres.backup.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when backup is disabled
+    set:
+      postgres.enabled: true
+      postgres.backup.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders three documents when backup is enabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "30d"
+          garage:
+            clusterRef: garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: creates GarageBucket for backup
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - isKind:
+          of: GarageBucket
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: garage.rajsingh.info/v1beta1
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 0
+
+  - it: creates GarageKey for backup
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - isKind:
+          of: GarageKey
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: garage.rajsingh.info/v1beta1
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 1
+      - equal:
+          path: spec.secretTemplate.name
+          value: RELEASE-NAME-pg-s3-key
+        documentIndex: 1
+      - equal:
+          path: spec.bucketPermissions[0].bucketRef.name
+          value: RELEASE-NAME-pg-backups
+        documentIndex: 1
+
+  - it: GarageBucket and GarageKey include clusterRefNamespace when configured
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            clusterRefNamespace: garage-system
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.name
+          value: my-garage
+        documentIndex: 1
+      - equal:
+          path: spec.clusterRef.namespace
+          value: garage-system
+        documentIndex: 1
+
+  - it: GarageBucket and GarageKey omit clusterRefNamespace when not set
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: my-garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - isNull:
+          path: spec.clusterRef.namespace
+        documentIndex: 0
+      - isNull:
+          path: spec.clusterRef.namespace
+        documentIndex: 1
+
+  - it: objectstore references GarageKey generated secret for credentials
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - isKind:
+          of: ObjectStore
+        documentIndex: 2
+      - equal:
+          path: apiVersion
+          value: barmancloud.cnpg.io/v1
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.endpointURL
+          value: "http://garage.garage.svc.cluster.local:3900"
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.accessKeyId.name
+          value: RELEASE-NAME-pg-s3-key
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.accessKeyId.key
+          value: access-key-id
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.secretAccessKey.name
+          value: RELEASE-NAME-pg-s3-key
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.secretAccessKey.key
+          value: secret-access-key
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.region.name
+          value: RELEASE-NAME-pg-s3-key
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.s3Credentials.region.key
+          value: region
+        documentIndex: 2
+
+  - it: objectstore enables wal and data compression
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - equal:
+          path: spec.configuration.wal.compression
+          value: gzip
+        documentIndex: 2
+      - equal:
+          path: spec.configuration.data.compression
+          value: gzip
+        documentIndex: 2

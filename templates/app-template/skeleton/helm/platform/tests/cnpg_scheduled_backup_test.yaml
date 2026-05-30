@@ -1,0 +1,50 @@
+suite: CNPG ScheduledBackup
+templates:
+  - templates/database/cnpg-scheduled-backup.yaml
+capabilities:
+  apiVersions:
+    - postgresql.cnpg.io/v1
+tests:
+  - it: is not created when postgres is disabled
+    set:
+      postgres.enabled: false
+      postgres.backup.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when backup is disabled
+    set:
+      postgres.enabled: true
+      postgres.backup.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders ScheduledBackup when both postgres and backup are enabled
+    set:
+      postgres:
+        enabled: true
+        backup:
+          enabled: true
+          schedule: "0 3 * * *"
+          retentionPolicy: "7d"
+          garage:
+            clusterRef: garage
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            region: garage
+    asserts:
+      - isKind:
+          of: ScheduledBackup
+      - equal:
+          path: apiVersion
+          value: postgresql.cnpg.io/v1
+      - equal:
+          path: spec.schedule
+          value: "0 3 * * *"
+      - equal:
+          path: spec.backupOwnerReference
+          value: self
+      - equal:
+          path: spec.pluginConfiguration.name
+          value: barman-cloud.cloudnative-pg.io

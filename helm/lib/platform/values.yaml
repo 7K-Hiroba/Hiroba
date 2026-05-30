@@ -39,7 +39,7 @@ postgres:
   # -- Database owner role
   owner: app
   backup:
-    # -- Render a ScheduledBackup + barman ObjectStore
+    # -- Render backup storage resources (ObjectStore, GarageBucket, GarageKey)
     enabled: false
     # -- Cron schedule for ScheduledBackup
     schedule: "0 2 * * *"
@@ -55,37 +55,39 @@ postgres:
       # -- S3 region (must match the GarageCluster's configured region)
       region: garage
 
-# -- S3-compatible object storage
+# -- S3-compatible object storage buckets
 s3:
   # -- Render the bucket resources
   enabled: false
-  # -- Provider: "crossplane" | "garage"
-  provider: crossplane
-  # -- Bucket name (will be prefixed with app name)
-  bucketName: assets
-  # -- Bucket ACL
-  acl: private
-  # -- Crossplane-specific settings (provider: crossplane)
-  crossplane:
-    # -- AWS region for the bucket
-    region: us-east-1
-    # -- ProviderConfig reference for the crossplane AWS provider
-    providerConfigRef: aws-provider
-    lifecycle:
-      enabled: false
-      expirationDays: 90
-  # -- Garage-specific settings (provider: garage)
-  garage:
-    # -- GarageCluster resource name to reference
-    clusterRef: garage
-    # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
-    clusterRefNamespace: ""
-    # -- Optional bucket quotas (maxSize, maxObjects)
-    quotas: {}
-    # -- Optional website hosting configuration
-    website: {}
-    # -- Optional bucket lifecycle rules
-    lifecycle: {}
+  # -- List of S3 buckets to provision. Each bucket can use a different provider.
+  buckets:
+      # -- Bucket name (will be prefixed with app name)
+    - name: assets
+      # -- Provider: "crossplane" | "garage"
+      provider: crossplane
+      # -- Bucket ACL
+      acl: private
+      # -- Crossplane-specific settings (provider: crossplane)
+      crossplane:
+        # -- AWS region for the bucket
+        region: us-east-1
+        # -- ProviderConfig reference for the crossplane AWS provider
+        providerConfigRef: aws-provider
+        lifecycle:
+          enabled: false
+          expirationDays: 90
+      # -- Garage-specific settings (provider: garage)
+      garage:
+        # -- GarageCluster resource name to reference
+        clusterRef: garage
+        # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
+        clusterRefNamespace: ""
+        # -- Optional bucket quotas (maxSize, maxObjects)
+        quotas: {}
+        # -- Optional website hosting configuration
+        website: {}
+        # -- Optional bucket lifecycle rules
+        lifecycle: {}
 
 # -- ExternalSecret (external-secrets.io) resources
 externalSecrets:

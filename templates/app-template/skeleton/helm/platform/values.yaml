@@ -58,50 +58,52 @@ postgres:
       # -- S3 region (must match the GarageCluster's configured region)
       region: garage
 
-# -- S3-compatible object storage
+# -- S3-compatible object storage buckets
 s3:
   enabled: ${{ values.enableS3 }}
-  # -- Provider: "crossplane" | "garage"
-  provider: crossplane
-  # -- Bucket name (will be prefixed with app name)
-  bucketName: assets
-  # -- Access control
-  acl: private
+  # -- List of S3 buckets to provision. Each bucket can use a different provider.
+  buckets:
+      # -- Bucket name (will be prefixed with app name)
+    - name: assets
+      # -- Provider: "crossplane" | "garage"
+      provider: crossplane
+      # -- Access control
+      acl: private
 
-  # -- Crossplane-specific settings (provider: crossplane)
-  crossplane:
-    region: us-east-1
-    providerConfigRef: aws-provider
-    lifecycle:
-      enabled: false
-      expirationDays: 90
+      # -- Crossplane-specific settings (provider: crossplane)
+      crossplane:
+        region: us-east-1
+        providerConfigRef: aws-provider
+        lifecycle:
+          enabled: false
+          expirationDays: 90
 
-  # -- Garage-specific settings (provider: garage)
-  # Provisions a bucket + key via the garage-operator
-  # (https://github.com/rajsinghtech/garage-operator). The operator generates
-  # the credentials Secret directly, so no init Job is needed.
-  garage:
-    # -- GarageCluster resource name to reference
-    clusterRef: garage
-    # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
-    clusterRefNamespace: ""
-    # -- Optional bucket quotas
-    quotas: {}
-    #  maxSize: 10Gi
-    #  maxObjects: 100000
-    # -- Optional website hosting configuration
-    website: {}
-    #  enabled: true
-    #  indexDocument: index.html
-    #  errorDocument: error.html
-    # -- Optional bucket lifecycle rules
-    lifecycle: {}
-    #  rules:
-    #    - id: expire-logs
-    #      status: Enabled
-    #      filter:
-    #        prefix: "logs/"
-    #      expirationDays: 30
+      # -- Garage-specific settings (provider: garage)
+      # Provisions a bucket + key via the garage-operator
+      # (https://github.com/rajsinghtech/garage-operator). The operator generates
+      # the credentials Secret directly, so no init Job is needed.
+      garage:
+        # -- GarageCluster resource name to reference
+        clusterRef: garage
+        # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
+        clusterRefNamespace: ""
+        # -- Optional bucket quotas
+        quotas: {}
+        #  maxSize: 10Gi
+        #  maxObjects: 100000
+        # -- Optional website hosting configuration
+        website: {}
+        #  enabled: true
+        #  indexDocument: index.html
+        #  errorDocument: error.html
+        # -- Optional bucket lifecycle rules
+        lifecycle: {}
+        #  rules:
+        #    - id: expire-logs
+        #      status: Enabled
+        #      filter:
+        #        prefix: "logs/"
+        #      expirationDays: 30
 
 # -- External Secrets (external-secrets.io)
 externalSecrets:

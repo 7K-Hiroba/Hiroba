@@ -22,33 +22,55 @@ tests:
       - failedTemplate:
           errorMessage: "postgres.backup.enabled is true but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set postgres.backup.enabled=false."
 
-  - it: fails when s3 with crossplane provider is enabled without Crossplane S3 CRD
+  - it: fails when s3 has crossplane bucket without Crossplane S3 CRD
     set:
       s3.enabled: true
-      s3.provider: crossplane
+      s3.buckets:
+        - name: assets
+          provider: crossplane
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with at least one bucket using provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to provider=garage, or set s3.enabled=false."
 
-  - it: fails when s3 with garage provider is enabled without Garage Operator CRD
+  - it: fails when s3 has garage bucket without Garage Operator CRD
     set:
       s3.enabled: true
-      s3.provider: garage
+      s3.buckets:
+        - name: assets
+          provider: garage
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with at least one bucket using provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false."
 
   - it: passes for s3 garage provider with Garage Operator CRD installed
     set:
       s3.enabled: true
-      s3.provider: garage
+      s3.buckets:
+        - name: assets
+          provider: garage
     capabilities:
       apiVersions:
         - garage.rajsingh.info/v1beta1
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: passes for mixed providers with all CRDs installed
+    set:
+      s3.enabled: true
+      s3.buckets:
+        - name: assets
+          provider: garage
+        - name: backups
+          provider: crossplane
+    capabilities:
+      apiVersions:
+        - garage.rajsingh.info/v1beta1
+        - s3.aws.crossplane.io/v1beta1
     asserts:
       - hasDocuments:
           count: 0

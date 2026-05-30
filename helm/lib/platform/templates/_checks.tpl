@@ -18,12 +18,19 @@ the available APIs — see `.ci-api-versions` in the consumer chart.
   {{- fail "postgres.backup.enabled is true but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set postgres.backup.enabled=false." }}
 {{- end }}
 
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") (not (.Capabilities.APIVersions.Has "s3.aws.crossplane.io/v1beta1")) }}
-  {{- fail "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false." }}
-{{- end }}
-
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") (not (.Capabilities.APIVersions.Has "garage.rajsingh.info/v1beta1")) }}
-  {{- fail "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false." }}
+{{- if .Values.s3.enabled }}
+  {{- $needsCrossplane := false }}
+  {{- $needsGarage := false }}
+  {{- range .Values.s3.buckets }}
+    {{- if eq .provider "crossplane" }}{{ $needsCrossplane = true }}{{ end }}
+    {{- if eq .provider "garage" }}{{ $needsGarage = true }}{{ end }}
+  {{- end }}
+  {{- if and $needsCrossplane (not (.Capabilities.APIVersions.Has "s3.aws.crossplane.io/v1beta1")) }}
+    {{- fail "s3.enabled is true with at least one bucket using provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to provider=garage, or set s3.enabled=false." }}
+  {{- end }}
+  {{- if and $needsGarage (not (.Capabilities.APIVersions.Has "garage.rajsingh.info/v1beta1")) }}
+    {{- fail "s3.enabled is true with at least one bucket using provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false." }}
+  {{- end }}
 {{- end }}
 
 {{- if and .Values.externalSecrets.enabled (not (.Capabilities.APIVersions.Has "external-secrets.io/v1")) }}

@@ -76,57 +76,67 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
-        "bucketName": { "type": "string" },
-        "acl": { "type": "string" },
-        "crossplane": {
-          "type": "object",
-          "properties": {
-            "region": { "type": "string" },
-            "providerConfigRef": { "type": "string" },
-            "lifecycle": {
-              "type": "object",
-              "properties": {
-                "enabled": { "type": "boolean" },
-                "expirationDays": { "type": "integer", "minimum": 1 }
+        "buckets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "provider"],
+            "properties": {
+              "name": { "type": "string" },
+              "provider": { "type": "string", "enum": ["crossplane", "garage"] },
+              "acl": { "type": "string" },
+              "crossplane": {
+                "type": "object",
+                "properties": {
+                  "region": { "type": "string" },
+                  "providerConfigRef": { "type": "string" },
+                  "lifecycle": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": { "type": "boolean" },
+                      "expirationDays": { "type": "integer", "minimum": 1 }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
               },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        "garage": {
-          "type": "object",
-          "properties": {
-            "clusterRef": { "type": "string" },
-            "clusterRefNamespace": { "type": "string" },
-            "quotas": {
-              "type": "object",
-              "properties": {
-                "maxSize": { "type": "string" },
-                "maxObjects": { "type": "integer" }
-              },
-              "additionalProperties": false
+              "garage": {
+                "type": "object",
+                "properties": {
+                  "clusterRef": { "type": "string" },
+                  "clusterRefNamespace": { "type": "string" },
+                  "quotas": {
+                    "type": "object",
+                    "properties": {
+                      "maxSize": { "type": "string" },
+                      "maxObjects": { "type": "integer" }
+                    },
+                    "additionalProperties": false
+                  },
+                  "website": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": { "type": "boolean" },
+                      "indexDocument": { "type": "string" },
+                      "errorDocument": { "type": "string" }
+                    },
+                    "additionalProperties": false
+                  },
+                  "lifecycle": {
+                    "type": "object",
+                    "properties": {
+                      "rules": { "type": "array" }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["clusterRef"],
+                "additionalProperties": false
+              }
             },
-            "website": {
-              "type": "object",
-              "properties": {
-                "enabled": { "type": "boolean" },
-                "indexDocument": { "type": "string" },
-                "errorDocument": { "type": "string" }
-              },
-              "additionalProperties": false
-            },
-            "lifecycle": {
-              "type": "object",
-              "properties": {
-                "rules": { "type": "array" }
-              },
-              "additionalProperties": false
-            }
-          },
-          "required": ["clusterRef"],
-          "additionalProperties": false
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

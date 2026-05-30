@@ -1,31 +1,34 @@
 {{/*
-hiroba-platform.s3-garage — Garage operator bucket + key (operator generates
-the credentials Secret directly, no init Job needed). Gated on s3.enabled
-AND s3.provider == "garage".
+hiroba-platform.s3-garage — Garage operator bucket + key collection.
+Iterates over s3.buckets and renders a GarageBucket + GarageKey for every
+entry with provider == "garage". Gated on s3.enabled.
 */}}
 {{- define "hiroba-platform.s3-garage" -}}
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") -}}
+{{- if .Values.s3.enabled }}
+{{- range .Values.s3.buckets }}
+{{- if eq .provider "garage" }}
+---
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
 metadata:
-  name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
+  name: {{ include "hiroba-platform.name" $ }}-{{ .name }}
   labels:
-    {{- include "hiroba-platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" $ | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .Values.s3.garage.clusterRef }}
-    {{- with .Values.s3.garage.clusterRefNamespace }}
+    name: {{ .garage.clusterRef }}
+    {{- with .garage.clusterRefNamespace }}
     namespace: {{ . }}
     {{- end }}
-  {{- with .Values.s3.garage.quotas }}
+  {{- with .garage.quotas }}
   quotas:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.s3.garage.website }}
+  {{- with .garage.website }}
   website:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.s3.garage.lifecycle }}
+  {{- with .garage.lifecycle }}
   lifecycle:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -33,24 +36,26 @@ spec:
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageKey
 metadata:
-  name: {{ include "hiroba-platform.name" . }}-s3-key
+  name: {{ include "hiroba-platform.name" $ }}-{{ .name }}-s3-key
   labels:
-    {{- include "hiroba-platform.labels" . | nindent 4 }}
+    {{- include "hiroba-platform.labels" $ | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .Values.s3.garage.clusterRef }}
-    {{- with .Values.s3.garage.clusterRefNamespace }}
+    name: {{ .garage.clusterRef }}
+    {{- with .garage.clusterRefNamespace }}
     namespace: {{ . }}
     {{- end }}
-  name: "{{ include "hiroba-platform.name" . }} S3 Key"
+  name: "{{ include "hiroba-platform.name" $ }} {{ .name | title }} S3 Key"
   secretTemplate:
-    name: {{ include "hiroba-platform.name" . }}-s3-key
+    name: {{ include "hiroba-platform.name" $ }}-{{ .name }}-s3-key
     additionalData:
-      S3_BUCKET: "{{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}"
+      S3_BUCKET: "{{ include "hiroba-platform.name" $ }}-{{ .name }}"
   bucketPermissions:
     - bucketRef:
-        name: {{ include "hiroba-platform.name" . }}-{{ .Values.s3.bucketName }}
+        name: {{ include "hiroba-platform.name" $ }}-{{ .name }}
       read: true
       write: true
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

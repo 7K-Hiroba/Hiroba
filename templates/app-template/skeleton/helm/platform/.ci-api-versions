@@ -4,6 +4,7 @@
 # entry as `--api-versions <value>` so the operator-presence checks in
 # templates/checks.yaml succeed without a live cluster.
 postgresql.cnpg.io/v1
+barmancloud.cnpg.io/v1
 s3.aws.crossplane.io/v1beta1
 garage.rajsingh.info/v1beta1
 external-secrets.io/v1
