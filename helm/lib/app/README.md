@@ -5,7 +5,7 @@ Defines reusable named templates for Deployment, Service, ServiceAccount,
 HPA, PDB, and Gateway API HTTPRoute. Consumer charts add this as a
 dependency and include the resources they need.
 
-![Version: 0.2.4](https://img.shields.io/badge/Version-0.2.4-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.5](https://img.shields.io/badge/Version-0.2.5-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 > Library charts are not installable on their own. Add this as a `dependency` from your application chart and include the resources you need.
 
@@ -21,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-app-lib
-    version: ^0.2.4
+    version: ^0.2.5
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -37,7 +37,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.4
+  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.5
 ```
 
 `templates/deployment.yaml` (one thin wrapper per resource, following the Hiroba skeleton convention):
