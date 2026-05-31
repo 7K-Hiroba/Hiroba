@@ -38,14 +38,16 @@
             "enabled": { "type": "boolean" },
             "schedule": { "type": "string" },
             "retentionPolicy": { "type": "string" },
-            "garage": {
+            "bucketName": { "type": "string" },
+            "endpoint": { "type": "string" },
+            "credentialsSecret": {
               "type": "object",
-              "required": ["clusterRef", "endpoint", "region"],
+              "required": ["name"],
               "properties": {
-                "clusterRef": { "type": "string" },
-                "clusterRefNamespace": { "type": "string" },
-                "endpoint": { "type": "string" },
-                "region": { "type": "string" }
+                "name": { "type": "string" },
+                "accessKeyKey": { "type": "string" },
+                "secretKeyKey": { "type": "string" },
+                "regionKey": { "type": "string" }
               },
               "additionalProperties": false
             }
@@ -60,9 +62,22 @@
       "properties": {
         "enabled": { "type": "boolean" },
         "provider": { "type": "string", "enum": ["crossplane", "garage"] },
-        "bucketName": { "type": "string" },
-        "acl": { "type": "string" },
-        "crossplane": { "type": "object" },
+        "crossplane": {
+          "type": "object",
+          "properties": {
+            "region": { "type": "string" },
+            "providerConfigRef": { "type": "string" },
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "expirationDays": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "garage": {
           "type": "object",
           "properties": {
@@ -93,8 +108,26 @@
               "additionalProperties": false
             }
           },
-          "required": ["clusterRef"],
           "additionalProperties": false
+        },
+        "buckets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "acl": { "type": "string" },
+              "region": { "type": "string" },
+              "providerConfigRef": { "type": "string" },
+              "clusterRef": { "type": "string" },
+              "clusterRefNamespace": { "type": "string" },
+              "quotas": { "type": "object" },
+              "website": { "type": "object" },
+              "lifecycle": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

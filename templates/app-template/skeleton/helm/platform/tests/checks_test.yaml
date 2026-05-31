@@ -11,18 +11,7 @@ tests:
       - failedTemplate:
           errorMessage: "postgres.enabled is true but the CloudNativePG Operator CRD (postgresql.cnpg.io/v1) is not installed. Install the operator first or set postgres.enabled=false."
 
-  - it: fails when postgres backup is enabled without Garage Operator CRD
-    set:
-      postgres.backup.enabled: true
-    capabilities:
-      apiVersions:
-        - postgresql.cnpg.io/v1
-        - barmancloud.cnpg.io/v1
-    asserts:
-      - failedTemplate:
-          errorMessage: "postgres.backup.enabled is true but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set postgres.backup.enabled=false."
-
-  - it: fails when s3 with crossplane provider is enabled without Crossplane S3 CRD
+  - it: fails when s3 provider is crossplane without Crossplane S3 CRD
     set:
       s3.enabled: true
       s3.provider: crossplane
@@ -30,9 +19,9 @@ tests:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to s3.provider=garage, or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to provider=garage, or set s3.enabled=false."
 
-  - it: fails when s3 with garage provider is enabled without Garage Operator CRD
+  - it: fails when s3 provider is garage without Garage Operator CRD
     set:
       s3.enabled: true
       s3.provider: garage
@@ -40,7 +29,7 @@ tests:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or switch to provider=crossplane, or set s3.enabled=false."
 
   - it: passes for s3 garage provider with Garage Operator CRD installed
     set:
@@ -49,6 +38,17 @@ tests:
     capabilities:
       apiVersions:
         - garage.rajsingh.info/v1beta1
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: passes for s3 crossplane provider with Crossplane S3 CRD installed
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+    capabilities:
+      apiVersions:
+        - s3.aws.crossplane.io/v1beta1
     asserts:
       - hasDocuments:
           count: 0

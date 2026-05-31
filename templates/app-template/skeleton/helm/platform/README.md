@@ -119,22 +119,27 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"${{ values.enablePostgres }}","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
-| postgres.backup | object | `{"enabled":false,"garage":{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
-| postgres.backup.garage | object | `{"clusterRef":"garage","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"}` | Garage S3 settings for WAL archiving and base backups (barman-cloud plugin) |
-| postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
-| postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
-| postgres.backup.garage.region | string | `"garage"` | S3 region (must match the GarageCluster's configured region) |
+| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"${{ values.enablePostgres }}","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
+| postgres.backup | object | `{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
+| postgres.backup.bucketName | string | `""` | S3 bucket name for backups (defaults to <app>-pg-backups) |
+| postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials |
+| postgres.backup.credentialsSecret.accessKeyKey | string | `"accessKeyId"` | Key in the secret for the access key ID |
+| postgres.backup.credentialsSecret.name | string | `""` | Name of the secret |
+| postgres.backup.credentialsSecret.regionKey | string | `"region"` | Key in the secret for the S3 region |
+| postgres.backup.credentialsSecret.secretKeyKey | string | `"secretAccessKey"` | Key in the secret for the secret access key |
+| postgres.backup.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | S3 API endpoint for backups |
 | postgres.database | string | `"app"` | Database name to create |
 | postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | PostgreSQL version |
 | postgres.owner | string | `"app"` | Database owner |
 | postgres.provider | string | `"cnpg"` | Provider: "cnpg" (CloudNativePG operator) |
-| s3 | object | `{"acl":"private","bucketName":"assets","crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":"${{ values.enableS3 }}","garage":{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage |
-| s3.acl | string | `"private"` | Access control |
-| s3.bucketName | string | `"assets"` | Bucket name (will be prefixed with app name) |
-| s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane-specific settings (provider: crossplane) |
-| s3.garage | object | `{"clusterRef":"garage","lifecycle":{},"quotas":{},"website":{}}` | Garage-specific settings (provider: garage) Provisions a bucket + key via the garage-operator (https://github.com/rajsinghtech/garage-operator). The operator generates the credentials Secret directly, so no init Job is needed. |
+| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":"${{ values.enableS3 }}","garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
+| s3.buckets | list | `[{"acl":"private","name":"assets"}]` | List of S3 buckets to provision. All use the same provider. |
+| s3.buckets[0] | object | `{"acl":"private","name":"assets"}` | Bucket name (will be prefixed with app name) |
+| s3.buckets[0].acl | string | `"private"` | Bucket ACL |
+| s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane default settings (all buckets inherit, per-bucket overrides allowed) |
+| s3.garage | object | `{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}}` | Garage default settings (all buckets inherit, per-bucket overrides allowed) |
 | s3.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
+| s3.garage.clusterRefNamespace | string | `""` | Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant |
 | s3.garage.lifecycle | object | `{}` | Optional bucket lifecycle rules |
 | s3.garage.quotas | object | `{}` | Optional bucket quotas |
 | s3.garage.website | object | `{}` | Optional website hosting configuration |
@@ -170,5 +175,3 @@ Tip: do a dry run with `helm uninstall --dry-run` first to see what *will* be re
 
 Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba).
 
-----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

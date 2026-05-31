@@ -16,15 +16,21 @@ tests:
     set:
       s3.enabled: true
       s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: renders GarageBucket and GarageKey when enabled with garage provider
+  - it: renders GarageBucket and GarageKey for garage buckets
     set:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
     asserts:
       - hasDocuments:
           count: 2
@@ -35,12 +41,13 @@ tests:
           of: GarageKey
         documentIndex: 1
 
-  - it: GarageBucket uses clusterRef from values
+  - it: GarageBucket uses configured name and clusterRef
     set:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
-      s3.bucketName: assets
+      s3.buckets:
+        - name: assets
     asserts:
       - equal:
           path: metadata.name
@@ -56,11 +63,12 @@ tests:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
-      s3.bucketName: assets
+      s3.buckets:
+        - name: assets
     asserts:
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-s3-key
+          value: RELEASE-NAME-assets-s3-key
         documentIndex: 1
       - equal:
           path: spec.clusterRef.name
@@ -68,7 +76,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.secretTemplate.name
-          value: RELEASE-NAME-s3-key
+          value: RELEASE-NAME-assets-s3-key
         documentIndex: 1
       - equal:
           path: spec.bucketPermissions[0].bucketRef.name
@@ -88,7 +96,8 @@ tests:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
-      s3.bucketName: assets
+      s3.buckets:
+        - name: assets
     asserts:
       - equal:
           path: spec.secretTemplate.additionalData.S3_BUCKET
@@ -101,7 +110,8 @@ tests:
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
       s3.garage.clusterRefNamespace: garage-system
-      s3.bucketName: assets
+      s3.buckets:
+        - name: assets
     asserts:
       - equal:
           path: spec.clusterRef.name
@@ -120,12 +130,32 @@ tests:
           value: garage-system
         documentIndex: 1
 
+  - it: GarageBucket and GarageKey use per-bucket clusterRefNamespace when overridden
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.garage.clusterRefNamespace: garage-system
+      s3.buckets:
+        - name: assets
+          clusterRefNamespace: other-ns
+    asserts:
+      - equal:
+          path: spec.clusterRef.namespace
+          value: other-ns
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.namespace
+          value: other-ns
+        documentIndex: 1
+
   - it: GarageBucket and GarageKey omit clusterRefNamespace when not set
     set:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
-      s3.bucketName: assets
+      s3.buckets:
+        - name: assets
     asserts:
       - isNull:
           path: spec.clusterRef.namespace
@@ -138,11 +168,12 @@ tests:
     set:
       s3.enabled: true
       s3.provider: garage
-      s3.garage:
-        clusterRef: my-cluster
-        quotas:
-          maxSize: 10Gi
-          maxObjects: 100000
+      s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
+          quotas:
+            maxSize: 10Gi
+            maxObjects: 100000
     asserts:
       - equal:
           path: spec.quotas.maxSize
@@ -157,12 +188,13 @@ tests:
     set:
       s3.enabled: true
       s3.provider: garage
-      s3.garage:
-        clusterRef: my-cluster
-        website:
-          enabled: true
-          indexDocument: index.html
-          errorDocument: error.html
+      s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
+          website:
+            enabled: true
+            indexDocument: index.html
+            errorDocument: error.html
     asserts:
       - equal:
           path: spec.website.enabled
@@ -177,15 +209,16 @@ tests:
     set:
       s3.enabled: true
       s3.provider: garage
-      s3.garage:
-        clusterRef: my-cluster
-        lifecycle:
-          rules:
-            - id: expire-logs
-              status: Enabled
-              filter:
-                prefix: "logs/"
-              expirationDays: 30
+      s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
+          lifecycle:
+            rules:
+              - id: expire-logs
+                status: Enabled
+                filter:
+                  prefix: "logs/"
+                expirationDays: 30
     asserts:
       - equal:
           path: spec.lifecycle.rules[0].id
@@ -201,6 +234,8 @@ tests:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
     asserts:
       - isNull:
           path: spec.quotas
@@ -217,6 +252,8 @@ tests:
       s3.enabled: true
       s3.provider: garage
       s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
     asserts:
       - isNotNull:
           path: metadata.labels
@@ -224,3 +261,31 @@ tests:
       - isNotNull:
           path: metadata.labels
         documentIndex: 1
+
+  - it: renders multiple garage buckets
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
+        - name: uploads
+    asserts:
+      - hasDocuments:
+          count: 4
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-assets
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-assets-s3-key
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-uploads
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-uploads-s3-key
+        documentIndex: 3
