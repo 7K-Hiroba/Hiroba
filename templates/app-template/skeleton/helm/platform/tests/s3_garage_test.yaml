@@ -12,15 +12,14 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: is not created when no buckets use garage provider
+  - it: is not created when provider is crossplane
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
     asserts:
       - hasDocuments:
           count: 0
@@ -28,11 +27,10 @@ tests:
   - it: renders GarageBucket and GarageKey for garage buckets
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - hasDocuments:
           count: 2
@@ -46,11 +44,10 @@ tests:
   - it: GarageBucket uses configured name and clusterRef
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - equal:
           path: metadata.name
@@ -64,11 +61,10 @@ tests:
   - it: GarageKey references cluster and bucket
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - equal:
           path: metadata.name
@@ -98,11 +94,10 @@ tests:
   - it: GarageKey includes bucket name in additionalData
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - equal:
           path: spec.secretTemplate.additionalData.S3_BUCKET
@@ -112,12 +107,11 @@ tests:
   - it: GarageBucket and GarageKey include clusterRefNamespace when configured
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.garage.clusterRefNamespace: garage-system
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
-            clusterRefNamespace: garage-system
     asserts:
       - equal:
           path: spec.clusterRef.name
@@ -136,14 +130,32 @@ tests:
           value: garage-system
         documentIndex: 1
 
+  - it: GarageBucket and GarageKey use per-bucket clusterRefNamespace when overridden
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.garage.clusterRefNamespace: garage-system
+      s3.buckets:
+        - name: assets
+          clusterRefNamespace: other-ns
+    asserts:
+      - equal:
+          path: spec.clusterRef.namespace
+          value: other-ns
+        documentIndex: 0
+      - equal:
+          path: spec.clusterRef.namespace
+          value: other-ns
+        documentIndex: 1
+
   - it: GarageBucket and GarageKey omit clusterRefNamespace when not set
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - isNull:
           path: spec.clusterRef.namespace
@@ -155,14 +167,13 @@ tests:
   - it: GarageBucket includes quotas when configured
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
-            quotas:
-              maxSize: 10Gi
-              maxObjects: 100000
+          quotas:
+            maxSize: 10Gi
+            maxObjects: 100000
     asserts:
       - equal:
           path: spec.quotas.maxSize
@@ -176,15 +187,14 @@ tests:
   - it: GarageBucket includes website config when configured
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
-            website:
-              enabled: true
-              indexDocument: index.html
-              errorDocument: error.html
+          website:
+            enabled: true
+            indexDocument: index.html
+            errorDocument: error.html
     asserts:
       - equal:
           path: spec.website.enabled
@@ -198,18 +208,17 @@ tests:
   - it: GarageBucket includes lifecycle rules when configured
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
-            lifecycle:
-              rules:
-                - id: expire-logs
-                  status: Enabled
-                  filter:
-                    prefix: "logs/"
-                  expirationDays: 30
+          lifecycle:
+            rules:
+              - id: expire-logs
+                status: Enabled
+                filter:
+                  prefix: "logs/"
+                expirationDays: 30
     asserts:
       - equal:
           path: spec.lifecycle.rules[0].id
@@ -223,11 +232,10 @@ tests:
   - it: GarageBucket omits quotas website and lifecycle when not set
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - isNull:
           path: spec.quotas
@@ -242,11 +250,10 @@ tests:
   - it: applies standard labels
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - isNotNull:
           path: metadata.labels
@@ -258,15 +265,11 @@ tests:
   - it: renders multiple garage buckets
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
         - name: uploads
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - hasDocuments:
           count: 4

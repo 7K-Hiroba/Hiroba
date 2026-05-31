@@ -108,12 +108,15 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","endpoint":"http://garage.garage.svc.cluster.local:3900","region":"garage"},"retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
-| postgres.backup.enabled | bool | `false` | Render a ScheduledBackup + barman ObjectStore |
-| postgres.backup.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
-| postgres.backup.garage.clusterRefNamespace | string | `""` | Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant |
-| postgres.backup.garage.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | Garage S3 API endpoint (must match the GarageCluster's service) |
-| postgres.backup.garage.region | string | `"garage"` | S3 region (must match the GarageCluster's configured region) |
+| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
+| postgres.backup.bucketName | string | `""` | S3 bucket name for backups (defaults to <app>-pg-backups) |
+| postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials |
+| postgres.backup.credentialsSecret.accessKeyKey | string | `"accessKeyId"` | Key in the secret for the access key ID |
+| postgres.backup.credentialsSecret.name | string | `""` | Name of the secret |
+| postgres.backup.credentialsSecret.regionKey | string | `"region"` | Key in the secret for the S3 region |
+| postgres.backup.credentialsSecret.secretKeyKey | string | `"secretAccessKey"` | Key in the secret for the secret access key |
+| postgres.backup.enabled | bool | `false` | Render backup storage resources (ObjectStore) |
+| postgres.backup.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | S3 API endpoint for backups |
 | postgres.backup.retentionPolicy | string | `"7d"` | Retention policy passed to barman |
 | postgres.backup.schedule | string | `"0 2 * * *"` | Cron schedule for ScheduledBackup |
 | postgres.database | string | `"app"` | Database name to create |
@@ -125,14 +128,15 @@ Kubernetes: `>=1.24.0-0`
 | postgres.resources | object | `{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}}` | Resource requests and limits for each PostgreSQL pod |
 | postgres.storage.size | string | `"10Gi"` | Persistent volume size per instance |
 | postgres.storage.storageClass | string | `""` | StorageClass for the persistent volumes. Empty uses the cluster default. |
-| s3 | object | `{"acl":"private","bucketName":"assets","crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage |
-| s3.acl | string | `"private"` | Bucket ACL |
-| s3.bucketName | string | `"assets"` | Bucket name (will be prefixed with app name) |
-| s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane-specific settings (provider: crossplane) |
+| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
+| s3.buckets | list | `[{"acl":"private","name":"assets"}]` | List of S3 buckets to provision. All use the same provider. |
+| s3.buckets[0] | object | `{"acl":"private","name":"assets"}` | Bucket name (will be prefixed with app name) |
+| s3.buckets[0].acl | string | `"private"` | Bucket ACL |
+| s3.crossplane | object | `{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"}` | Crossplane default settings (all buckets inherit, per-bucket overrides allowed) |
 | s3.crossplane.providerConfigRef | string | `"aws-provider"` | ProviderConfig reference for the crossplane AWS provider |
 | s3.crossplane.region | string | `"us-east-1"` | AWS region for the bucket |
 | s3.enabled | bool | `false` | Render the bucket resources |
-| s3.garage | object | `{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}}` | Garage-specific settings (provider: garage) |
+| s3.garage | object | `{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}}` | Garage default settings (all buckets inherit, per-bucket overrides allowed) |
 | s3.garage.clusterRef | string | `"garage"` | GarageCluster resource name to reference |
 | s3.garage.clusterRefNamespace | string | `""` | Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant |
 | s3.garage.lifecycle | object | `{}` | Optional bucket lifecycle rules |
@@ -160,5 +164,3 @@ For the workload itself (Deployment, Service, HPA, PDB, HTTPRoute) see [`hiroba-
 
 <https://hiroba.7kgroup.org/docs/architecture/helm-libraries>
 
-----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

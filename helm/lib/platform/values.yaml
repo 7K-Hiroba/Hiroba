@@ -39,55 +39,60 @@ postgres:
   # -- Database owner role
   owner: app
   backup:
-    # -- Render backup storage resources (ObjectStore, GarageBucket, GarageKey)
+    # -- Render backup storage resources (ObjectStore)
     enabled: false
     # -- Cron schedule for ScheduledBackup
     schedule: "0 2 * * *"
     # -- Retention policy passed to barman
     retentionPolicy: "7d"
-    garage:
-      # -- GarageCluster resource name to reference
-      clusterRef: garage
-      # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
-      clusterRefNamespace: ""
-      # -- Garage S3 API endpoint (must match the GarageCluster's service)
-      endpoint: "http://garage.garage.svc.cluster.local:3900"
-      # -- S3 region (must match the GarageCluster's configured region)
-      region: garage
+    # -- S3 bucket name for backups (defaults to <app>-pg-backups)
+    bucketName: ""
+    # -- S3 API endpoint for backups
+    endpoint: "http://garage.garage.svc.cluster.local:3900"
+    # -- Pre-existing secret containing S3 credentials
+    credentialsSecret:
+      # -- Name of the secret
+      name: ""
+      # -- Key in the secret for the access key ID
+      accessKeyKey: accessKeyId
+      # -- Key in the secret for the secret access key
+      secretKeyKey: secretAccessKey
+      # -- Key in the secret for the S3 region
+      regionKey: region
 
 # -- S3-compatible object storage buckets
 s3:
   # -- Render the bucket resources
   enabled: false
-  # -- List of S3 buckets to provision. Each bucket can use a different provider.
+  # -- Provider: "crossplane" | "garage"
+  provider: crossplane
+  # -- Crossplane default settings (all buckets inherit, per-bucket overrides allowed)
+  crossplane:
+    # -- AWS region for the bucket
+    region: us-east-1
+    # -- ProviderConfig reference for the crossplane AWS provider
+    providerConfigRef: aws-provider
+    lifecycle:
+      enabled: false
+      expirationDays: 90
+  # -- Garage default settings (all buckets inherit, per-bucket overrides allowed)
+  garage:
+    # -- GarageCluster resource name to reference
+    clusterRef: garage
+    # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
+    clusterRefNamespace: ""
+    # -- Optional bucket quotas (maxSize, maxObjects)
+    quotas: {}
+    # -- Optional website hosting configuration
+    website: {}
+    # -- Optional bucket lifecycle rules
+    lifecycle: {}
+  # -- List of S3 buckets to provision. All use the same provider.
   buckets:
-      # -- Bucket name (will be prefixed with app name)
+    # -- Bucket name (will be prefixed with app name)
     - name: assets
-      # -- Provider: "crossplane" | "garage"
-      provider: crossplane
       # -- Bucket ACL
       acl: private
-      # -- Crossplane-specific settings (provider: crossplane)
-      crossplane:
-        # -- AWS region for the bucket
-        region: us-east-1
-        # -- ProviderConfig reference for the crossplane AWS provider
-        providerConfigRef: aws-provider
-        lifecycle:
-          enabled: false
-          expirationDays: 90
-      # -- Garage-specific settings (provider: garage)
-      garage:
-        # -- GarageCluster resource name to reference
-        clusterRef: garage
-        # -- Namespace of the GarageCluster (defaults to the same namespace). Cross-namespace requires a GarageReferenceGrant
-        clusterRefNamespace: ""
-        # -- Optional bucket quotas (maxSize, maxObjects)
-        quotas: {}
-        # -- Optional website hosting configuration
-        website: {}
-        # -- Optional bucket lifecycle rules
-        lifecycle: {}
 
 # -- ExternalSecret (external-secrets.io) resources
 externalSecrets:

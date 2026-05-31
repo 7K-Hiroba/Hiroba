@@ -55,15 +55,17 @@
             "enabled": { "type": "boolean" },
             "schedule": { "type": "string" },
             "retentionPolicy": { "type": "string" },
-            "garage": {
+            "bucketName": { "type": "string" },
+            "endpoint": { "type": "string" },
+            "credentialsSecret": {
               "type": "object",
+              "required": ["name"],
               "properties": {
-                "clusterRef": { "type": "string" },
-                "clusterRefNamespace": { "type": "string" },
-                "endpoint": { "type": "string" },
-                "region": { "type": "string" }
+                "name": { "type": "string" },
+                "accessKeyKey": { "type": "string" },
+                "secretKeyKey": { "type": "string" },
+                "regionKey": { "type": "string" }
               },
-              "required": ["clusterRef", "endpoint", "region"],
               "additionalProperties": false
             }
           },
@@ -76,64 +78,70 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
+        "crossplane": {
+          "type": "object",
+          "properties": {
+            "region": { "type": "string" },
+            "providerConfigRef": { "type": "string" },
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "expirationDays": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "garage": {
+          "type": "object",
+          "properties": {
+            "clusterRef": { "type": "string" },
+            "clusterRefNamespace": { "type": "string" },
+            "quotas": {
+              "type": "object",
+              "properties": {
+                "maxSize": { "type": "string" },
+                "maxObjects": { "type": "integer" }
+              },
+              "additionalProperties": false
+            },
+            "website": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "indexDocument": { "type": "string" },
+                "errorDocument": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "lifecycle": {
+              "type": "object",
+              "properties": {
+                "rules": { "type": "array" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "buckets": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "provider"],
+            "required": ["name"],
             "properties": {
               "name": { "type": "string" },
-              "provider": { "type": "string", "enum": ["crossplane", "garage"] },
               "acl": { "type": "string" },
-              "crossplane": {
-                "type": "object",
-                "properties": {
-                  "region": { "type": "string" },
-                  "providerConfigRef": { "type": "string" },
-                  "lifecycle": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": { "type": "boolean" },
-                      "expirationDays": { "type": "integer", "minimum": 1 }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "additionalProperties": false
-              },
-              "garage": {
-                "type": "object",
-                "properties": {
-                  "clusterRef": { "type": "string" },
-                  "clusterRefNamespace": { "type": "string" },
-                  "quotas": {
-                    "type": "object",
-                    "properties": {
-                      "maxSize": { "type": "string" },
-                      "maxObjects": { "type": "integer" }
-                    },
-                    "additionalProperties": false
-                  },
-                  "website": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": { "type": "boolean" },
-                      "indexDocument": { "type": "string" },
-                      "errorDocument": { "type": "string" }
-                    },
-                    "additionalProperties": false
-                  },
-                  "lifecycle": {
-                    "type": "object",
-                    "properties": {
-                      "rules": { "type": "array" }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "required": ["clusterRef"],
-                "additionalProperties": false
-              }
+              "region": { "type": "string" },
+              "providerConfigRef": { "type": "string" },
+              "clusterRef": { "type": "string" },
+              "clusterRefNamespace": { "type": "string" },
+              "quotas": { "type": "object" },
+              "website": { "type": "object" },
+              "lifecycle": { "type": "object" }
             },
             "additionalProperties": false
           }

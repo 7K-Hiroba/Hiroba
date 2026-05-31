@@ -64,41 +64,49 @@ Connection credentials are published to a `Secret` named `${{ values.name }}-app
 
 ## S3 / Object storage
 
-Provisions an S3-compatible bucket. Two providers are supported:
+Provisions S3-compatible buckets. Two providers are supported:
 
-- **`crossplane`** — provisions a real bucket on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
-- **`garage`** — creates a bucket in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment via the [garage-operator](https://github.com/rajsinghtech/garage-operator)
+- **`crossplane`** — provisions real buckets on AWS (or an S3-compatible cloud) via Crossplane's S3 provider
+- **`garage`** — creates buckets in an in-cluster [Garage](https://garagehq.deuxfleurs.fr/) deployment via the [garage-operator](https://github.com/rajsinghtech/garage-operator)
 
 ### Configuration
+
+All buckets share the same provider. Set defaults under `s3.crossplane` or `s3.garage`, then list buckets under `s3.buckets`. Per-bucket settings override the defaults.
 
 ```yaml
 s3:
   enabled: true
-  provider: crossplane   # or "garage"
-  bucketName: assets
-  acl: private           # crossplane only
+  provider: crossplane
   crossplane:
     region: us-east-1
     providerConfigRef: aws-provider
     lifecycle:
       enabled: true
       expirationDays: 90
+  buckets:
+    - name: assets
+      acl: private
+    - name: backups
+      acl: private
+      region: eu-west-1    # override default
 ```
 
 Swap the provider by changing `s3.provider` — the provider-specific blocks (`crossplane`, `garage`) configure the chosen backend.
 
 ### Garage provider
 
-The garage-operator creates a `GarageBucket` and `GarageKey` for your app. The `GarageKey` auto-generates a Secret containing S3 credentials and connection info. Reference this Secret from the base chart's `envFrom`:
+The garage-operator creates a `GarageBucket` and `GarageKey` for each bucket. The `GarageKey` auto-generates a Secret containing S3 credentials and connection info. Reference this Secret from the base chart's `envFrom`:
 
 ```yaml
 s3:
   enabled: true
   provider: garage
-  bucketName: assets
   garage:
     clusterRef: garage              # name of the GarageCluster resource
     clusterRefNamespace: ""         # namespace of the GarageCluster (defaults to same namespace)
+  buckets:
+    - name: assets
+    - name: uploads
 ```
 
 Optional features:
@@ -120,6 +128,10 @@ s3:
           filter:
             prefix: "logs/"
           expirationDays: 30
+  buckets:
+    - name: assets
+      quotas:                   # per-bucket override
+        maxSize: 5Gi
 ```
 
 ## ExternalSecrets

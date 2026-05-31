@@ -1,12 +1,15 @@
 {{/*
 hiroba-platform.s3-crossplane — Crossplane S3 Bucket collection.
-Iterates over s3.buckets and renders a Crossplane Bucket for every
-entry with provider == "crossplane". Gated on s3.enabled.
+Renders a Crossplane Bucket for each s3.buckets entry.
+Gated on s3.enabled AND s3.provider == "crossplane".
+Bucket-level settings override top-level s3.crossplane defaults.
 */}}
 {{- define "hiroba-platform.s3-crossplane" -}}
-{{- if .Values.s3.enabled }}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") }}
 {{- range .Values.s3.buckets }}
-{{- if eq .provider "crossplane" }}
+{{- $region := .region | default $.Values.s3.crossplane.region }}
+{{- $providerConfigRef := .providerConfigRef | default $.Values.s3.crossplane.providerConfigRef }}
+{{- $lifecycle := .lifecycle | default $.Values.s3.crossplane.lifecycle }}
 ---
 apiVersion: s3.aws.crossplane.io/v1beta1
 kind: Bucket
@@ -16,9 +19,9 @@ metadata:
     {{- include "hiroba-platform.labels" $ | nindent 4 }}
 spec:
   forProvider:
-    region: {{ .crossplane.region }}
-    acl: {{ .acl }}
-    {{- with .crossplane.lifecycle }}
+    region: {{ $region }}
+    acl: {{ .acl | default "private" }}
+    {{- with $lifecycle }}
     {{- if .enabled }}
     lifecycleConfiguration:
       rules:
@@ -30,8 +33,7 @@ spec:
     {{- end }}
     {{- end }}
   providerConfigRef:
-    name: {{ .crossplane.providerConfigRef }}
-{{- end }}
+    name: {{ $providerConfigRef }}
 {{- end }}
 {{- end }}
 {{- end }}

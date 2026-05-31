@@ -1,12 +1,17 @@
 {{/*
 hiroba-platform.s3-garage — Garage operator bucket + key collection.
-Iterates over s3.buckets and renders a GarageBucket + GarageKey for every
-entry with provider == "garage". Gated on s3.enabled.
+Renders a GarageBucket + GarageKey for each s3.buckets entry.
+Gated on s3.enabled AND s3.provider == "garage".
+Bucket-level settings override top-level s3.garage defaults.
 */}}
 {{- define "hiroba-platform.s3-garage" -}}
-{{- if .Values.s3.enabled }}
+{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
 {{- range .Values.s3.buckets }}
-{{- if eq .provider "garage" }}
+{{- $clusterRef := .clusterRef | default $.Values.s3.garage.clusterRef }}
+{{- $clusterRefNamespace := .clusterRefNamespace | default $.Values.s3.garage.clusterRefNamespace }}
+{{- $quotas := .quotas | default $.Values.s3.garage.quotas }}
+{{- $website := .website | default $.Values.s3.garage.website }}
+{{- $lifecycle := .lifecycle | default $.Values.s3.garage.lifecycle }}
 ---
 apiVersion: garage.rajsingh.info/v1beta1
 kind: GarageBucket
@@ -16,19 +21,19 @@ metadata:
     {{- include "hiroba-platform.labels" $ | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .garage.clusterRef }}
-    {{- with .garage.clusterRefNamespace }}
+    name: {{ $clusterRef }}
+    {{- with $clusterRefNamespace }}
     namespace: {{ . }}
     {{- end }}
-  {{- with .garage.quotas }}
+  {{- with $quotas }}
   quotas:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .garage.website }}
+  {{- with $website }}
   website:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .garage.lifecycle }}
+  {{- with $lifecycle }}
   lifecycle:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -41,8 +46,8 @@ metadata:
     {{- include "hiroba-platform.labels" $ | nindent 4 }}
 spec:
   clusterRef:
-    name: {{ .garage.clusterRef }}
-    {{- with .garage.clusterRefNamespace }}
+    name: {{ $clusterRef }}
+    {{- with $clusterRefNamespace }}
     namespace: {{ . }}
     {{- end }}
   name: "{{ include "hiroba-platform.name" $ }} {{ .name | title }} S3 Key"
@@ -55,7 +60,6 @@ spec:
         name: {{ include "hiroba-platform.name" $ }}-{{ .name }}
       read: true
       write: true
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

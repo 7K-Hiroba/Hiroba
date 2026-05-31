@@ -1,8 +1,8 @@
 {{/*
 hiroba-platform.cnpg-cluster — CloudNativePG Cluster resource.
 Backup configuration (plugins / retentionPolicy) is rendered when
-postgres.backup.enabled is true; the actual backup storage resources
-(ObjectStore, GarageBucket, GarageKey) live in the cnpg-backup template.
+postgres.backup.enabled is true; the actual backup storage resource
+(ObjectStore) lives in the cnpg-backup template.
 */}}
 {{- define "hiroba-platform.cnpg-cluster" -}}
 {{- if .Values.postgres.enabled }}

@@ -12,14 +12,13 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: is not created when no buckets use crossplane provider
+  - it: is not created when provider is garage
     set:
       s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
       s3.buckets:
         - name: assets
-          provider: garage
-          garage:
-            clusterRef: my-cluster
     asserts:
       - hasDocuments:
           count: 0
@@ -27,13 +26,12 @@ tests:
   - it: renders Bucket for crossplane buckets
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
           acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
     asserts:
       - hasDocuments:
           count: 1
@@ -46,13 +44,14 @@ tests:
   - it: Bucket uses configured name region and acl
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
           acl: public-read
-          crossplane:
-            region: eu-west-1
-            providerConfigRef: my-provider
+          region: eu-west-1
+          providerConfigRef: my-provider
     asserts:
       - equal:
           path: metadata.name
@@ -67,19 +66,35 @@ tests:
           path: spec.providerConfigRef.name
           value: my-provider
 
+  - it: uses defaults from s3.crossplane when not overridden
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - equal:
+          path: spec.forProvider.region
+          value: us-east-1
+      - equal:
+          path: spec.providerConfigRef.name
+          value: aws-provider
+
   - it: includes lifecycle configuration when enabled
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: logs
-          provider: crossplane
           acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
-            lifecycle:
-              enabled: true
-              expirationDays: 90
+          lifecycle:
+            enabled: true
+            expirationDays: 90
     asserts:
       - equal:
           path: spec.forProvider.lifecycleConfiguration.rules[0].status
@@ -88,19 +103,38 @@ tests:
           path: spec.forProvider.lifecycleConfiguration.rules[0].expiration.days
           value: 90
 
+  - it: uses lifecycle defaults from s3.crossplane
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.crossplane.lifecycle:
+        enabled: true
+        expirationDays: 45
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].status
+          value: Enabled
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].expiration.days
+          value: 45
+
   - it: omits lifecycle configuration when disabled
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
           acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
-            lifecycle:
-              enabled: false
-              expirationDays: 90
+          lifecycle:
+            enabled: false
+            expirationDays: 90
     asserts:
       - isNull:
           path: spec.forProvider.lifecycleConfiguration
@@ -108,13 +142,12 @@ tests:
   - it: applies standard labels
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
           acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
     asserts:
       - isNotNull:
           path: metadata.labels
@@ -122,19 +155,15 @@ tests:
   - it: renders multiple crossplane buckets
     set:
       s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
       s3.buckets:
         - name: assets
-          provider: crossplane
           acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
         - name: backups
-          provider: crossplane
           acl: private
-          crossplane:
-            region: eu-west-1
-            providerConfigRef: aws-provider
+          region: eu-west-1
     asserts:
       - hasDocuments:
           count: 2
@@ -146,24 +175,11 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-backups
         documentIndex: 1
-
-  - it: renders mixed providers only crossplane buckets
-    set:
-      s3.enabled: true
-      s3.buckets:
-        - name: assets
-          provider: crossplane
-          acl: private
-          crossplane:
-            region: us-east-1
-            providerConfigRef: aws-provider
-        - name: uploads
-          provider: garage
-          garage:
-            clusterRef: my-cluster
-    asserts:
-      - hasDocuments:
-          count: 1
       - equal:
-          path: metadata.name
-          value: RELEASE-NAME-assets
+          path: spec.forProvider.region
+          value: us-east-1
+        documentIndex: 0
+      - equal:
+          path: spec.forProvider.region
+          value: eu-west-1
+        documentIndex: 1

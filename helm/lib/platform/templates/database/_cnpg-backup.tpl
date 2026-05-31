@@ -1,46 +1,10 @@
 {{/*
 hiroba-platform.cnpg-backup — Backup storage resources for CloudNativePG.
-Renders GarageBucket, GarageKey, and barman ObjectStore when
-postgres.enabled AND postgres.backup.enabled are true.
+Renders the barman ObjectStore when postgres.enabled AND postgres.backup.enabled
+are true. Assumes the S3 bucket and credentials secret are created externally.
 */}}
 {{- define "hiroba-platform.cnpg-backup" -}}
 {{- if and .Values.postgres.enabled .Values.postgres.backup.enabled -}}
----
-apiVersion: garage.rajsingh.info/v1beta1
-kind: GarageBucket
-metadata:
-  name: {{ include "hiroba-platform.name" . }}-pg-backups
-  labels:
-    {{- include "hiroba-platform.labels" . | nindent 4 }}
-spec:
-  clusterRef:
-    name: {{ .Values.postgres.backup.garage.clusterRef }}
-    {{- with .Values.postgres.backup.garage.clusterRefNamespace }}
-    namespace: {{ . }}
-    {{- end }}
----
-apiVersion: garage.rajsingh.info/v1beta1
-kind: GarageKey
-metadata:
-  name: {{ include "hiroba-platform.name" . }}-pg-s3-key
-  labels:
-    {{- include "hiroba-platform.labels" . | nindent 4 }}
-spec:
-  clusterRef:
-    name: {{ .Values.postgres.backup.garage.clusterRef }}
-    {{- with .Values.postgres.backup.garage.clusterRefNamespace }}
-    namespace: {{ . }}
-    {{- end }}
-  name: "{{ include "hiroba-platform.name" . }} PG Backup Key"
-  secretTemplate:
-    name: {{ include "hiroba-platform.name" . }}-pg-s3-key
-    additionalData:
-      region: {{ .Values.postgres.backup.garage.region | quote }}
-  bucketPermissions:
-    - bucketRef:
-        name: {{ include "hiroba-platform.name" . }}-pg-backups
-      read: true
-      write: true
 ---
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
@@ -50,18 +14,18 @@ metadata:
     {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   configuration:
-    destinationPath: "s3://{{ include "hiroba-platform.name" . }}-pg-backups/"
-    endpointURL: {{ .Values.postgres.backup.garage.endpoint | quote }}
+    destinationPath: "s3://{{ .Values.postgres.backup.bucketName | default (printf "%s-pg-backups" (include "hiroba-platform.name" .)) }}/"
+    endpointURL: {{ .Values.postgres.backup.endpoint | quote }}
     s3Credentials:
       accessKeyId:
-        name: {{ include "hiroba-platform.name" . }}-pg-s3-key
-        key: access-key-id
+        name: {{ .Values.postgres.backup.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.credentialsSecret.accessKeyKey | default "accessKeyId" }}
       secretAccessKey:
-        name: {{ include "hiroba-platform.name" . }}-pg-s3-key
-        key: secret-access-key
+        name: {{ .Values.postgres.backup.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.credentialsSecret.secretKeyKey | default "secretAccessKey" }}
       region:
-        name: {{ include "hiroba-platform.name" . }}-pg-s3-key
-        key: region
+        name: {{ .Values.postgres.backup.credentialsSecret.name }}
+        key: {{ .Values.postgres.backup.credentialsSecret.regionKey | default "region" }}
     wal:
       compression: gzip
     data:
