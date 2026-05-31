@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.4...helm-platform-lib-v0.2.5) (2026-05-31)
+
+
+### Features
+
+* wire s3 buckets per provider, create cnpg backup ([#70](https://github.com/7K-Hiroba/Hiroba/issues/70)) ([6f67311](https://github.com/7K-Hiroba/Hiroba/commit/6f673116684db25eb8bffe8148c8d94a92de0669))
+
 ## [0.2.4](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.3...helm-platform-lib-v0.2.4) (2026-05-29)
 
 
