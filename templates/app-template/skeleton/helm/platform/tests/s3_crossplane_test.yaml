@@ -1,0 +1,185 @@
+suite: S3 Crossplane
+templates:
+  - templates/storage/s3-crossplane.yaml
+capabilities:
+  apiVersions:
+    - s3.aws.crossplane.io/v1beta1
+tests:
+  - it: is not created when s3 is disabled
+    set:
+      s3.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when provider is garage
+    set:
+      s3.enabled: true
+      s3.provider: garage
+      s3.garage.clusterRef: my-cluster
+      s3.buckets:
+        - name: assets
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders Bucket for crossplane buckets
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Bucket
+      - equal:
+          path: apiVersion
+          value: s3.aws.crossplane.io/v1beta1
+
+  - it: Bucket uses configured name region and acl
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: public-read
+          region: eu-west-1
+          providerConfigRef: my-provider
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-assets
+      - equal:
+          path: spec.forProvider.region
+          value: eu-west-1
+      - equal:
+          path: spec.forProvider.acl
+          value: public-read
+      - equal:
+          path: spec.providerConfigRef.name
+          value: my-provider
+
+  - it: uses defaults from s3.crossplane when not overridden
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - equal:
+          path: spec.forProvider.region
+          value: us-east-1
+      - equal:
+          path: spec.providerConfigRef.name
+          value: aws-provider
+
+  - it: includes lifecycle configuration when enabled
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: logs
+          acl: private
+          lifecycle:
+            enabled: true
+            expirationDays: 90
+    asserts:
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].status
+          value: Enabled
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].expiration.days
+          value: 90
+
+  - it: uses lifecycle defaults from s3.crossplane
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.crossplane.lifecycle:
+        enabled: true
+        expirationDays: 45
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].status
+          value: Enabled
+      - equal:
+          path: spec.forProvider.lifecycleConfiguration.rules[0].expiration.days
+          value: 45
+
+  - it: omits lifecycle configuration when disabled
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+          lifecycle:
+            enabled: false
+            expirationDays: 90
+    asserts:
+      - isNull:
+          path: spec.forProvider.lifecycleConfiguration
+
+  - it: applies standard labels
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+    asserts:
+      - isNotNull:
+          path: metadata.labels
+
+  - it: renders multiple crossplane buckets
+    set:
+      s3.enabled: true
+      s3.provider: crossplane
+      s3.crossplane.region: us-east-1
+      s3.crossplane.providerConfigRef: aws-provider
+      s3.buckets:
+        - name: assets
+          acl: private
+        - name: backups
+          acl: private
+          region: eu-west-1
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-assets
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-backups
+        documentIndex: 1
+      - equal:
+          path: spec.forProvider.region
+          value: us-east-1
+        documentIndex: 0
+      - equal:
+          path: spec.forProvider.region
+          value: eu-west-1
+        documentIndex: 1
