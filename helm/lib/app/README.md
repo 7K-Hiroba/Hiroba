@@ -5,7 +5,7 @@ Defines reusable named templates for Deployment, Service, ServiceAccount,
 HPA, PDB, and Gateway API HTTPRoute. Consumer charts add this as a
 dependency and include the resources they need.
 
-![Version: 0.2.5](https://img.shields.io/badge/Version-0.2.5-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.6](https://img.shields.io/badge/Version-0.2.6-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 > Library charts are not installable on their own. Add this as a `dependency` from your application chart and include the resources you need.
 
@@ -21,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-app-lib
-    version: ^0.2.5
+    version: ^0.2.6
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -37,7 +37,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.5
+  harbor.7kgroup.org/7khiroba/charts/hiroba-app-lib:0.2.6
 ```
 
 `templates/deployment.yaml` (one thin wrapper per resource, following the Hiroba skeleton convention):
@@ -94,6 +94,7 @@ Kubernetes: `>=1.24.0-0`
 | config.enabled | bool | `false` | Mount ConfigMap(s) into the container as files |
 | env | list | `[]` | Extra environment variables, passed directly to the container |
 | envFrom | list | `[]` | envFrom sources (ConfigMapRef / SecretRef) injected into the container |
+| extraDeploy | list | `[]` | Extra raw Kubernetes resources to deploy. Each entry is a multi-line YAML string (use `|`). Templating is supported — use `{{ include "hiroba-app.name" . }}`, `{{ .Release.Name }}`, etc. |
 | extraVolumeMounts | list | `[]` | Extra volume mounts added to the workload container |
 | extraVolumes | list | `[]` | Extra volumes added to the pod spec |
 | fullnameOverride | string | `""` | Fully override the generated fullname used in resource names |
@@ -110,6 +111,7 @@ Kubernetes: `>=1.24.0-0`
 | livenessProbe | object | `{"httpGet":{"path":"/healthz","port":"http"},"initialDelaySeconds":10,"periodSeconds":10}` | Liveness probe (passed straight to the container spec) |
 | nameOverride | string | `""` | Override the chart name used in resource names |
 | nodeSelector | object | `{}` | nodeSelector applied to the workload pods |
+| persistence | object | `{"claims":[]}` | Persistent volume claims for application storage. Each entry creates a PVC and mounts it into the workload container. |
 | podAnnotations | object | `{}` | Annotations applied to every pod |
 | podDisruptionBudget | object | `{"enabled":false,"minAvailable":1}` | Pod Disruption Budget. Only meaningful with replicaCount > 1 or HPA on. |
 | podDisruptionBudget.enabled | bool | `false` | Render a PodDisruptionBudget |
