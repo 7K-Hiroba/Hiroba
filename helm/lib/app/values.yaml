@@ -169,18 +169,41 @@ statefulset:
   volumeClaimTemplates: []
 
 config:
-  # -- Mount ConfigMap(s) into the container as files
+  # -- Mount ConfigMap(s) into the container as files.
+  # When `data`, `tplData`, or `binaryData` are provided and `configMapName`
+  # is empty, the library also creates the ConfigMap resource automatically.
   enabled: false
   # -- List of ConfigMaps to mount as files
   configs:
-    # -- Name of the ConfigMap to mount. Defaults to fullname + "-app-config" when empty
+    # -- Name of an existing ConfigMap to mount. When empty, the library
+    # creates a ConfigMap named `<fullname>-app-config` from `data`, `tplData`,
+    # or `binaryData`. When set, the library assumes the ConfigMap already
+    # exists and only mounts it (no creation).
     - configMapName: ""
-      # -- File path where the config is mounted inside the container
+      # -- File path where the config is mounted inside the container.
+      # If omitted, the ConfigMap is created but NOT mounted (useful for
+      # sidecars or other consumers).
       mountPath: "/app/app-config.yaml"
       # -- The key inside the ConfigMap to mount as a file (required for readOnlyRootFilesystem)
       subPath: "app-config.yaml"
       # -- Whether the mounted config file is read-only
       readOnly: true
+      # -- Plain string data for the ConfigMap. Keys become filenames.
+      # Only used when `configMapName` is empty (library-managed ConfigMap).
+      data: {}
+      #   app.yaml: |
+      #     server:
+      #       port: 8080
+      # -- Templated string data rendered through Helm's `tpl` function.
+      # Supports template expressions like `{{ include "hiroba-app.name" . }}`.
+      # Only used when `configMapName` is empty (library-managed ConfigMap).
+      tplData: {}
+      #   settings.php: |
+      #     <?php
+      #     $host = '{{ include "hiroba-app.name" . }}';
+      # -- Base64-encoded binary data for the ConfigMap.
+      # Only used when `configMapName` is empty (library-managed ConfigMap).
+      binaryData: {}
 
 # -- Persistent volume claims for application storage.
 # Each entry creates a PVC and mounts it into the workload container.

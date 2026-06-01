@@ -71,14 +71,20 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or .Values.config.enabled .Values.persistence.claims .Values.extraVolumeMounts }}
+          {{- if or (and .Values.config.enabled (include "hiroba-app.hasMountedConfigs" .)) .Values.persistence.claims .Values.extraVolumeMounts }}
           volumeMounts:
             {{- if .Values.config.enabled }}
             {{- range $i, $cfg := .Values.config.configs }}
+            {{- if $cfg.mountPath }}
             - name: config-{{ $i }}
               mountPath: {{ $cfg.mountPath }}
-              subPath: {{ $cfg.subPath }}
-              readOnly: {{ $cfg.readOnly }}
+              {{- with $cfg.subPath }}
+              subPath: {{ . }}
+              {{- end }}
+              {{- with $cfg.readOnly }}
+              readOnly: {{ . }}
+              {{- end }}
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- range .Values.persistence.claims }}
@@ -89,13 +95,15 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- end }}
-      {{- if or .Values.config.enabled .Values.persistence.claims .Values.extraVolumes }}
+      {{- if or (and .Values.config.enabled (include "hiroba-app.hasMountedConfigs" .)) .Values.persistence.claims .Values.extraVolumes }}
       volumes:
         {{- if .Values.config.enabled }}
         {{- range $i, $cfg := .Values.config.configs }}
+        {{- if $cfg.mountPath }}
         - name: config-{{ $i }}
           configMap:
             name: {{ default (printf "%s-app-config" (include "hiroba-app.fullname" $)) $cfg.configMapName }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- range .Values.persistence.claims }}
