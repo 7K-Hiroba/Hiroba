@@ -37,7 +37,7 @@ postgres:
       cpu: 250m
       memory: 256Mi
   # -- PostgreSQL version
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4
   # -- Database name to create
   database: app
   # -- Database owner
