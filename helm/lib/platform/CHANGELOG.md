@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.6...helm-platform-lib-v0.2.7) (2026-06-01)
+
+
+### Bug Fixes
+
+* ommit dragonfly image when empty ([#77](https://github.com/7K-Hiroba/Hiroba/issues/77)) ([59fd8fd](https://github.com/7K-Hiroba/Hiroba/commit/59fd8fd357eb165ed47a7fec6eadcd1206f18f40))
+
 ## [0.2.6](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.5...helm-platform-lib-v0.2.6) (2026-06-01)
 
 
