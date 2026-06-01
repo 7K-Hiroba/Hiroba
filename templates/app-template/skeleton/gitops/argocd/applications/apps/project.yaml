@@ -1,0 +1,59 @@
+# ArgoCD AppProject for ${{ values.name }}.
+#
+# Defines the boundaries for what the Applications can deploy.
+#
+# Usage:
+#   kubectl apply -f gitops/argocd/applications/apps/project.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ${{ values.name }}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/part-of: hiroba
+spec:
+  description: ${{ values.description }}
+  sourceRepos:
+    - https://github.com/7K-Hiroba/${{ values.name }}.git
+  destinations:
+    - namespace: ${{ values.name }}
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+    - group: postgresql.cnpg.io
+      kind: Cluster
+    - group: postgresql.cnpg.io
+      kind: ScheduledBackup
+    - group: dragonflydb.io
+      kind: Dragonfly
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: monitoring.coreos.com
+      kind: ServiceMonitor
+    - group: monitoring.coreos.com
+      kind: PrometheusRule
+  orphanedResources:
+    warn: true

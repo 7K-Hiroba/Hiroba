@@ -1,0 +1,21 @@
+# Staging overlay values for the ${{ values.name }} platform chart.
+#
+# Reduces HA and disables backups for cost savings.
+postgres:
+  enabled: ${{ values.enablePostgres }}
+  instances: 1
+  backup:
+    enabled: false
+
+redis:
+  enabled: ${{ values.enablePostgres }}
+  dragonfly:
+    replicas: 1
+
+observability:
+  serviceMonitor:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+  prometheusRules:
+    enabled: true

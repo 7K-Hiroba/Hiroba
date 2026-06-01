@@ -1,0 +1,181 @@
+# ArgoCD Application for the ${{ values.name }} platform chart.
+#
+# Produces operator-backed infrastructure:
+# - PostgreSQL cluster (CNPG)
+# - Redis-compatible cache (Dragonfly)
+# - External secrets
+# - Observability (ServiceMonitor, Grafana dashboard, PrometheusRules)
+#
+# Platform resources change rarely and carry higher risk, so automated
+# sync is still enabled but with more conservative retry settings.
+#
+# Usage:
+#   kubectl apply -f gitops/argocd/applications/apps/platform.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/component: platform
+    app.kubernetes.io/part-of: hiroba
+spec:
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+    targetRevision: HEAD
+    path: helm/platform
+    helm:
+      valuesObject:
+        global:
+          appName: ${{ values.name }}
+          baseInstance: ""
+        postgres:
+          enabled: ${{ values.enablePostgres }}
+          provider: cnpg
+          instances: 3
+          storage:
+            size: 10Gi
+            storageClass: ""
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          imageName: ghcr.io/cloudnative-pg/postgresql:18.3
+          database: ${{ values.name }}
+          owner: ${{ values.name }}
+          plugins:
+            - name: barman-cloud.cloudnative-pg.io
+              enabled: true
+              isWALArchiver: false
+              parameters:
+                barmanObjectName: ""
+          backup:
+            enabled: true
+            schedule: "0 2 * * *"
+            retentionPolicy: "30d"
+            bucketName: ""
+            endpoint: "http://garage.garage.svc.cluster.local:3900"
+            credentialsSecret:
+              name: ""
+              accessKeyKey: accessKeyId
+              secretKeyKey: secretAccessKey
+              regionKey: region
+        redis:
+          enabled: ${{ values.enablePostgres }}
+          provider: dragonfly
+          dragonfly:
+            replicas: 3
+            image: ""
+            resources:
+              limits:
+                cpu: 500m
+                memory: 512Mi
+              requests:
+                cpu: 100m
+                memory: 256Mi
+            snapshot:
+              cron: "0 */6 * * *"
+              dir: /snapshots
+              enableOnMasterOnly: false
+              existingPersistentVolumeClaimName: ""
+              persistentVolumeClaimSpec:
+                storageClassName: ""
+                resources:
+                  requests:
+                    storage: 5Gi
+            serviceSpec:
+              type: ClusterIP
+            labels: {}
+            args: []
+            env: []
+        s3:
+          enabled: ${{ values.enableS3 }}
+        externalSecrets:
+          enabled: true
+          refreshInterval: 1h
+          storeRef:
+            name: cluster-secret-store
+            kind: ClusterSecretStore
+          data:
+            - secretKey: ACCESS_TOKEN_SALT
+              remoteKey: ${{ values.name }}/auth
+              property: access-token-salt
+            - secretKey: JWT_SECRET_KEY
+              remoteKey: ${{ values.name }}/auth
+              property: jwt-secret-key
+          dataFrom: []
+          target:
+            template: {}
+        observability:
+          serviceMonitor:
+            enabled: true
+            additionalLabels: {}
+            port: http
+            path: /metrics
+            interval: 30s
+            scrapeTimeout: 10s
+          grafanaDashboard:
+            enabled: true
+            folderLabel: ""
+          prometheusRules:
+            enabled: true
+            groups:
+              - name: ${{ values.name }}.rules
+                rules:
+                  - alert: HighErrorRate
+                    expr: |
+                      sum(rate(http_requests_total{namespace="${{ values.name }}", service="${{ values.name }}", status=~"5.."}[5m]))
+                      /
+                      sum(rate(http_requests_total{namespace="${{ values.name }}", service="${{ values.name }}"}[5m]))
+                      > 0.05
+                    for: 5m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "High error rate for ${{ values.name }}"
+                      description: "Error rate is above 5% for the last 5 minutes."
+                  - alert: HighLatency
+                    expr: |
+                      histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="${{ values.name }}", service="${{ values.name }}"}[5m]))
+                      > 1
+                    for: 5m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "High p99 latency for ${{ values.name }}"
+                      description: "p99 latency is above 1 second for the last 5 minutes."
+                  - alert: PodCrashLooping
+                    expr: |
+                      rate(kube_pod_container_status_restarts_total{namespace="${{ values.name }}"}[15m]) > 0
+                    for: 5m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: "${{ values.name }} pod is crash looping"
+                      description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes."
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

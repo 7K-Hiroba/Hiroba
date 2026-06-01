@@ -1,0 +1,17 @@
+# ConfigMap for non-sensitive ${{ values.name }} configuration.
+#
+# Secrets are managed via ExternalSecrets.
+#
+# Usage:
+#   kubectl apply -f gitops/argocd/applications/apps/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${{ values.name }}-config
+  namespace: ${{ values.name }}
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/part-of: hiroba
+data:
+  NODE_ENV: production
+  PORT: "3333"

@@ -12,6 +12,12 @@
       "release-type": "helm",
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md"
+    },
+    "templates": {
+      "component": "app-template",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "separate-pull-requests": false,
