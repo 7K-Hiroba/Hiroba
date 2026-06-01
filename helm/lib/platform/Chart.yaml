@@ -6,7 +6,7 @@ description: |
   Clusters, S3 buckets (Crossplane / Garage), ExternalSecrets, ServiceMonitor,
   Grafana dashboards, PrometheusRules, and operator presence checks.
 type: library
-version: 0.2.7
+version: 0.2.8
 appVersion: "0.1.0"
 kubeVersion: ">=1.24.0-0"
 home: https://hiroba.7kgroup.org
