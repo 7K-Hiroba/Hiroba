@@ -1,7 +1,8 @@
 apiVersion: backstage.io/v1alpha1
 kind: Location
 metadata:
-  name: templates
+  name: hiroba-templates
+  title: hiroba-templates
   description: Collection of all Backstage templates
   annotations:
     backstage.io/techdocs-ref: dir:./docs
