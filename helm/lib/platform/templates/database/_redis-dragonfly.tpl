@@ -12,7 +12,9 @@ metadata:
     {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.redis.dragonfly.replicas }}
-  image: {{ .Values.redis.dragonfly.image }}
+  {{- with .Values.redis.dragonfly.image }}
+  image: {{ . }}
+  {{- end }}
 
   {{- with .Values.redis.dragonfly.labels }}
   labels:
