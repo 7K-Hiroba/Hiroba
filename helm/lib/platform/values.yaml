@@ -146,6 +146,17 @@ redis:
     serviceSpec:
       # -- Service type. One of: ClusterIP, NodePort, LoadBalancer
       type: ClusterIP
+    # -- PersistentVolumeClaim configuration for Dragonfly data storage
+    persistentVolumeClaimSpec:
+      # -- Access mode for the PVC. Required by the Dragonfly operator.
+      accessModes:
+        - ReadWriteOnce
+      # -- StorageClass for the PVC. Empty uses cluster default.
+      storageClassName: ""
+      resources:
+        requests:
+          # -- Size of the persistent volume
+          storage: 10Gi
     # -- Extra labels applied to Dragonfly pods
     labels: {}
     # -- Container args override

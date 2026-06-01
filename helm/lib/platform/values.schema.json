@@ -84,6 +84,7 @@
             "resources": { "type": "object" },
             "snapshot": { "type": "object" },
             "serviceSpec": { "type": "object" },
+            "persistentVolumeClaimSpec": { "type": "object" },
             "labels": { "type": "object" },
             "args": { "type": "array", "items": { "type": "string" } },
             "env": { "type": "array" }
