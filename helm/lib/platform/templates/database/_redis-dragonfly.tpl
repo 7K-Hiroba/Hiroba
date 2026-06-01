@@ -45,5 +45,10 @@ spec:
   serviceSpec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+
+  {{- with .Values.redis.dragonfly.persistentVolumeClaimSpec }}
+  persistentVolumeClaimSpec:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}
