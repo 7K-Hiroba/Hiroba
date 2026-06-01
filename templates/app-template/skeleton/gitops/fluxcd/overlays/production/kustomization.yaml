@@ -1,0 +1,14 @@
+# Production overlay Kustomization for ${{ values.name }}.
+#
+# Full HA configuration with increased resources.
+resources:
+  - ../../apps
+patches:
+  - path: base-patch.yaml
+    target:
+      kind: HelmRelease
+      name: ${{ values.name }}-base
+  - path: platform-patch.yaml
+    target:
+      kind: HelmRelease
+      name: ${{ values.name }}-platform

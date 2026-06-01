@@ -84,12 +84,23 @@
       "customType": "regex",
       "description": "Container image references in app-template skeleton Helm values",
       "managerFilePatterns": [
-        "/templates/app-template/skeleton/helm/.+/values\\.yaml$"
+        "/templates/app-template/skeleton/helm/.+/values\\.yaml$/"
       ],
       "matchStrings": [
         "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Hiroba template version in app-template template.yaml",
+      "managerFilePatterns": ["/templates/app-template/template\\.yaml$/"],
+      "matchStrings": [
+        "hirobaVersion:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "7K-Hiroba/Hiroba",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^app-template-v(?<version>.+)$"
     }
   ]
 }

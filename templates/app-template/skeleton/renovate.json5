@@ -18,6 +18,17 @@
         "imageName:\\s*(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Track Hiroba template version in catalog-info.yaml",
+      "managerFilePatterns": ["/catalog-info\\.yaml$/"],
+      "matchStrings": [
+        "hiroba\\.7kgroup\\.org/template-version:\\s*(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "7K-Hiroba/Hiroba",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^app-template-v(?<version>.+)$"
     }
     {%- if values.upstreamImage %},
     {
@@ -47,6 +58,13 @@
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
       "semanticCommitType": "ci"
+    },
+    {
+      "description": "Hiroba template version updates",
+      "matchPackageNames": ["7K-Hiroba/Hiroba"],
+      "groupName": "hiroba-template",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "hiroba"
     }
     {%- if values.upstreamImage %},
     {

@@ -1,0 +1,24 @@
+# Staging patch for ${{ values.name }} platform chart.
+#
+# Reduces HA and disables backups for cost savings.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: flux-system
+spec:
+  values:
+    postgres:
+      instances: 1
+      backup:
+        enabled: false
+    redis:
+      dragonfly:
+        replicas: 1
+    observability:
+      serviceMonitor:
+        enabled: true
+      grafanaDashboard:
+        enabled: true
+      prometheusRules:
+        enabled: true

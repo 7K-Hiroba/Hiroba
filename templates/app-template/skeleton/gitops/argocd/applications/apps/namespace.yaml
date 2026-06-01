@@ -1,0 +1,16 @@
+# Namespace for ${{ values.name }}.
+#
+# Enforces restricted Pod Security Standards.
+#
+# Usage:
+#   kubectl apply -f gitops/argocd/applications/apps/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${{ values.name }}
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/part-of: hiroba
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

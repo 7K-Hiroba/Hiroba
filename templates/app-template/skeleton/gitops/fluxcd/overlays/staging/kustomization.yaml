@@ -1,0 +1,14 @@
+# Staging overlay Kustomization for ${{ values.name }}.
+#
+# Reduces resources and disables HA for cost-effective staging.
+resources:
+  - ../../apps
+patches:
+  - path: base-patch.yaml
+    target:
+      kind: HelmRelease
+      name: ${{ values.name }}-base
+  - path: platform-patch.yaml
+    target:
+      kind: HelmRelease
+      name: ${{ values.name }}-platform

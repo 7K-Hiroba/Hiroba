@@ -1,0 +1,106 @@
+# FluxCD HelmRelease for the ${{ values.name }} base chart.
+#
+# Deploys the application workload with production-ready defaults.
+# Reconciles every 5 minutes and auto-applies changes.
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/git-repository.yaml   # once per cluster
+#   kubectl apply -f gitops/fluxcd/apps/ --recursive
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-base
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/component: base
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 5m
+  releaseName: ${{ values.name }}
+  targetNamespace: ${{ values.name }}
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: ./helm/base
+      sourceRef:
+        kind: GitRepository
+        name: ${{ values.name }}
+        namespace: flux-system
+  values:
+    replicaCount: 2
+    image:
+      repository: ghcr.io/7k-hiroba/${{ values.name }}
+      pullPolicy: IfNotPresent
+      tag: ""
+    serviceAccount:
+      create: true
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 3333
+    gateway:
+      enabled: true
+      parentRefs:
+        - name: default-gateway
+      hostnames:
+        - ${{ values.name }}.example.com
+    resources:
+      limits:
+        cpu: "1"
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    livenessProbe:
+      httpGet:
+        path: /api/v1/health
+        port: http
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /api/v1/health
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 5
+      targetCPUUtilizationPercentage: 80
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+    envFrom:
+      - configMapRef:
+          name: ${{ values.name }}-config
+      - secretRef:
+          name: ${{ values.name }}
+    extraVolumes:
+      - name: tmp
+        emptyDir: {}
+    extraVolumeMounts:
+      - name: tmp
+        mountPath: /tmp

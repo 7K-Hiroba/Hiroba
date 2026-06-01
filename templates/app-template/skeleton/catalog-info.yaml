@@ -8,6 +8,7 @@ metadata:
   annotations:
     github.com/project-slug: 7K-Hiroba/${{ values.name }}
     backstage.io/techdocs-ref: dir:./docs
+    hiroba.7kgroup.org/template-version: ${{ values.hirobaVersion }}
   tags:
     - kubernetes
 spec:

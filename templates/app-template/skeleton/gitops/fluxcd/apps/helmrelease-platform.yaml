@@ -1,0 +1,174 @@
+# FluxCD HelmRelease for the ${{ values.name }} platform chart.
+#
+# Produces operator-backed infrastructure (databases, cache, secrets, observability).
+# Changes to these resources carry higher risk, so this release reconciles
+# every 30 minutes. Review the diff carefully before manually triggering a sync:
+#
+#   flux reconcile helmrelease ${{ values.name }}-platform -n flux-system
+#
+# To pause reconciliation while investigating an issue, set `suspend: true`.
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/apps/ --recursive
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/component: platform
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 30m
+  releaseName: ${{ values.name }}-platform
+  targetNamespace: ${{ values.name }}
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  dependsOn:
+    - name: ${{ values.name }}-base
+      namespace: flux-system
+  chart:
+    spec:
+      chart: ./helm/platform
+      sourceRef:
+        kind: GitRepository
+        name: ${{ values.name }}
+        namespace: flux-system
+  values:
+    global:
+      appName: ${{ values.name }}
+      baseInstance: ""
+    postgres:
+      enabled: ${{ values.enablePostgres }}
+      provider: cnpg
+      instances: 3
+      storage:
+        size: 10Gi
+        storageClass: ""
+      resources:
+        limits:
+          cpu: "1"
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      imageName: ghcr.io/cloudnative-pg/postgresql:18.3
+      database: ${{ values.name }}
+      owner: ${{ values.name }}
+      plugins:
+        - name: barman-cloud.cloudnative-pg.io
+          enabled: true
+          isWALArchiver: false
+          parameters:
+            barmanObjectName: ""
+      backup:
+        enabled: true
+        schedule: "0 2 * * *"
+        retentionPolicy: "30d"
+        bucketName: ""
+        endpoint: "http://garage.garage.svc.cluster.local:3900"
+        credentialsSecret:
+          name: ""
+          accessKeyKey: accessKeyId
+          secretKeyKey: secretAccessKey
+          regionKey: region
+    redis:
+      enabled: ${{ values.enablePostgres }}
+      provider: dragonfly
+      dragonfly:
+        replicas: 3
+        image: ""
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        snapshot:
+          cron: "0 */6 * * *"
+          dir: /snapshots
+          enableOnMasterOnly: false
+          existingPersistentVolumeClaimName: ""
+          persistentVolumeClaimSpec:
+            storageClassName: ""
+            resources:
+              requests:
+                storage: 5Gi
+        serviceSpec:
+          type: ClusterIP
+        labels: {}
+        args: []
+        env: []
+    s3:
+      enabled: ${{ values.enableS3 }}
+    externalSecrets:
+      enabled: true
+      refreshInterval: 1h
+      storeRef:
+        name: cluster-secret-store
+        kind: ClusterSecretStore
+      data:
+        - secretKey: ACCESS_TOKEN_SALT
+          remoteKey: ${{ values.name }}/auth
+          property: access-token-salt
+        - secretKey: JWT_SECRET_KEY
+          remoteKey: ${{ values.name }}/auth
+          property: jwt-secret-key
+      dataFrom: []
+      target:
+        template: {}
+    observability:
+      serviceMonitor:
+        enabled: true
+        additionalLabels: {}
+        port: http
+        path: /metrics
+        interval: 30s
+        scrapeTimeout: 10s
+      grafanaDashboard:
+        enabled: true
+        folderLabel: ""
+      prometheusRules:
+        enabled: true
+        groups:
+          - name: ${{ values.name }}.rules
+            rules:
+              - alert: HighErrorRate
+                expr: |
+                  sum(rate(http_requests_total{namespace="${{ values.name }}", service="${{ values.name }}", status=~"5.."}[5m]))
+                  /
+                  sum(rate(http_requests_total{namespace="${{ values.name }}", service="${{ values.name }}"}[5m]))
+                  > 0.05
+                for: 5m
+                labels:
+                  severity: warning
+                annotations:
+                  summary: "High error rate for ${{ values.name }}"
+                  description: "Error rate is above 5% for the last 5 minutes."
+              - alert: HighLatency
+                expr: |
+                  histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="${{ values.name }}", service="${{ values.name }}"}[5m]))
+                  > 1
+                for: 5m
+                labels:
+                  severity: warning
+                annotations:
+                  summary: "High p99 latency for ${{ values.name }}"
+                  description: "p99 latency is above 1 second for the last 5 minutes."
+              - alert: PodCrashLooping
+                expr: |
+                  rate(kube_pod_container_status_restarts_total{namespace="${{ values.name }}"}[15m]) > 0
+                for: 5m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: "${{ values.name }} pod is crash looping"
+                  description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes."

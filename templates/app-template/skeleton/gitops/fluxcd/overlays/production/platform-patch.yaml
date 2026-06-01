@@ -1,0 +1,42 @@
+# Production patch for ${{ values.name }} platform chart.
+#
+# Full HA with 3-instance PostgreSQL cluster, Redis cluster, backups.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${{ values.name }}-platform
+  namespace: flux-system
+spec:
+  values:
+    postgres:
+      instances: 3
+      storage:
+        size: 50Gi
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      backup:
+        enabled: true
+        schedule: "0 2 * * *"
+        retentionPolicy: "30d"
+    redis:
+      dragonfly:
+        replicas: 3
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+    observability:
+      serviceMonitor:
+        enabled: true
+      grafanaDashboard:
+        enabled: true
+      prometheusRules:
+        enabled: true
