@@ -1,5 +1,5 @@
 {
   "helm/lib/app": "0.2.7",
   "helm/lib/platform": "0.2.6",
-  "templates": "0.1.0"
+  "templates": "0.2.0"
 }
