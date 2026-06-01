@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.10](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.9...helm-app-lib-v0.2.10) (2026-06-01)
+
+
+### Features
+
+* add init containers do deployment and statefulset ([#82](https://github.com/7K-Hiroba/Hiroba/issues/82)) ([fb68243](https://github.com/7K-Hiroba/Hiroba/commit/fb682438ed52538a08c8bc4c96de0e7cfcbf442a))
+* create configmap resource and map it with config ([#84](https://github.com/7K-Hiroba/Hiroba/issues/84)) ([b22ef29](https://github.com/7K-Hiroba/Hiroba/commit/b22ef2915821fb140045aaf296866d54d011bc64))
+
 ## [0.2.9](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.8...helm-app-lib-v0.2.9) (2026-06-01)
 
 
