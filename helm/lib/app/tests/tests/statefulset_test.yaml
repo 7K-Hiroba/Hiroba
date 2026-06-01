@@ -1,0 +1,30 @@
+suite: StatefulSet
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: renders with default values
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: renders initContainers when set
+    set:
+      initContainers:
+        - name: init-myservice
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-myservice
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: busybox:1.28
+
+  - it: does not render initContainers when empty
+    asserts:
+      - isNull:
+          path: spec.template.spec.initContainers

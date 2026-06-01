@@ -139,6 +139,24 @@ affinity: {}
 # -- Container args override. When empty, the container uses the image's default CMD.
 args: []
 
+# -- Init containers run before the main app container. They share the same pod
+# volumes and are useful for filesystem initialization (e.g. setting permissions,
+# seeding data, running migrations). Each init container is a standard Kubernetes
+# container spec. Volume mounts from persistence.claims and config are NOT
+# automatically injected — specify them explicitly if needed.
+initContainers: []
+# - name: init-filesystem
+#   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+#   command: ["/bin/sh", "-c"]
+#   args:
+#     - |
+#       set -e
+#       mkdir -p /var/www/html/sites/default/files
+#       chmod 775 /var/www/html/sites/default/files
+#   volumeMounts:
+#     - name: persistence-sites
+#       mountPath: /var/www/html/sites
+
 statefulset:
   # -- Service name governing the StatefulSet. Defaults to the chart fullname.
   serviceName: ""
