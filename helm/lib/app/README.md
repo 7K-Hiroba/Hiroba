@@ -86,12 +86,15 @@ Kubernetes: `>=1.24.0-0`
 | autoscaling.minReplicas | int | `1` | Minimum replicas the HPA may scale to |
 | autoscaling.scaleTargetKind | string | `"Deployment"` | Workload kind to scale. One of: Deployment, StatefulSet |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` | Target average CPU utilization across replicas |
-| config.configs | list | `[{"configMapName":"","mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml"}]` | List of ConfigMaps to mount as files |
-| config.configs[0] | object | `{"configMapName":"","mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml"}` | Name of the ConfigMap to mount. Defaults to fullname + "-app-config" when empty |
-| config.configs[0].mountPath | string | `"/app/app-config.yaml"` | File path where the config is mounted inside the container |
+| config.configs | list | `[{"binaryData":{},"configMapName":"","data":{},"mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml","tplData":{}}]` | List of ConfigMaps to mount as files |
+| config.configs[0] | object | `{"binaryData":{},"configMapName":"","data":{},"mountPath":"/app/app-config.yaml","readOnly":true,"subPath":"app-config.yaml","tplData":{}}` | Name of an existing ConfigMap to mount. When empty, the library creates a ConfigMap named `<fullname>-app-config` from `data`, `tplData`, or `binaryData`. When set, the library assumes the ConfigMap already exists and only mounts it (no creation). |
+| config.configs[0].binaryData | object | `{}` | Base64-encoded binary data for the ConfigMap. Only used when `configMapName` is empty (library-managed ConfigMap). |
+| config.configs[0].data | object | `{}` | Plain string data for the ConfigMap. Keys become filenames. Only used when `configMapName` is empty (library-managed ConfigMap). |
+| config.configs[0].mountPath | string | `"/app/app-config.yaml"` | File path where the config is mounted inside the container. If omitted, the ConfigMap is created but NOT mounted (useful for sidecars or other consumers). |
 | config.configs[0].readOnly | bool | `true` | Whether the mounted config file is read-only |
 | config.configs[0].subPath | string | `"app-config.yaml"` | The key inside the ConfigMap to mount as a file (required for readOnlyRootFilesystem) |
-| config.enabled | bool | `false` | Mount ConfigMap(s) into the container as files |
+| config.configs[0].tplData | object | `{}` | Templated string data rendered through Helm's `tpl` function. Supports template expressions like `{{ include "hiroba-app.name" . }}`. Only used when `configMapName` is empty (library-managed ConfigMap). |
+| config.enabled | bool | `false` | Mount ConfigMap(s) into the container as files. When `data`, `tplData`, or `binaryData` are provided and `configMapName` is empty, the library also creates the ConfigMap resource automatically. |
 | env | list | `[]` | Extra environment variables, passed directly to the container |
 | envFrom | list | `[]` | envFrom sources (ConfigMapRef / SecretRef) injected into the container |
 | extraDeploy | list | `[]` | Extra raw Kubernetes resources to deploy. Each entry is a multi-line YAML string (use `|`). Templating is supported — use `{{ include "hiroba-app.name" . }}`, `{{ .Release.Name }}`, etc. |

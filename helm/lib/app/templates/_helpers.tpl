@@ -72,3 +72,17 @@ ServiceAccount name to use. Falls back to `<release>-<chart>` when
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Returns "true" if any config entry has a mountPath (meaning it should be
+mounted into the deployment).  Used to conditionally render volumes / volumeMounts.
+*/}}
+{{- define "hiroba-app.hasMountedConfigs" -}}
+{{- $hasMount := false -}}
+{{- range .Values.config.configs -}}
+{{- if .mountPath -}}
+{{- $hasMount = true -}}
+{{- end -}}
+{{- end -}}
+{{- if $hasMount }}true{{ end -}}
+{{- end }}
