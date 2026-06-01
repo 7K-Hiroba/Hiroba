@@ -112,6 +112,11 @@
       "items": { "type": "string" },
       "description": "Container args override. When empty, the container uses the image's default CMD."
     },
+    "initContainers": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Init containers run before the main app container. They share the same pod volumes and are useful for filesystem initialization (e.g. setting permissions, seeding data, running migrations)."
+    },
     "statefulset": {
       "type": "object",
       "properties": {
