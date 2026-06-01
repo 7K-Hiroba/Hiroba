@@ -31,11 +31,26 @@ spec:
     {{- toYaml .Values.postgres.resources | nindent 4 }}
 
   {{- if .Values.postgres.backup.enabled }}
+  {{- if .Values.postgres.plugins }}
   plugins:
-    - name: barman-cloud.cloudnative-pg.io
+    {{- range .Values.postgres.plugins }}
+    - name: {{ .name }}
+      enabled: {{ .enabled }}
+      {{- with .isWALArchiver }}
+      isWALArchiver: {{ . }}
+      {{- end }}
+      {{- with .parameters }}
       parameters:
-        barmanObjectName: {{ include "hiroba-platform.name" . }}-pg-barman
-
+        {{- range $k, $v := . }}
+        {{- if and (eq $k "barmanObjectName") (not $v) }}
+        barmanObjectName: {{ include "hiroba-platform.name" $ }}-pg-barman
+        {{- else }}
+        {{ $k }}: {{ $v | quote }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
   backup:
     retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
   {{- end }}

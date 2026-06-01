@@ -60,3 +60,6 @@ config:
       mountPath: "/app/app-config.yaml"
       subPath: "app-config.yaml"
       readOnly: true
+
+persistence:
+  claims: []

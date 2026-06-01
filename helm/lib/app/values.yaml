@@ -164,6 +164,24 @@ config:
       # -- Whether the mounted config file is read-only
       readOnly: true
 
+# -- Persistent volume claims for application storage.
+# Each entry creates a PVC and mounts it into the workload container.
+persistence:
+  claims: []
+  # - name: files
+  #   # -- Create the PVC (set false to use existingClaim only)
+  #   enabled: true
+  #   # -- Size of the PVC
+  #   size: 5Gi
+  #   # -- Access mode for the PVC
+  #   accessMode: ReadWriteOnce
+  #   # -- StorageClass for the PVC. Empty uses cluster default.
+  #   storageClass: ""
+  #   # -- Use an existing PVC instead of creating one
+  #   existingClaim: ""
+  #   # -- Mount path inside the container
+  #   mountPath: /app/files
+
 # -- Extra environment variables, passed directly to the container
 env: []
 # -- envFrom sources (ConfigMapRef / SecretRef) injected into the container
@@ -172,3 +190,15 @@ envFrom: []
 extraVolumes: []
 # -- Extra volume mounts added to the workload container
 extraVolumeMounts: []
+
+# -- Extra raw Kubernetes resources to deploy. Each entry is a multi-line YAML
+# string (use `|`). Templating is supported — use `{{ include "hiroba-app.name" . }}`,
+# `{{ .Release.Name }}`, etc.
+extraDeploy: []
+# - |
+#   apiVersion: v1
+#   kind: ConfigMap
+#   metadata:
+#     name: {{ include "hiroba-app.fullname" . }}-extra
+#   data:
+#     key: value

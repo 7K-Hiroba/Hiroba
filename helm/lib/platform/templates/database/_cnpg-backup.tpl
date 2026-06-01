@@ -1,10 +1,14 @@
 {{/*
 hiroba-platform.cnpg-backup — Backup storage resources for CloudNativePG.
 Renders the barman ObjectStore when postgres.enabled AND postgres.backup.enabled
-are true. Assumes the S3 bucket and credentials secret are created externally.
+are true.
+
+Requires a pre-existing secret containing S3 credentials. Set
+postgres.backup.credentialsSecret.name to reference it.
 */}}
 {{- define "hiroba-platform.cnpg-backup" -}}
 {{- if and .Values.postgres.enabled .Values.postgres.backup.enabled -}}
+{{- $bucketName := default (printf "%s-pg-backups" (include "hiroba-platform.name" .)) .Values.postgres.backup.bucketName -}}
 ---
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
@@ -14,7 +18,7 @@ metadata:
     {{- include "hiroba-platform.labels" . | nindent 4 }}
 spec:
   configuration:
-    destinationPath: "s3://{{ .Values.postgres.backup.bucketName | default (printf "%s-pg-backups" (include "hiroba-platform.name" .)) }}/"
+    destinationPath: "s3://{{ $bucketName }}/"
     endpointURL: {{ .Values.postgres.backup.endpoint | quote }}
     s3Credentials:
       accessKeyId:

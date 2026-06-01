@@ -38,6 +38,16 @@ postgres:
   database: app
   # -- Database owner role
   owner: app
+  # -- CNPG plugins applied to the cluster. The barman-cloud plugin is
+  # automatically configured when backup is enabled; add others here.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: false
+      parameters:
+        # -- ObjectStore resource name. Defaults to <app>-pg-barman when empty.
+        barmanObjectName: ""
+
   backup:
     # -- Render backup storage resources (ObjectStore)
     enabled: false
@@ -48,8 +58,8 @@ postgres:
     # -- S3 bucket name for backups (defaults to <app>-pg-backups)
     bucketName: ""
     # -- S3 API endpoint for backups
-    endpoint: "http://garage.garage.svc.cluster.local:3900"
-    # -- Pre-existing secret containing S3 credentials
+    endpoint: ""
+    # -- Pre-existing secret containing S3 credentials.
     credentialsSecret:
       # -- Name of the secret
       name: ""
@@ -93,6 +103,55 @@ s3:
     - name: assets
       # -- Bucket ACL
       acl: private
+
+# -- Redis-compatible cache / queue resources
+redis:
+  # -- Render Redis resources
+  enabled: false
+  # -- Provider: "dragonfly" (Dragonfly operator)
+  provider: dragonfly
+  # -- Dragonfly operator settings
+  dragonfly:
+    # -- Number of Dragonfly replicas (including master)
+    replicas: 1
+    # -- Container image for Dragonfly
+    image: docker.io/dragonflydb/dragonfly:latest
+    # -- Resource requests and limits for each Dragonfly pod
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    # -- Snapshot configuration (persistence)
+    snapshot:
+      # -- Cron schedule for snapshots
+      cron: "0 */6 * * *"
+      # -- Snapshot directory path
+      dir: /snapshots
+      # -- Only run snapshots on the master node
+      enableOnMasterOnly: false
+      # -- Pre-existing PVC name for snapshots (leave empty to create one)
+      existingPersistentVolumeClaimName: ""
+      # -- PVC spec for snapshot storage
+      persistentVolumeClaimSpec:
+        # -- StorageClass for the PVC. Empty uses cluster default.
+        storageClassName: ""
+        resources:
+          requests:
+            # -- Size of the snapshot volume
+            storage: 5Gi
+    # -- Service configuration
+    serviceSpec:
+      # -- Service type. One of: ClusterIP, NodePort, LoadBalancer
+      type: ClusterIP
+    # -- Extra labels applied to Dragonfly pods
+    labels: {}
+    # -- Container args override
+    args: []
+    # -- Extra environment variables
+    env: []
 
 # -- ExternalSecret (external-secrets.io) resources
 externalSecrets:
