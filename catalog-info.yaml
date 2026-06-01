@@ -5,7 +5,7 @@ metadata:
   title: hiroba-location
   description: Collection of all Backstage templates
   annotations:
-    backstage.io/techdocs-ref: dir:./docs
+    backstage.io/techdocs-ref: dir:.
 spec:
   targets:
     - ./templates/app-template/template.yaml

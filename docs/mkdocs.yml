@@ -1,3 +1,0 @@
-# mkdocs.yml - necessary so backstage engine can build docs
-site_name: Hiroba Documentation
-dir: .
