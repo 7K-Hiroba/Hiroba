@@ -5,7 +5,7 @@ dependencies) charts. Defines reusable named templates for CloudNativePG
 Clusters, S3 buckets (Crossplane / Garage), ExternalSecrets, ServiceMonitor,
 Grafana dashboards, PrometheusRules, and operator presence checks.
 
-![Version: 0.2.4](https://img.shields.io/badge/Version-0.2.4-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.5](https://img.shields.io/badge/Version-0.2.5-informational?style=flat-square)  ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 > Library charts are not installable on their own. Add this as a `dependency` from your application *platform* chart and include the resources you need.
 
@@ -21,7 +21,7 @@ version: 0.1.0
 appVersion: "0.1.0"
 dependencies:
   - name: hiroba-platform-lib
-    version: ^0.2.4
+    version: ^0.2.5
     repository: oci://harbor.7kgroup.org/7khiroba/charts
 ```
 
@@ -37,7 +37,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib:0.2.4
+  harbor.7kgroup.org/7khiroba/charts/hiroba-platform-lib:0.2.5
 ```
 
 Wrappers (one per resource, following the Hiroba skeleton convention):
@@ -108,15 +108,15 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
+| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","plugins":[{"enabled":true,"isWALArchiver":false,"name":"barman-cloud.cloudnative-pg.io","parameters":{"barmanObjectName":""}}],"provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database resources |
 | postgres.backup.bucketName | string | `""` | S3 bucket name for backups (defaults to <app>-pg-backups) |
-| postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials |
+| postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials. |
 | postgres.backup.credentialsSecret.accessKeyKey | string | `"accessKeyId"` | Key in the secret for the access key ID |
 | postgres.backup.credentialsSecret.name | string | `""` | Name of the secret |
 | postgres.backup.credentialsSecret.regionKey | string | `"region"` | Key in the secret for the S3 region |
 | postgres.backup.credentialsSecret.secretKeyKey | string | `"secretAccessKey"` | Key in the secret for the secret access key |
 | postgres.backup.enabled | bool | `false` | Render backup storage resources (ObjectStore) |
-| postgres.backup.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | S3 API endpoint for backups |
+| postgres.backup.endpoint | string | `""` | S3 API endpoint for backups |
 | postgres.backup.retentionPolicy | string | `"7d"` | Retention policy passed to barman |
 | postgres.backup.schedule | string | `"0 2 * * *"` | Cron schedule for ScheduledBackup |
 | postgres.database | string | `"app"` | Database name to create |
@@ -124,10 +124,32 @@ Kubernetes: `>=1.24.0-0`
 | postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | Container image (operator-compatible) used for PostgreSQL |
 | postgres.instances | int | `1` | Number of PostgreSQL instances in the cluster |
 | postgres.owner | string | `"app"` | Database owner role |
+| postgres.plugins | list | `[{"enabled":true,"isWALArchiver":false,"name":"barman-cloud.cloudnative-pg.io","parameters":{"barmanObjectName":""}}]` | CNPG plugins applied to the cluster. The barman-cloud plugin is automatically configured when backup is enabled; add others here. |
+| postgres.plugins[0].parameters.barmanObjectName | string | `""` | ObjectStore resource name. Defaults to <app>-pg-barman when empty. |
 | postgres.provider | string | `"cnpg"` | Provider: "cnpg" (CloudNativePG operator) |
 | postgres.resources | object | `{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}}` | Resource requests and limits for each PostgreSQL pod |
 | postgres.storage.size | string | `"10Gi"` | Persistent volume size per instance |
 | postgres.storage.storageClass | string | `""` | StorageClass for the persistent volumes. Empty uses the cluster default. |
+| redis | object | `{"dragonfly":{"args":[],"env":[],"image":"docker.io/dragonflydb/dragonfly:latest","labels":{},"replicas":1,"resources":{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"serviceSpec":{"type":"ClusterIP"},"snapshot":{"cron":"0 */6 * * *","dir":"/snapshots","enableOnMasterOnly":false,"existingPersistentVolumeClaimName":"","persistentVolumeClaimSpec":{"resources":{"requests":{"storage":"5Gi"}},"storageClassName":""}}},"enabled":false,"provider":"dragonfly"}` | Redis-compatible cache / queue resources |
+| redis.dragonfly | object | `{"args":[],"env":[],"image":"docker.io/dragonflydb/dragonfly:latest","labels":{},"replicas":1,"resources":{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"serviceSpec":{"type":"ClusterIP"},"snapshot":{"cron":"0 */6 * * *","dir":"/snapshots","enableOnMasterOnly":false,"existingPersistentVolumeClaimName":"","persistentVolumeClaimSpec":{"resources":{"requests":{"storage":"5Gi"}},"storageClassName":""}}}` | Dragonfly operator settings |
+| redis.dragonfly.args | list | `[]` | Container args override |
+| redis.dragonfly.env | list | `[]` | Extra environment variables |
+| redis.dragonfly.image | string | `"docker.io/dragonflydb/dragonfly:latest"` | Container image for Dragonfly |
+| redis.dragonfly.labels | object | `{}` | Extra labels applied to Dragonfly pods |
+| redis.dragonfly.replicas | int | `1` | Number of Dragonfly replicas (including master) |
+| redis.dragonfly.resources | object | `{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"100m","memory":"256Mi"}}` | Resource requests and limits for each Dragonfly pod |
+| redis.dragonfly.serviceSpec | object | `{"type":"ClusterIP"}` | Service configuration |
+| redis.dragonfly.serviceSpec.type | string | `"ClusterIP"` | Service type. One of: ClusterIP, NodePort, LoadBalancer |
+| redis.dragonfly.snapshot | object | `{"cron":"0 */6 * * *","dir":"/snapshots","enableOnMasterOnly":false,"existingPersistentVolumeClaimName":"","persistentVolumeClaimSpec":{"resources":{"requests":{"storage":"5Gi"}},"storageClassName":""}}` | Snapshot configuration (persistence) |
+| redis.dragonfly.snapshot.cron | string | `"0 */6 * * *"` | Cron schedule for snapshots |
+| redis.dragonfly.snapshot.dir | string | `"/snapshots"` | Snapshot directory path |
+| redis.dragonfly.snapshot.enableOnMasterOnly | bool | `false` | Only run snapshots on the master node |
+| redis.dragonfly.snapshot.existingPersistentVolumeClaimName | string | `""` | Pre-existing PVC name for snapshots (leave empty to create one) |
+| redis.dragonfly.snapshot.persistentVolumeClaimSpec | object | `{"resources":{"requests":{"storage":"5Gi"}},"storageClassName":""}` | PVC spec for snapshot storage |
+| redis.dragonfly.snapshot.persistentVolumeClaimSpec.resources.requests.storage | string | `"5Gi"` | Size of the snapshot volume |
+| redis.dragonfly.snapshot.persistentVolumeClaimSpec.storageClassName | string | `""` | StorageClass for the PVC. Empty uses cluster default. |
+| redis.enabled | bool | `false` | Render Redis resources |
+| redis.provider | string | `"dragonfly"` | Provider: "dragonfly" (Dragonfly operator) |
 | s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
 | s3.buckets | list | `[{"acl":"private","name":"assets"}]` | List of S3 buckets to provision. All use the same provider. |
 | s3.buckets[0] | object | `{"acl":"private","name":"assets"}` | Bucket name (will be prefixed with app name) |

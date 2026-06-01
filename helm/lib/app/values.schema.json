@@ -102,6 +102,11 @@
     "env": { "type": "array" },
     "extraVolumes": { "type": "array" },
     "extraVolumeMounts": { "type": "array" },
+    "extraDeploy": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Extra raw Kubernetes resources to deploy. Each entry is a multi-line YAML string (use `|`). Templating is supported."
+    },
     "args": {
       "type": "array",
       "items": { "type": "string" },
@@ -149,6 +154,29 @@
               "subPath": { "type": "string" },
               "readOnly": { "type": "boolean" }
             },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "enabled": { "type": "boolean" },
+              "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$" },
+              "accessMode": { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany", "ReadWriteOncePod"] },
+              "storageClass": { "type": "string" },
+              "existingClaim": { "type": "string" },
+              "mountPath": { "type": "string" }
+            },
+            "required": ["name", "mountPath"],
             "additionalProperties": false
           }
         }

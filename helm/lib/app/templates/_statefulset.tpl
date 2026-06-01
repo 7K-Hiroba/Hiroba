@@ -71,7 +71,7 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or .Values.config.enabled .Values.extraVolumeMounts .Values.statefulset.volumeClaimTemplates }}
+          {{- if or .Values.config.enabled .Values.persistence.claims .Values.extraVolumeMounts .Values.statefulset.volumeClaimTemplates }}
           volumeMounts:
             {{- if .Values.config.enabled }}
             {{- range $i, $cfg := .Values.config.configs }}
@@ -80,6 +80,10 @@ spec:
               subPath: {{ $cfg.subPath }}
               readOnly: {{ $cfg.readOnly }}
             {{- end }}
+            {{- end }}
+            {{- range .Values.persistence.claims }}
+            - name: persistence-{{ .name }}
+              mountPath: {{ .mountPath }}
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -91,7 +95,7 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
-      {{- if or .Values.config.enabled .Values.extraVolumes }}
+      {{- if or .Values.config.enabled .Values.persistence.claims .Values.extraVolumes }}
       volumes:
         {{- if .Values.config.enabled }}
         {{- range $i, $cfg := .Values.config.configs }}
@@ -99,6 +103,15 @@ spec:
           configMap:
             name: {{ default (printf "%s-app-config" (include "hiroba-app.fullname" $)) $cfg.configMapName }}
         {{- end }}
+        {{- end }}
+        {{- range .Values.persistence.claims }}
+        - name: persistence-{{ .name }}
+          persistentVolumeClaim:
+            {{- if .existingClaim }}
+            claimName: {{ .existingClaim }}
+            {{- else }}
+            claimName: {{ include "hiroba-app.fullname" $ }}-{{ .name }}
+            {{- end }}
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
