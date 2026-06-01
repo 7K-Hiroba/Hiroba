@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.6...helm-app-lib-v0.2.7) (2026-06-01)
+
+
+### Features
+
+* add plugins to cnpg database and add redis dragonfly ([#73](https://github.com/7K-Hiroba/Hiroba/issues/73)) ([aeb0a97](https://github.com/7K-Hiroba/Hiroba/commit/aeb0a97f3c24157e6a31daf67424bd0936f1cd7b))
+
 ## [0.2.6](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.5...helm-app-lib-v0.2.6) (2026-05-31)
 
 
