@@ -3,6 +3,8 @@ kind: Location
 metadata:
   name: templates
   description: Collection of all Backstage templates
+  annotations:
+    backstage.io/techdocs-ref: dir:./docs
 spec:
   targets:
     - ./templates/app-template/template.yaml
