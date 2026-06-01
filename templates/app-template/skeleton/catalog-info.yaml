@@ -1,8 +1,10 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: ${{ values.name }}
+  name: ${{ values.name }}-component
+  title: ${{ values.name }}-component
   description: ${{ values.description }}
+  
   annotations:
     github.com/project-slug: 7K-Hiroba/${{ values.name }}
     backstage.io/techdocs-ref: dir:./docs

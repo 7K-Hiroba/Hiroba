@@ -1,7 +1,8 @@
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
-  name: ${{ values.name }}
+  name: ${{ values.name }}-system
+  title: ${{ values.name }}-system
   description: ${{ values.description }}
   annotations:
     github.com/project-slug: 7K-Hiroba/${{ values.name }}
