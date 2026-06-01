@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.8...helm-app-lib-v0.2.9) (2026-06-01)
+
+
+### Bug Fixes
+
+* add persistentVolumeClaimSpec to dragonfly redis resources ([#80](https://github.com/7K-Hiroba/Hiroba/issues/80)) ([a4fb429](https://github.com/7K-Hiroba/Hiroba/commit/a4fb429f8885a261b5512f480dbf0a59a514162e))
+
 ## [0.2.8](https://github.com/7K-Hiroba/Hiroba/compare/helm-app-lib-v0.2.7...helm-app-lib-v0.2.8) (2026-06-01)
 
 
