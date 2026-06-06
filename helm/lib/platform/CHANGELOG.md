@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.11](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.10...helm-platform-lib-v0.2.11) (2026-06-06)
+
+
+### Bug Fixes
+
+* set additional properties default to true ([#88](https://github.com/7K-Hiroba/Hiroba/issues/88)) ([1b9e574](https://github.com/7K-Hiroba/Hiroba/commit/1b9e574b53e9dab50fab34682daffd2e69f8f7a7))
+
 ## [0.2.10](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.9...helm-platform-lib-v0.2.10) (2026-06-06)
 
 
