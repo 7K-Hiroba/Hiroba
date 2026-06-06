@@ -4,125 +4,286 @@
   "description": "Reference schema for the value surface consumed by hiroba-app-lib named templates. Library values are NOT merged into the consumer; consumer charts should ship and validate their own values.schema.json (this file is a copy-paste starting point).",
   "type": "object",
   "properties": {
-    "replicaCount": { "type": "integer", "minimum": 1 },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
     "image": {
       "type": "object",
-      "required": ["repository"],
+      "required": [
+        "repository"
+      ],
       "properties": {
-        "repository": { "type": "string", "minLength": 1 },
-        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] },
-        "tag": { "type": "string" }
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "tag": {
+          "type": "string"
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "imagePullSecrets": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name"],
-        "properties": { "name": { "type": "string" } }
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
       }
     },
-    "nameOverride": { "type": "string" },
-    "fullnameOverride": { "type": "string" },
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
     "serviceAccount": {
       "type": "object",
       "properties": {
-        "create": { "type": "boolean" },
-        "annotations": { "type": "object" },
-        "name": { "type": "string" }
+        "create": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "name": {
+          "type": "string"
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
-    "podAnnotations": { "type": "object" },
-    "envFrom": { "type": "array", "description": "envFrom sources (ConfigMapRef / SecretRef) injected into the container." },
-    "podSecurityContext": { "type": "object" },
-    "securityContext": { "type": "object" },
+    "podAnnotations": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "envFrom": {
+      "type": "array",
+      "description": "envFrom sources (ConfigMapRef / SecretRef) injected into the container."
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "securityContext": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "service": {
       "type": "object",
-      "required": ["port"],
+      "required": [
+        "port"
+      ],
       "properties": {
-        "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-        "targetPort": { "type": "integer", "minimum": 1, "maximum": 65535 }
+        "type": {
+          "type": "string",
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "targetPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "gateway": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "annotations": { "type": "object" },
+        "enabled": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": true
+        },
         "parentRefs": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
-              "name": { "type": "string" },
-              "namespace": { "type": "string" },
-              "sectionName": { "type": "string" }
-            }
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "sectionName": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
           }
         },
-        "hostnames": { "type": "array", "items": { "type": "string" } },
-        "defaultFilters": { "type": "array" },
-        "rules": { "type": "array" }
+        "hostnames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultFilters": {
+          "type": "array"
+        },
+        "rules": {
+          "type": "array"
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
-    
-    "resources": { "type": "object" },
-    "livenessProbe": { "type": "object" },
-    "readinessProbe": { "type": "object" },
-    "startupProbe": { "type": "object" },
+    "resources": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "livenessProbe": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "readinessProbe": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "startupProbe": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "autoscaling": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "minReplicas": { "type": "integer", "minimum": 1 },
-        "maxReplicas": { "type": "integer", "minimum": 1 },
-        "targetCPUUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 },
-        "scaleTargetKind": { "type": "string", "enum": ["Deployment", "StatefulSet"] }
+        "enabled": {
+          "type": "boolean"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "scaleTargetKind": {
+          "type": "string",
+          "enum": [
+            "Deployment",
+            "StatefulSet"
+          ]
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "podDisruptionBudget": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "minAvailable": { "type": ["integer", "string"] },
-        "maxUnavailable": { "type": ["integer", "string"] }
+        "enabled": {
+          "type": "boolean"
+        },
+        "minAvailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "maxUnavailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
-    "nodeSelector": { "type": "object" },
-    "tolerations": { "type": "array" },
-    "affinity": { "type": "object" },
-    "env": { "type": "array" },
-    "extraVolumes": { "type": "array" },
-    "extraVolumeMounts": { "type": "array" },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "tolerations": {
+      "type": "array"
+    },
+    "affinity": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "env": {
+      "type": "array"
+    },
+    "extraVolumes": {
+      "type": "array"
+    },
+    "extraVolumeMounts": {
+      "type": "array"
+    },
     "extraDeploy": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Extra raw Kubernetes resources to deploy. Each entry is a multi-line YAML string (use `|`). Templating is supported."
     },
     "args": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Container args override. When empty, the container uses the image's default CMD."
     },
     "initContainers": {
       "type": "array",
-      "items": { "type": "object" },
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
       "description": "Init containers run before the main app container. They share the same pod volumes and are useful for filesystem initialization (e.g. setting permissions, seeding data, running migrations)."
     },
     "statefulset": {
       "type": "object",
       "properties": {
-        "serviceName": { "type": "string", "description": "Service name governing the StatefulSet. Defaults to the chart fullname." },
-        "podManagementPolicy": { "type": "string", "enum": ["OrderedReady", "Parallel"] },
-        "updateStrategy": { "type": "object" },
+        "serviceName": {
+          "type": "string",
+          "description": "Service name governing the StatefulSet. Defaults to the chart fullname."
+        },
+        "podManagementPolicy": {
+          "type": "string",
+          "enum": [
+            "OrderedReady",
+            "Parallel"
+          ]
+        },
+        "updateStrategy": {
+          "type": "object",
+          "additionalProperties": true
+        },
         "volumeClaimTemplates": {
           "type": "array",
           "items": {
@@ -131,42 +292,78 @@
               "metadata": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "annotations": { "type": "object" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "annotations": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
                 },
-                "required": ["name"]
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": true
               },
-              "spec": { "type": "object" },
-              "mountPath": { "type": "string" }
+              "spec": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "mountPath": {
+                "type": "string"
+              }
             },
-            "required": ["metadata", "spec"]
+            "required": [
+              "metadata",
+              "spec"
+            ],
+            "additionalProperties": true
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "config": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
+        "enabled": {
+          "type": "boolean"
+        },
         "configs": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "configMapName": { "type": "string" },
-              "mountPath": { "type": "string" },
-              "subPath": { "type": "string" },
-              "readOnly": { "type": "boolean" },
-              "data": { "type": "object" },
-              "tplData": { "type": "object" },
-              "binaryData": { "type": "object" }
+              "configMapName": {
+                "type": "string"
+              },
+              "mountPath": {
+                "type": "string"
+              },
+              "subPath": {
+                "type": "string"
+              },
+              "readOnly": {
+                "type": "boolean"
+              },
+              "data": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "tplData": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "binaryData": {
+                "type": "object",
+                "additionalProperties": true
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": true
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "persistence": {
       "type": "object",
@@ -176,20 +373,44 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "enabled": { "type": "boolean" },
-              "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$" },
-              "accessMode": { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany", "ReadWriteOncePod"] },
-              "storageClass": { "type": "string" },
-              "existingClaim": { "type": "string" },
-              "mountPath": { "type": "string" }
+              "name": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "size": {
+                "type": "string",
+                "pattern": "^[0-9]+(Mi|Gi|Ti)$"
+              },
+              "accessMode": {
+                "type": "string",
+                "enum": [
+                  "ReadWriteOnce",
+                  "ReadWriteMany",
+                  "ReadOnlyMany",
+                  "ReadWriteOncePod"
+                ]
+              },
+              "storageClass": {
+                "type": "string"
+              },
+              "existingClaim": {
+                "type": "string"
+              },
+              "mountPath": {
+                "type": "string"
+              }
             },
-            "required": ["name", "mountPath"],
-            "additionalProperties": false
+            "required": [
+              "name",
+              "mountPath"
+            ],
+            "additionalProperties": true
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
   "additionalProperties": true

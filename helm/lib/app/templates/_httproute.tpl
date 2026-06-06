@@ -48,7 +48,7 @@ spec:
           {{- end }}
         {{- end }}
       backendRefs:
-        - name: {{ include "hiroba-app.fullname" $ }}
+        - name: {{ default (include "hiroba-app.fullname" $) $.Values.gateway.backendName }}
           port: {{ $.Values.service.port }}
       {{- if or $.Values.gateway.defaultFilters .filters }}
       filters:
@@ -66,7 +66,7 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: {{ include "hiroba-app.fullname" . }}
+        - name: {{ default (include "hiroba-app.fullname" .) .Values.gateway.backendName }}
           port: {{ .Values.service.port }}
       {{- with .Values.gateway.defaultFilters }}
       filters:

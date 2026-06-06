@@ -3,200 +3,386 @@
   "title": "hiroba-platform-lib values reference",
   "description": "Reference schema for the value surface consumed by hiroba-platform-lib named templates. Library values are NOT merged into the consumer; consumer charts should ship and validate their own values.schema.json (this file is a copy-paste starting point).",
   "type": "object",
-  "required": ["global"],
+  "required": [
+    "global"
+  ],
   "properties": {
     "global": {
       "type": "object",
-      "required": ["appName"],
+      "required": [
+        "appName"
+      ],
       "properties": {
-        "appName": { "type": "string", "minLength": 1 },
-        "baseInstance": { "type": "string" }
+        "appName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseInstance": {
+          "type": "string"
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "postgres": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["cnpg"] },
-        "instances": { "type": "integer", "minimum": 1 },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "cnpg"
+          ]
+        },
+        "instances": {
+          "type": "integer",
+          "minimum": 1
+        },
         "storage": {
           "type": "object",
           "properties": {
-            "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$" },
-            "storageClass": { "type": "string" }
+            "size": {
+              "type": "string",
+              "pattern": "^[0-9]+(Mi|Gi|Ti)$"
+            },
+            "storageClass": {
+              "type": "string"
+            }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         },
-        "resources": { "type": "object" },
-        "imageName": { "type": "string" },
-        "database": { "type": "string" },
-        "owner": { "type": "string" },
+        "resources": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "imageName": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
         "plugins": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "enabled"],
+            "required": [
+              "name",
+              "enabled"
+            ],
             "properties": {
-              "name": { "type": "string" },
-              "enabled": { "type": "boolean" },
-              "isWALArchiver": { "type": "boolean" },
-              "parameters": { "type": "object" }
+              "name": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "isWALArchiver": {
+                "type": "boolean"
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": true
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": true
           }
         },
         "backup": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
-            "schedule": { "type": "string" },
-            "retentionPolicy": { "type": "string" },
-            "bucketName": { "type": "string" },
-            "endpoint": { "type": "string" },
+            "enabled": {
+              "type": "boolean"
+            },
+            "schedule": {
+              "type": "string"
+            },
+            "retentionPolicy": {
+              "type": "string"
+            },
+            "bucketName": {
+              "type": "string"
+            },
+            "endpoint": {
+              "type": "string"
+            },
             "credentialsSecret": {
               "type": "object",
-              "required": ["name"],
+              "required": [
+                "name"
+              ],
               "properties": {
-                "name": { "type": "string" },
-                "accessKeyKey": { "type": "string" },
-                "secretKeyKey": { "type": "string" },
-                "regionKey": { "type": "string" }
+                "name": {
+                  "type": "string"
+                },
+                "accessKeyKey": {
+                  "type": "string"
+                },
+                "secretKeyKey": {
+                  "type": "string"
+                },
+                "regionKey": {
+                  "type": "string"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "redis": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["dragonfly"] },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "dragonfly"
+          ]
+        },
         "dragonfly": {
           "type": "object",
           "properties": {
-            "replicas": { "type": "integer", "minimum": 1 },
-            "image": { "type": "string" },
-            "resources": { "type": "object" },
-            "snapshot": { "type": "object" },
-            "serviceSpec": { "type": "object" },
-            "persistentVolumeClaimSpec": { "type": "object" },
-            "labels": { "type": "object" },
-            "args": { "type": "array", "items": { "type": "string" } },
-            "env": { "type": "array" }
+            "replicas": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "image": {
+              "type": "string"
+            },
+            "resources": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "snapshot": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "serviceSpec": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "persistentVolumeClaimSpec": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "labels": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "env": {
+              "type": "array"
+            }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "s3": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "enum": ["crossplane", "garage"] },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "crossplane",
+            "garage"
+          ]
+        },
         "crossplane": {
           "type": "object",
           "properties": {
-            "region": { "type": "string" },
-            "providerConfigRef": { "type": "string" },
+            "region": {
+              "type": "string"
+            },
+            "providerConfigRef": {
+              "type": "string"
+            },
             "lifecycle": {
               "type": "object",
               "properties": {
-                "enabled": { "type": "boolean" },
-                "expirationDays": { "type": "integer", "minimum": 1 }
+                "enabled": {
+                  "type": "boolean"
+                },
+                "expirationDays": {
+                  "type": "integer",
+                  "minimum": 1
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "garage": {
           "type": "object",
           "properties": {
-            "clusterRef": { "type": "string" },
-            "clusterRefNamespace": { "type": "string" },
+            "clusterRef": {
+              "type": "string"
+            },
+            "clusterRefNamespace": {
+              "type": "string"
+            },
             "quotas": {
               "type": "object",
               "properties": {
-                "maxSize": { "type": "string" },
-                "maxObjects": { "type": "integer" }
+                "maxSize": {
+                  "type": "string"
+                },
+                "maxObjects": {
+                  "type": "integer"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             },
             "website": {
               "type": "object",
               "properties": {
-                "enabled": { "type": "boolean" },
-                "indexDocument": { "type": "string" },
-                "errorDocument": { "type": "string" }
+                "enabled": {
+                  "type": "boolean"
+                },
+                "indexDocument": {
+                  "type": "string"
+                },
+                "errorDocument": {
+                  "type": "string"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             },
             "lifecycle": {
               "type": "object",
               "properties": {
-                "rules": { "type": "array" }
+                "rules": {
+                  "type": "array"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "buckets": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "properties": {
-              "name": { "type": "string" },
-              "acl": { "type": "string" },
-              "region": { "type": "string" },
-              "providerConfigRef": { "type": "string" },
-              "clusterRef": { "type": "string" },
-              "clusterRefNamespace": { "type": "string" },
-              "quotas": { "type": "object" },
-              "website": { "type": "object" },
-              "lifecycle": { "type": "object" }
+              "name": {
+                "type": "string"
+              },
+              "acl": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "providerConfigRef": {
+                "type": "string"
+              },
+              "clusterRef": {
+                "type": "string"
+              },
+              "clusterRefNamespace": {
+                "type": "string"
+              },
+              "quotas": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "website": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "lifecycle": {
+                "type": "object",
+                "additionalProperties": true
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": true
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "externalSecrets": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "refreshInterval": { "type": "string" },
+        "enabled": {
+          "type": "boolean"
+        },
+        "refreshInterval": {
+          "type": "string"
+        },
         "storeRef": {
           "type": "object",
-          "required": ["name", "kind"],
+          "required": [
+            "name",
+            "kind"
+          ],
           "properties": {
-            "name": { "type": "string" },
-            "kind": { "type": "string", "enum": ["SecretStore", "ClusterSecretStore"] }
+            "name": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "SecretStore",
+                "ClusterSecretStore"
+              ]
+            }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         },
-        "data": { "type": "array" },
-        "dataFrom": { "type": "array" },
-        "target": { "type": "object" }
+        "data": {
+          "type": "array"
+        },
+        "dataFrom": {
+          "type": "array"
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": true
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "observability": {
       "type": "object",
       "properties": {
-        "serviceMonitor": { "type": "object" },
-        "grafanaDashboard": { "type": "object" },
-        "prometheusRules": { "type": "object" }
+        "serviceMonitor": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "grafanaDashboard": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "prometheusRules": {
+          "type": "object",
+          "additionalProperties": true
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
   "additionalProperties": true
