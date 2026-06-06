@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.9...helm-platform-lib-v0.2.10) (2026-06-06)
+
+
+### Features
+
+* ommiting platform values defaults to false, update checks ([#86](https://github.com/7K-Hiroba/Hiroba/issues/86)) ([15be99c](https://github.com/7K-Hiroba/Hiroba/commit/15be99cac7a2cf397b832ebc1f155804e462e9f4))
+
 ## [0.2.9](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.8...helm-platform-lib-v0.2.9) (2026-06-01)
 
 
