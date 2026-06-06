@@ -5,7 +5,7 @@ Gated on s3.enabled AND s3.provider == "garage".
 Bucket-level settings override top-level s3.garage defaults.
 */}}
 {{- define "hiroba-platform.s3-garage" -}}
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "garage") }}
+{{- if and (get (get .Values "s3" | default dict) "enabled" | default false) (eq .Values.s3.provider "garage") }}
 {{- range .Values.s3.buckets }}
 {{- $clusterRef := .clusterRef | default $.Values.s3.garage.clusterRef }}
 {{- $clusterRefNamespace := .clusterRefNamespace | default $.Values.s3.garage.clusterRefNamespace }}

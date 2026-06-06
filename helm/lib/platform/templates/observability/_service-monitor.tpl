@@ -3,7 +3,7 @@ hiroba-platform.service-monitor — Prometheus Operator ServiceMonitor for the
 workload created by the base chart. Gated on observability.serviceMonitor.enabled.
 */}}
 {{- define "hiroba-platform.service-monitor" -}}
-{{- if .Values.observability.serviceMonitor.enabled -}}
+{{- if get (get (get .Values "observability" | default dict) "serviceMonitor" | default dict) "enabled" | default false -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

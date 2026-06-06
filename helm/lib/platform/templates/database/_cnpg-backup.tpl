@@ -7,7 +7,7 @@ Requires a pre-existing secret containing S3 credentials. Set
 postgres.backup.credentialsSecret.name to reference it.
 */}}
 {{- define "hiroba-platform.cnpg-backup" -}}
-{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled -}}
+{{- if and (get (get .Values "postgres" | default dict) "enabled" | default false) (get (get (get .Values "postgres" | default dict) "backup" | default dict) "enabled" | default false) -}}
 {{- $bucketName := default (printf "%s-pg-backups" (include "hiroba-platform.name" .)) .Values.postgres.backup.bucketName -}}
 ---
 apiVersion: barmancloud.cnpg.io/v1

@@ -5,7 +5,7 @@ hiroba-platform.prometheus-rules — Prometheus Operator PrometheusRule.
 defaults, or append to extend them.
 */}}
 {{- define "hiroba-platform.prometheus-rules" -}}
-{{- if .Values.observability.prometheusRules.enabled -}}
+{{- if get (get (get .Values "observability" | default dict) "prometheusRules" | default dict) "enabled" | default false -}}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:

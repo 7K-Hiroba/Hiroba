@@ -5,7 +5,7 @@ postgres.backup.enabled is true; the actual backup storage resource
 (ObjectStore) lives in the cnpg-backup template.
 */}}
 {{- define "hiroba-platform.cnpg-cluster" -}}
-{{- if .Values.postgres.enabled }}
+{{- if get (get .Values "postgres" | default dict) "enabled" | default false }}
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -30,7 +30,7 @@ spec:
   resources:
     {{- toYaml .Values.postgres.resources | nindent 4 }}
 
-  {{- if .Values.postgres.backup.enabled }}
+  {{- if get (get (get .Values "postgres" | default dict) "backup" | default dict) "enabled" | default false }}
   {{- if .Values.postgres.plugins }}
   plugins:
     {{- range .Values.postgres.plugins }}

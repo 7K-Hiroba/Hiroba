@@ -5,7 +5,7 @@ Gated on s3.enabled AND s3.provider == "crossplane".
 Bucket-level settings override top-level s3.crossplane defaults.
 */}}
 {{- define "hiroba-platform.s3-crossplane" -}}
-{{- if and .Values.s3.enabled (eq .Values.s3.provider "crossplane") }}
+{{- if and (get (get .Values "s3" | default dict) "enabled" | default false) (eq .Values.s3.provider "crossplane") }}
 {{- range .Values.s3.buckets }}
 {{- $region := .region | default $.Values.s3.crossplane.region }}
 {{- $providerConfigRef := .providerConfigRef | default $.Values.s3.crossplane.providerConfigRef }}

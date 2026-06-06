@@ -3,7 +3,7 @@ hiroba-platform.redis-dragonfly — Dragonfly (Redis-compatible) resource.
 Renders a Dragonfly CR when redis.enabled AND redis.provider == "dragonfly".
 */}}
 {{- define "hiroba-platform.redis-dragonfly" -}}
-{{- if and .Values.redis.enabled (eq .Values.redis.provider "dragonfly") }}
+{{- if and (get (get .Values "redis" | default dict) "enabled" | default false) (eq .Values.redis.provider "dragonfly") }}
 apiVersion: dragonflydb.io/v1alpha1
 kind: Dragonfly
 metadata:
