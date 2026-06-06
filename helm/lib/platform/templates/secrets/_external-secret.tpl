@@ -3,7 +3,7 @@ hiroba-platform.external-secret — external-secrets.io ExternalSecret,
 gated on externalSecrets.enabled.
 */}}
 {{- define "hiroba-platform.external-secret" -}}
-{{- if .Values.externalSecrets.enabled -}}
+{{- if get (get .Values "externalSecrets" | default dict) "enabled" | default false -}}
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:

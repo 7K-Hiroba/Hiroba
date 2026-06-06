@@ -3,7 +3,7 @@ hiroba-platform.cnpg-scheduled-backup — CNPG ScheduledBackup, gated on
 postgres.enabled AND postgres.backup.enabled.
 */}}
 {{- define "hiroba-platform.cnpg-scheduled-backup" -}}
-{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled -}}
+{{- if and (get (get .Values "postgres" | default dict) "enabled" | default false) (get (get (get .Values "postgres" | default dict) "backup" | default dict) "enabled" | default false) -}}
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:

@@ -8,7 +8,7 @@ template is included from a consumer wrapper, so the consumer ships its own
 dashboards/*.json.
 */}}
 {{- define "hiroba-platform.grafana-dashboard" -}}
-{{- if .Values.observability.grafanaDashboard.enabled -}}
+{{- if get (get (get .Values "observability" | default dict) "grafanaDashboard" | default dict) "enabled" | default false -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
