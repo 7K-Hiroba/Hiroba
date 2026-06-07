@@ -108,7 +108,7 @@ spec:
           enablePlatform: ${{ parameters.enablePlatform }}
           enablePostgres: ${{ parameters.enablePostgres }}
           enableS3: ${{ parameters.enableS3 }}
-          hirobaVersion: "0.2.0"
+          hirobaVersion: "0.2.1"
 
     - id: publish
       name: Publish to GitHub
