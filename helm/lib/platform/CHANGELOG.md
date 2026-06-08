@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.11...helm-platform-lib-v0.2.12) (2026-06-08)
+
+
+### Features
+
+* allow external secret target name to be overriden ([ae87dca](https://github.com/7K-Hiroba/Hiroba/commit/ae87dca161e3244a8c168da051cd0956a824accd))
+
 ## [0.2.11](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.10...helm-platform-lib-v0.2.11) (2026-06-06)
 
 
