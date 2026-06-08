@@ -16,7 +16,7 @@ spec:
     name: {{ .Values.externalSecrets.storeRef.name }}
     kind: {{ .Values.externalSecrets.storeRef.kind }}
   target:
-    name: {{ include "hiroba-platform.name" . }}
+    name: {{ .Values.externalSecrets.target.name | default (include "hiroba-platform.name" .) }}
     creationPolicy: Owner
     {{- with .Values.externalSecrets.target.template }}
     template:
