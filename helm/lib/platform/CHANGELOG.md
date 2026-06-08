@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.12...helm-platform-lib-v0.2.13) (2026-06-08)
+
+
+### Features
+
+* allow service-monitor labels to be overriden ([a22a666](https://github.com/7K-Hiroba/Hiroba/commit/a22a666d90ddd7c4d760330796692444d2eea8a6))
+
 ## [0.2.12](https://github.com/7K-Hiroba/Hiroba/compare/helm-platform-lib-v0.2.11...helm-platform-lib-v0.2.12) (2026-06-08)
 
 
