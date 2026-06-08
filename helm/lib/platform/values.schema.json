@@ -371,6 +371,37 @@
       "properties": {
         "serviceMonitor": {
           "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "additionalLabels": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "selector": {
+              "type": "object",
+              "properties": {
+                "matchLabels": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "port": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "interval": {
+              "type": "string"
+            },
+            "scrapeTimeout": {
+              "type": "string"
+            }
+          },
           "additionalProperties": true
         },
         "grafanaDashboard": {

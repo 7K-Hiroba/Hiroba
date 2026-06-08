@@ -97,12 +97,14 @@ Kubernetes: `>=1.24.0-0`
 | externalSecrets.target | object | `{"template":{}}` | Optional target Secret template for value transformation |
 | global.appName | string | `"example"` | Application name, used as prefix for all platform resources |
 | global.baseInstance | string | `""` | Release name of the base chart deployment. When set, the ServiceMonitor selector matches `app.kubernetes.io/instance: <baseInstance>` so multiple releases of the same app coexist safely. Leave empty to match by name only. |
-| observability | object | `{"grafanaDashboard":{"enabled":false,"folderLabel":""},"prometheusRules":{"enabled":false,"groups":[]},"serviceMonitor":{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s"}}` | Observability resources |
+| observability | object | `{"grafanaDashboard":{"enabled":false,"folderLabel":""},"prometheusRules":{"enabled":false,"groups":[]},"serviceMonitor":{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s","selector":{"matchLabels":{}}}}` | Observability resources |
 | observability.grafanaDashboard.enabled | bool | `false` | Ship `dashboards/*.json` as a ConfigMap picked up by Grafana's sidecar |
 | observability.grafanaDashboard.folderLabel | string | `""` | Grafana folder label |
 | observability.prometheusRules.enabled | bool | `false` | Render a PrometheusRule. `groups` is `tpl`-rendered so it can reference `.Release.Namespace`, helper templates, etc. |
 | observability.prometheusRules.groups | list | `[]` | Rule groups passed straight to the PrometheusRule spec |
 | observability.serviceMonitor.additionalLabels | object | `{}` | Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack) |
+| observability.serviceMonitor.selector | object | `{"matchLabels":{}}` | Optional selector matchLabels override. If set, replaces the default `hiroba-platform.baseSelectorLabels` selector. |
+| observability.serviceMonitor.selector.matchLabels | object | `{}` | Selector matchLabels override for the ServiceMonitor |
 | observability.serviceMonitor.enabled | bool | `false` | Render a Prometheus ServiceMonitor |
 | observability.serviceMonitor.interval | string | `"30s"` | Scrape interval |
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |

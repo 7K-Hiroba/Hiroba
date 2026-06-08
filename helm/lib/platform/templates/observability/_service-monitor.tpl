@@ -16,7 +16,12 @@ metadata:
 spec:
   selector:
     matchLabels:
+      {{- $selector := get (get (get .Values "observability" | default dict) "serviceMonitor" | default dict) "selector" | default dict }}
+      {{- with $selector.matchLabels }}
+      {{- toYaml . | nindent 6 }}
+      {{- else }}
       {{- include "hiroba-platform.baseSelectorLabels" . | nindent 6 }}
+      {{- end }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}

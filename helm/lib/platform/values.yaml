@@ -189,6 +189,10 @@ observability:
     enabled: false
     # -- Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack)
     additionalLabels: {}
+    # -- Optional selector matchLabels override. If set, replaces the default
+    # `hiroba-platform.baseSelectorLabels` selector.
+    selector:
+      matchLabels: {}
     # -- Service port name to scrape
     port: http
     # -- Metrics endpoint path
