@@ -1,7 +1,0 @@
-language: typescript
-app: npx ts-node src/index.ts
-imports:
-  - ../../packages/grafana/dist/xrd.k8s.yaml
-  - ../../packages/loki/dist/xrd.k8s.yaml
-  - ../../packages/prometheus/dist/xrd.k8s.yaml
-  - k8s@1.28.0

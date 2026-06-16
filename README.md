@@ -2,12 +2,28 @@
 
 Internal platform engineering framework using **Crossplane** (infrastructure orchestration) and **CDK8s** (type-safe manifest generation) to deliver self-service "platform products" to development teams.
 
-## Products
+## Repository Structure
 
-- **ObservabilityStack**: Grafana + Prometheus + Loki
-- **GrafanaInstance**: Standalone Grafana with SSO, alerting, and TLS
-- **LokiInstance**: Log aggregation with S3 or local storage
-- **PrometheusInstance**: Metrics with alerting and federation
+This repository is the central framework repository. It contains the shared platform library, consumer SDK, scaffolding tools, examples, and policies. Individual product stacks live in dedicated repositories.
+
+```
+platform-engineering/
+├── packages/          # Shared platform library
+├── consumer-sdk/      # Developer-facing libraries
+├── tools/             # Scaffolding and documentation tools
+├── infrastructure/    # Platform infrastructure
+├── examples/          # Example consumer projects
+├── policies/          # OPA / Kyverno policies
+└── docs/              # Documentation
+```
+
+## Product Repositories
+
+- **Observability Stack**: `/mnt/local-nas/Projects/7K-Hiroba/Observability Stack/`
+  - GrafanaInstance
+  - LokiInstance
+  - PrometheusInstance
+  - ObservabilityStack
 
 ## Quick Start
 
@@ -25,22 +41,9 @@ make synth
 make validate
 ```
 
-## Repository Structure
-
-```
-platform-engineering/
-├── packages/          # Primitive platform products
-├── stacks/            # Composite platform products
-├── consumer-sdk/      # Developer-facing libraries
-├── infrastructure/    # Platform infrastructure
-├── examples/          # Example consumer projects
-├── policies/          # OPA / Kyverno policies
-└── docs/              # Documentation
-```
-
 ## Documentation
 
-- [Usage Guide](docs/usage-guide.md) — how to use the project, create applications, stacks, and products
+- [Usage Guide](docs/usage-guide.md)
 - [Architecture](docs/architecture.md)
 - [Developer Guide](docs/developer-guide.md)
 - [API Reference](docs/api-reference)

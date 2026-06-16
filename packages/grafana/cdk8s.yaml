@@ -1,6 +1,0 @@
-language: typescript
-app: npx ts-node src/index.ts
-imports:
-  - https://raw.githubusercontent.com/grafana/grafana-operator/v5.24.0/config/crd/bases/grafana.integreatly.org_grafanas.yaml
-  - https://raw.githubusercontent.com/grafana/grafana-operator/v5.24.0/config/crd/bases/grafana.integreatly.org_grafanadatasources.yaml
-  - k8s@1.28.0

@@ -242,9 +242,31 @@ kubectl apply -f dist/
 
 ## Creating a New Stack
 
+> **Note**: This repository is the central framework repository. Individual product stacks are maintained in dedicated repositories (e.g., `/mnt/local-nas/Projects/7K-Hiroba/Observability Stack/`). Use the central repository for shared libraries, the consumer SDK, and scaffolding tools; create or update a stack repository for a specific product domain.
+
 A stack combines multiple primitive products into a single higher-level abstraction.
 
-### 1. Create the Stack Package
+### 1. Create the Stack Repository
+
+Create a new repository for the stack. The recommended layout is:
+
+```
+my-stack/
+├── packages/
+│   ├── shared/          # Copy or reference the shared platform library
+│   ├── product-a/       # Primitive product A
+│   └── product-b/       # Primitive product B
+├── my-stack/            # Composite stack package
+├── scripts/
+├── infrastructure/
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+For an example, see the [Observability Stack repository](/mnt/local-nas/Projects/7K-Hiroba/Observability%20Stack/).
+
+### 2. Create the Stack Package
 
 Use the scaffolding tool or create it manually:
 
