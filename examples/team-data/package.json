@@ -1,0 +1,19 @@
+{
+  "name": "team-data",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example consumer project for team-data",
+  "scripts": {
+    "synth": "cdk8s synth"
+  },
+  "dependencies": {
+    "@yourcompany/platform-consumer": "1.0.0",
+    "cdk8s": "^2.68.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "cdk8s-cli": "^2.198.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

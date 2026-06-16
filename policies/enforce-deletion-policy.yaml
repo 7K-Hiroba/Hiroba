@@ -1,0 +1,16 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-deletion-policy
+spec:
+  rules:
+    - name: check-deletion-policy
+      match:
+        resources:
+          kinds:
+            - platform.yourcompany.io/v1/PostgreSQLInstance
+      validate:
+        message: "Production databases must have deletionPolicy: Orphan"
+        pattern:
+          spec:
+            deletionPolicy: "Orphan"

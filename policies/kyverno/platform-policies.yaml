@@ -1,0 +1,84 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: platform-cost-labels
+  annotations:
+    policies.kyverno.io/title: Require platform cost labels
+    policies.kyverno.io/category: Platform Governance
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-cost-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - platform.yourcompany.io/v1/PlatformApp
+                - platform.yourcompany.io/v1/Grafana
+                - platform.yourcompany.io/v1/Loki
+                - platform.yourcompany.io/v1/Prometheus
+      validate:
+        message: 'Platform resources must include team, costCenter, and environment labels.'
+        pattern:
+          metadata:
+            labels:
+              team: '?*'
+              costCenter: '?*'
+              environment: '?*'
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: platform-quota-enforcement
+  annotations:
+    policies.kyverno.io/title: Enforce platform quota limits
+    policies.kyverno.io/category: Platform Governance
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-replica-quota
+      match:
+        any:
+          - resources:
+              kinds:
+                - platform.yourcompany.io/v1/Grafana
+      preconditions:
+        any:
+          - key: '{{request.object.spec.features.ha.enabled}}'
+            operator: Equals
+            value: true
+      validate:
+        message: 'HA requires explicit replica count under quota.'
+        pattern:
+          spec:
+            features:
+              ha:
+                replicas: '1-5'
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: platform-allowed-profiles
+  annotations:
+    policies.kyverno.io/title: Allowed platform profiles
+    policies.kyverno.io/category: Platform Governance
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: allowed-profiles
+      match:
+        any:
+          - resources:
+              kinds:
+                - platform.yourcompany.io/v1/*
+      validate:
+        message: 'Unsupported profile requested.'
+        pattern:
+          spec:
+            profile: 'dev|staging|prod'

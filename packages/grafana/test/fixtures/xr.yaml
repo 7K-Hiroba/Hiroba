@@ -1,0 +1,21 @@
+apiVersion: platform.yourcompany.io/v1
+kind: GrafanaInstance
+metadata:
+  name: test-grafana
+spec:
+  profile: production
+  domain: grafana.prod.local
+  features:
+    sso:
+      enabled: true
+      secretRef:
+        source: external-secrets
+        store: platform-vault
+        path: platform/sso/grafana
+    alerting:
+      enabled: true
+    ingress:
+      enabled: true
+      config:
+        tls: true
+        ingressClass: nginx

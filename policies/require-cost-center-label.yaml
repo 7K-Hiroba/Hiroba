@@ -1,0 +1,17 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-cost-center
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: check-cost-center
+      match:
+        resources:
+          kinds:
+            - platform.yourcompany.io/v1/ObservabilityStack
+      validate:
+        message: "ObservabilityStack must have spec.costCenter"
+        pattern:
+          spec:
+            costCenter: "?*"

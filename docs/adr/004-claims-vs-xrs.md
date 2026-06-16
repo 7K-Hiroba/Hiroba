@@ -1,0 +1,19 @@
+# ADR 004: Claims vs XRs
+
+## Status
+
+Accepted
+
+## Context
+
+Developers need namespace-scoped access to platform resources.
+
+## Decision
+
+Expose namespace-scoped Claims (e.g., `GrafanaInstanceClaim`) that bind to cluster-scoped Composite Resources (XRs).
+
+## Consequences
+
+- Teams can create resources in their own namespaces.
+- Platform team retains control over XR lifecycle and policies.
+- Claims simplify RBAC and multi-tenancy.

@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-production
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: check-production-permissions
+      match:
+        resources:
+          kinds:
+            - platform.yourcompany.io/v1/ObservabilityStack
+      validate:
+        message: "Production profile requires platform-admin group"
+        deny:
+          conditions:
+            - key: "{{request.object.spec.profile}}"
+              operator: Equals
+              value: "production"
+            - key: "{{request.userInfo.groups}}"
+              operator: AnyNotIn
+              value: ["platform-admins"]

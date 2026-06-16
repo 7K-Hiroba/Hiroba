@@ -1,0 +1,9 @@
+apiVersion: platform.yourcompany.io/v1
+kind: LokiInstance
+metadata:
+  name: test-loki
+spec:
+  profile: production
+  storage: s3
+  retentionDays: 90
+  replication: 3

@@ -1,0 +1,19 @@
+apiVersion: platform.yourcompany.io/v1
+kind: GrafanaInstanceClaim
+metadata:
+  name: dev-grafana
+  namespace: team-api
+  labels:
+    team: team-api
+    cost-center: cc-12345
+    platform.yourcompany.io/stack: grafana
+spec:
+  profile: development
+  domain: grafana.dev.local
+  features:
+    sso:
+      enabled: false
+    alerting:
+      enabled: false
+    ingress:
+      enabled: false

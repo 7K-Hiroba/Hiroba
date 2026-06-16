@@ -1,0 +1,5 @@
+language: typescript
+app: npx ts-node src/index.ts
+imports:
+  - https://raw.githubusercontent.com/grafana/loki/main/operator/config/crd/bases/loki.grafana.com_lokistacks.yaml
+  - k8s@1.28.0

@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-developer
+rules:
+  - apiGroups: ['platform.yourcompany.io']
+    resources:
+      - 'grafanainstanceclaims'
+      - 'lokiinstanceclaims'
+      - 'prometheusinstanceclaims'
+      - 'observabilitystackclaims'
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
+  - apiGroups: ['platform.yourcompany.io']
+    resources:
+      - 'grafanainstances'
+      - 'lokiinstances'
+      - 'prometheusinstances'
+      - 'observabilitystacks'
+    verbs: ['get', 'list', 'watch']
