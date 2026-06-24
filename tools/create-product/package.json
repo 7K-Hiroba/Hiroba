@@ -14,7 +14,7 @@
     "test:unit": "jest --testPathPattern=test/unit"
   },
   "dependencies": {
-    "commander": "^12.1.0",
+    "commander": "^15.0.0",
     "mustache": "^4.2.0"
   },
   "devDependencies": {
