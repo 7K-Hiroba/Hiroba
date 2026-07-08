@@ -2,9 +2,19 @@ export type Profile = 'development' | 'production' | 'staging';
 
 export type DeletionPolicy = 'Delete' | 'Orphan' | 'Retain';
 
+/**
+ * Cloud providers supported for managed infrastructure.
+ * @deprecated use InfrastructureProvider instead
+ */
 export type CloudProvider = 'aws' | 'gcp' | 'azure';
 
-export type StorageBackendType = 's3' | 'gcs' | 'azureBlob' | 'local';
+/**
+ * Infrastructure providers supported by the platform, including cloud providers
+ * and in-cluster operators.
+ */
+export type InfrastructureProvider = 'aws' | 'gcp' | 'azure' | 'garage' | 'cnpg' | 'local';
+
+export type StorageBackendType = 's3' | 'garage' | 'gcs' | 'azureBlob' | 'local';
 
 export interface SecretRef {
   readonly source: 'external-secrets' | 'native' | 'generated';
@@ -116,8 +126,22 @@ export interface StorageBackend {
     readonly account?: string;
     readonly container?: string;
   };
+  readonly garage?: {
+    readonly clusterRef?: string;
+    readonly clusterNamespace?: string;
+  };
 }
 
+export interface InfrastructureResourceConfig {
+  readonly provider: InfrastructureProvider;
+  readonly region: string;
+  readonly providerConfigRef?: string;
+  readonly storageBackend?: StorageBackend;
+}
+
+/**
+ * @deprecated use InfrastructureResourceConfig instead
+ */
 export interface MultiCloudResourceConfig {
   readonly cloudProvider: CloudProvider;
   readonly region: string;

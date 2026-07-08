@@ -1,13 +1,28 @@
 import { ApiObject, Chart } from 'cdk8s';
 import { Construct } from 'constructs';
+import { InfrastructureProvider } from './types';
 import { PlatformProductConfig, ProductMetadata } from './platform';
+
+export function createProviderCompositionName(productName: string, provider: InfrastructureProvider): string {
+  return `${productName}-${provider}-composition`;
+}
+
+export function createProviderCompositionLabels(
+  productName: string,
+  provider: InfrastructureProvider,
+): Record<string, string> {
+  return {
+    'platform.yourcompany.io/product': productName,
+    'platform.yourcompany.io/provider': provider,
+  };
+}
 
 export function createPlatformXrd(
   scope: Construct,
   id: string,
   config: PlatformProductConfig,
   schemaProperties: object,
-  requiredFields: string[] = []
+  requiredFields: string[] = [],
 ): ApiObject {
   const versions: object[] = [
     {
@@ -67,6 +82,11 @@ export function createBaseSchema(): object {
       type: 'string',
       enum: ['development', 'production', 'staging'],
     },
+    provider: {
+      type: 'string',
+      enum: ['aws', 'gcp', 'azure', 'garage', 'cnpg', 'local'],
+      description: 'Infrastructure provider for this resource. Defaults to the cluster default if unset.',
+    },
     team: {
       type: 'string',
     },
@@ -118,13 +138,7 @@ export abstract class BasePlatformProduct extends Chart {
   }
 
   defineXrd(): ApiObject {
-    return createPlatformXrd(
-      this,
-      'xrd',
-      this.config,
-      this.getSchemaProperties(),
-      this.getRequiredFields()
-    );
+    return createPlatformXrd(this, 'xrd', this.config, this.getSchemaProperties(), this.getRequiredFields());
   }
 
   abstract getSchemaProperties(): object;

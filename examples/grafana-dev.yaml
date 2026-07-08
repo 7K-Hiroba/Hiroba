@@ -9,6 +9,7 @@ metadata:
     platform.yourcompany.io/stack: grafana
 spec:
   profile: development
+  provider: cnpg
   domain: grafana.dev.local
   features:
     sso:

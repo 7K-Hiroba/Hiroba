@@ -12,6 +12,10 @@ metadata:
   namespace: team-api
 spec:
   profile: production
+  provider: aws
+  providerConfigRef:
+    name: aws-provider
+  region: us-east-1
   domain: grafana.team-api.yourcompany.com
   features:
     sso:
@@ -36,7 +40,10 @@ metadata:
   namespace: team-api
 spec:
   profile: production
-  storage: s3
+  provider: aws
+  providerConfigRef:
+    name: aws-provider
+  region: us-east-1
   retentionDays: 90
   replication: 3
 ```
@@ -68,11 +75,15 @@ metadata:
   namespace: team-api
 spec:
   profile: production
+  provider: aws
+  providerConfigRef:
+    name: aws-provider
+  region: us-east-1
   domain: obs.team-api.yourcompany.com
   team: team-api
   costCenter: cc-12345
   modules:
     grafana: { enabled: true }
-    loki: { enabled: true, storage: s3, retentionDays: 90 }
+    loki: { enabled: true, retentionDays: 90 }
     prometheus: { enabled: true, retentionDays: 90 }
 ```

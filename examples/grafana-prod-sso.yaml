@@ -9,6 +9,7 @@ metadata:
     platform.yourcompany.io/stack: grafana
 spec:
   profile: production
+  provider: aws
   domain: grafana.prod.local
   features:
     sso:

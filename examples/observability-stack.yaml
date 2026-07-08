@@ -9,6 +9,7 @@ metadata:
     platform.yourcompany.io/stack: observability
 spec:
   profile: production
+  provider: aws
   domain: obs.team-api.yourcompany.com
   team: team-api
   costCenter: cc-12345
@@ -22,7 +23,6 @@ spec:
           enabled: true
     loki:
       enabled: true
-      storage: s3
       retentionDays: 90
     prometheus:
       enabled: true

@@ -5,22 +5,38 @@ This repository implements an internal platform engineering framework using **Cr
 ## Products
 
 - **ObservabilityStack**: Composite product assembling Grafana + Prometheus + Loki with inter-module wiring.
-- **GrafanaInstance**: Standalone Grafana with profile-driven defaults, SSO, alerting, and TLS.
-- **LokiInstance**: Log aggregation with S3 or local storage and configurable retention.
+- **GrafanaInstance**: Standalone Grafana with profile-driven defaults, SSO, alerting, and TLS; supports AWS RDS or CNPG for Postgres.
+- **LokiInstance**: Log aggregation with AWS S3, Garage, or local storage and configurable retention.
 - **PrometheusInstance**: Metrics with alerting and federation.
+
+## Multi-Provider Support
+
+Hiroba uses a **provider-per-composition** pattern. Each product exposes a cloud-agnostic XRD, and each supported backend is implemented as a separate Crossplane Composition:
+
+```
+packages/<product>/src/compositions/
+├── aws.ts    # managed cloud resources
+├── garage.ts # Garage operator resources
+├── cnpg.ts   # CloudNativePG operator resources
+└── local.ts  # in-cluster defaults
+```
+
+Consumers may set `spec.provider` on a claim. The consumer SDK translates this into a `compositionSelector` so Crossplane schedules the claim to the matching Composition.
+
+See [ADR 006: Multi-Provider Compositions](./adr/006-multi-provider-compositions.md).
 
 ## Technology Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Control Plane | Crossplane v2 | Universal infrastructure reconciliation |
-| Manifest Generation | CDK8s (TypeScript) | Type-safe YAML generation for XRDs, Compositions, and consumers |
-| Secret Management | External Secrets Operator (ESO) | Sync secrets from Vault / AWS Secrets Manager |
-| GitOps | ArgoCD | Continuous delivery |
-| Cloud Provider | AWS | Managed resources (S3, RDS, IAM) |
-| Kubernetes Operators | Grafana Operator, Prometheus Operator, Loki Operator | In-cluster workload management |
-| Ingress / TLS | cert-manager + nginx-ingress + External-DNS | Automated DNS and certificates |
-| CI/CD | GitHub Actions | Build, test, and publish |
+| Layer                | Technology                                           | Purpose                                                         |
+| -------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
+| Control Plane        | Crossplane v2                                        | Universal infrastructure reconciliation                         |
+| Manifest Generation  | CDK8s (TypeScript)                                   | Type-safe YAML generation for XRDs, Compositions, and consumers |
+| Secret Management    | External Secrets Operator (ESO)                      | Sync secrets from Vault / AWS Secrets Manager                   |
+| GitOps               | ArgoCD                                               | Continuous delivery                                             |
+| Cloud Provider       | AWS                                                  | Managed resources (S3, RDS, IAM)                                |
+| Kubernetes Operators | Grafana Operator, Prometheus Operator, Loki Operator | In-cluster workload management                                  |
+| Ingress / TLS        | cert-manager + nginx-ingress + External-DNS          | Automated DNS and certificates                                  |
+| CI/CD                | GitHub Actions                                       | Build, test, and publish                                        |
 
 ## Repository Layout
 
