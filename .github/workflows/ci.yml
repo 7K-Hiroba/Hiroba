@@ -3,8 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}'
@@ -49,14 +48,14 @@ jobs:
 
   cdk8s:
     needs: detect
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.cdk8s == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' }}
     uses: 7K-Group/workflows-library/.github/workflows/ci-cdk8s.yml@v1
     with:
       path: .
 
   function:
     needs: detect
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.function == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.function == 'true' }}
     uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@v1
     with:
       path: functions/platform
@@ -64,7 +63,7 @@ jobs:
 
   xpkg:
     needs: [detect, cdk8s]
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.primitives == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.primitives == 'true' }}
     uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane.yml@v1
     with:
       path: packages/primitives
@@ -72,7 +71,7 @@ jobs:
 
   e2e:
     needs: [detect, cdk8s, function]
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.cdk8s == 'true' || needs.detect.outputs.function == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' || needs.detect.outputs.function == 'true' }}
     uses: 7K-Group/workflows-library/.github/workflows/ci-e2e-kind.yml@v1
     with:
       path: .
@@ -82,7 +81,7 @@ jobs:
   # required check after the first successful run in CI.
   xpkg-e2e:
     needs: [detect, xpkg]
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.primitives == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.primitives == 'true' }}
     uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane-e2e.yml@v1
     with:
       path: packages/primitives
