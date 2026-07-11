@@ -14,6 +14,12 @@ helm upgrade --install crossplane crossplane-stable/crossplane \
 # Install providers
 kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml
 
+# Wait for providers to be Healthy (their CRDs are only registered after the
+# packages are pulled and installed), then re-apply to create ProviderConfigs.
+kubectl wait --for=condition=Healthy provider.pkg.crossplane.io --all --timeout=600s || true
+kubectl wait --for=condition=Established crd providerconfigs.aws.m.upbound.io --timeout=300s || true
+kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml
+
 # Wait for Crossplane core pods
 kubectl wait --for=condition=Ready pod -l app=crossplane -n crossplane-system --timeout=120s || true
 
