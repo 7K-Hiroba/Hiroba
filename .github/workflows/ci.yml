@@ -15,6 +15,10 @@ concurrency:
 
 jobs:
   detect:
+    # Skip release-please PRs: they only bump versions/changelogs, and with
+    # separate-pull-requests there is one per package — a full CI run on each
+    # is pure waste. Skipped jobs satisfy required-check branch protection.
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -41,7 +45,7 @@ jobs:
               - 'packages/primitives/**'
 
   pr-title:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
     uses: 7K-Group/workflows-library/.github/workflows/ci-lint-pr-title.yml@v1
     secrets: inherit
 
