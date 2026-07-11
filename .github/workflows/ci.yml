@@ -58,7 +58,7 @@ jobs:
     uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@v1
     with:
       path: functions/platform
-      go-version: '1.25'
+      go-version: '1.25.12'
 
   xpkg:
     needs: [detect, cdk8s]

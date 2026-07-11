@@ -1,6 +1,6 @@
 module github.com/7k-hiroba/hiroba/functions/platform
 
-go 1.25.0
+go 1.25.12
 
 require (
 	github.com/crossplane/function-sdk-go v0.4.0
