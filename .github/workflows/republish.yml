@@ -1,0 +1,37 @@
+name: Republish stranded releases (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  function:
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    with:
+      path: functions/platform
+      package-path: functions/platform/package
+      version: '1.0.0'
+      image-name: function-platform
+      function-name: function-platform
+      go-version: '1.25'
+    secrets:
+      HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+      HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
+      HARBOR_ROBOT_NAME: ${{ secrets.HARBOR_ROBOT_NAME }}
+      HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
+
+  primitives:
+    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@v1
+    with:
+      path: packages/primitives
+      version: '1.0.0'
+      image: platform-primitives
+      prebuild: npm run build -w @7k-hiroba/shared && npm run synth -w @7k-hiroba/primitives
+    secrets:
+      HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+      HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
+      HARBOR_ROBOT_NAME: ${{ secrets.HARBOR_ROBOT_NAME }}
+      HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}

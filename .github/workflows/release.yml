@@ -55,7 +55,13 @@ jobs:
       image-name: function-platform
       function-name: function-platform
       go-version: '1.25'
-    secrets: inherit
+    # Cross-org reusable workflow (7K-Group): `secrets: inherit` only works within
+    # the same organization/enterprise, so Harbor secrets must be passed explicitly.
+    secrets:
+      HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+      HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
+      HARBOR_ROBOT_NAME: ${{ secrets.HARBOR_ROBOT_NAME }}
+      HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
 
   primitives:
     needs: [release-please, resolve]
@@ -66,7 +72,13 @@ jobs:
       version: ${{ fromJson(needs.resolve.outputs.versions)['packages/primitives'] }}
       image: platform-primitives
       prebuild: npm run build -w @7k-hiroba/shared && npm run synth -w @7k-hiroba/primitives
-    secrets: inherit
+    # Cross-org reusable workflow (7K-Group): `secrets: inherit` only works within
+    # the same organization/enterprise, so Harbor secrets must be passed explicitly.
+    secrets:
+      HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+      HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
+      HARBOR_ROBOT_NAME: ${{ secrets.HARBOR_ROBOT_NAME }}
+      HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
 
   npm:
     needs: release-please
