@@ -10,7 +10,7 @@
     "synth": "cdk8s synth",
     "test": "jest",
     "test:unit": "jest --testPathPattern=test/unit",
-    "validate": "crossplane composition render test/fixtures/xr.yaml dist/composition.k8s.yaml --xrd=dist/xrd.k8s.yaml",
+    "validate": "../../scripts/render-validate.sh packages/object-storage",
     "package": "cp dist/*.yaml package/ && crossplane build configuration package/"
   },
   "dependencies": {
