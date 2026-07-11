@@ -68,4 +68,4 @@ Ensure XRD and Composition classes extend `Chart` from `cdk8s`.
 
 ### `make validate` fails with string transform error
 
-Crossplane v2 requires `string.type: Format`. Use the `transformString` helper from `@platform-engineering/shared`.
+Crossplane v2 requires `string.type: Format`. Use the `transformString` helper from `@7k-hiroba/shared`.

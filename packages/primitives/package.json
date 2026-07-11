@@ -1,0 +1,22 @@
+{
+  "name": "@7k-hiroba/primitives",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Aggregate Crossplane Configuration bundling all platform primitives (PostgresInstance, ObjectBucket).",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7K-Hiroba/Hiroba.git",
+    "directory": "packages/primitives"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bash aggregate.sh",
+    "synth": "bash aggregate.sh",
+    "package": "bash aggregate.sh && crossplane xpkg build --package-root=. -o platform-primitives.xpkg",
+    "clean": "rm -f *.k8s.yaml *.xpkg"
+  },
+  "devDependencies": {}
+}

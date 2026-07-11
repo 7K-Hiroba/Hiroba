@@ -27,12 +27,12 @@ export class PlatformAppComposition extends Chart {
     super(scope, id);
 
     new ApiObject(this, 'app', {
-      apiVersion: 'platform.yourcompany.io/v1',
+      apiVersion: 'platform.7kgroup.org/v1',
       kind: 'PlatformApp',
       metadata: {
         name: spec.name,
         labels: {
-          'platform.yourcompany.io/managed-by': 'platform-consumer-sdk',
+          'platform.7kgroup.org/managed-by': 'platform-consumer-sdk',
           team: spec.team ?? 'unknown',
           costCenter: spec.costCenter ?? 'unknown',
           environment: spec.environment ?? 'unknown',
@@ -56,7 +56,7 @@ export class PlatformAppComposition extends Chart {
       new PlatformProduct(this, `${p.name}-product`, {
         id: `${p.name}-product`,
         name: p.name,
-        apiVersion: `platform.yourcompany.io/v1`,
+        apiVersion: `platform.7kgroup.org/v1`,
         kind: p.product,
         plural: `${p.product.toLowerCase()}s`,
         spec: p.spec,

@@ -1,0 +1,10 @@
+apiVersion: platform.7kgroup.org/v1
+kind: ObjectBucket
+metadata:
+  name: example-bucket
+  namespace: default
+spec:
+  profile: development
+  team: platform
+  costCenter: cc-1234
+  provider: garage

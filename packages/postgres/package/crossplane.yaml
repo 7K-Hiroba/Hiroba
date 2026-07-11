@@ -1,0 +1,14 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: platform-primitive-postgres
+  annotations:
+    meta.crossplane.io/maintainer: Platform Engineering
+    meta.crossplane.io/source: github.com/7K-Hiroba/Hiroba
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: >-
+      Agnostic Postgres primitive (RDS / Cloud SQL / Azure DB / CNPG), reconciled by
+      the central orchestrator function. Crossplane v2 namespaced XR.
+spec:
+  crossplane:
+    version: '>=v2.0.0'

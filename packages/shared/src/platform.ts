@@ -24,6 +24,15 @@ export interface PlatformProductConfig {
   readonly plural: string;
   readonly singular: string;
   readonly shortNames?: string[];
+  /**
+   * Crossplane v2 composite resource scope. Defaults to `Namespaced` (v2-native).
+   * When `Namespaced`, legacy `claimNames` are ignored: consumers create the XR
+   * directly in their namespace and no separate Claim CRD is generated.
+   */
+  readonly scope?: 'Namespaced' | 'Cluster';
+  /**
+   * @deprecated Crossplane v2 uses namespaced XRs; only honoured when `scope: 'Cluster'`.
+   */
   readonly claimNames?: {
     readonly kind: string;
     readonly plural: string;

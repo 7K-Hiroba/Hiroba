@@ -1,4 +1,4 @@
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: ObservabilityStackClaim
 metadata:
   name: team-api-observability
@@ -6,11 +6,11 @@ metadata:
   labels:
     team: team-api
     cost-center: cc-12345
-    platform.yourcompany.io/stack: observability
+    platform.7kgroup.org/stack: observability
 spec:
   profile: production
   provider: aws
-  domain: obs.team-api.yourcompany.com
+  domain: obs.team-api.example.com
   team: team-api
   costCenter: cc-12345
   modules:

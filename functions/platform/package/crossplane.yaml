@@ -1,0 +1,13 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-platform
+  annotations:
+    meta.crossplane.io/maintainer: Platform Engineering
+    meta.crossplane.io/source: github.com/7K-Hiroba/Hiroba
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: >-
+      Central orchestrator Composition Function (ADR 007). Dispatches on XR kind
+      (PostgresInstance, ObjectBucket, GrafanaInstance, LokiInstance, ...) and emits
+      owned child primitives plus the appropriate managed resources / Helm Releases.
+spec: {}

@@ -49,7 +49,7 @@ export function mandatoryLabelPatches(): object[] {
   return [
     optionalPatch('metadata.labels[team]', 'spec.forProvider.tags[team]'),
     optionalPatch('metadata.labels[cost-center]', 'spec.forProvider.tags[cost-center]'),
-    optionalPatch('metadata.labels[platform.yourcompany.io/stack]', 'spec.forProvider.tags[platform-stack]'),
+    optionalPatch('metadata.labels[platform.7kgroup.org/stack]', 'spec.forProvider.tags[platform-stack]'),
     optionalPatch('spec.profile', 'spec.forProvider.tags[environment]'),
   ];
 }
@@ -78,36 +78,12 @@ export function regionPatch(providerFieldPath = 'spec.forProvider.region'): obje
   };
 }
 
-export function providerConfigRefPatch(
-  providerConfigFieldPath = 'spec.providerConfigRef.name',
-  cloudProviderFieldPath = 'spec.cloudProvider',
-): object {
+export function providerConfigRefPatch(providerConfigFieldPath = 'spec.providerConfigRef.name'): object {
   return {
     type: 'FromCompositeFieldPath',
-    fromFieldPath: cloudProviderFieldPath,
+    fromFieldPath: 'spec.providerConfigRef.name',
     toFieldPath: providerConfigFieldPath,
     policy: { fromFieldPath: 'Optional' },
-    transforms: [
-      transformMap({
-        aws: 'default-aws',
-        gcp: 'default-gcp',
-        azure: 'default-azure',
-      }),
-    ],
-  };
-}
-
-export function cloudRegionPatch(targetFieldPath = 'spec.forProvider.region'): object {
-  return {
-    type: 'CombineFromComposite',
-    combine: {
-      variables: [{ fromFieldPath: 'spec.cloudProvider' }, { fromFieldPath: 'spec.region' }],
-      strategy: 'string',
-      string: {
-        fmt: '%s-%s',
-      },
-    },
-    toFieldPath: targetFieldPath,
   };
 }
 

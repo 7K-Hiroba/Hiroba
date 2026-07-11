@@ -11,7 +11,16 @@ helm upgrade --install crossplane crossplane-stable/crossplane \
   --create-namespace \
   --wait
 
-# Install providers
+# Install providers. First pass expected to partially fail: ProviderConfig CRDs
+# are only registered once the provider packages below are installed, so the
+# namespaced ProviderConfig in this file errors with "no matches for kind".
+# It is created by the second apply after the CRD wait below.
+kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml || true
+
+# Wait for providers to be Healthy (their CRDs are only registered after the
+# packages are pulled and installed), then re-apply to create ProviderConfigs.
+kubectl wait --for=condition=Healthy provider.pkg.crossplane.io --all --timeout=600s || true
+kubectl wait --for=condition=Established crd providerconfigs.aws.m.upbound.io --timeout=300s || true
 kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml
 
 # Wait for Crossplane core pods

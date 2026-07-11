@@ -1,15 +1,26 @@
 {
-  "name": "@platform-engineering/shared",
+  "name": "@7k-hiroba/shared",
   "version": "1.0.0",
-  "private": true,
   "description": "Shared platform primitives and utilities",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7K-Hiroba/Hiroba.git",
+    "directory": "packages/shared"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "test:unit": "jest --testPathPattern=test/unit",
-    "test:e2e": "jest --testPathPattern=test/e2e"
+    "test:e2e": "jest --testPathPattern=test/e2e --passWithNoTests"
   },
   "dependencies": {
     "cdk8s": "^2.68.0",

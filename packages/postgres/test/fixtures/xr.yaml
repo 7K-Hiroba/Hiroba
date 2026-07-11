@@ -1,0 +1,11 @@
+apiVersion: platform.7kgroup.org/v1
+kind: PostgresInstance
+metadata:
+  name: example-postgres
+  namespace: default
+spec:
+  profile: development
+  team: platform
+  costCenter: cc-1234
+  provider: cnpg
+  database: app

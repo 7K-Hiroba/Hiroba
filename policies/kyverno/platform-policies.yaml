@@ -15,10 +15,10 @@ spec:
         any:
           - resources:
               kinds:
-                - platform.yourcompany.io/v1/PlatformApp
-                - platform.yourcompany.io/v1/Grafana
-                - platform.yourcompany.io/v1/Loki
-                - platform.yourcompany.io/v1/Prometheus
+                - platform.7kgroup.org/v1/PlatformApp
+                - platform.7kgroup.org/v1/Grafana
+                - platform.7kgroup.org/v1/Loki
+                - platform.7kgroup.org/v1/Prometheus
       validate:
         message: 'Platform resources must include team, costCenter, and environment labels.'
         pattern:
@@ -45,7 +45,7 @@ spec:
         any:
           - resources:
               kinds:
-                - platform.yourcompany.io/v1/Grafana
+                - platform.7kgroup.org/v1/Grafana
       preconditions:
         any:
           - key: '{{request.object.spec.features.ha.enabled}}'
@@ -76,7 +76,7 @@ spec:
         any:
           - resources:
               kinds:
-                - platform.yourcompany.io/v1/*
+                - platform.7kgroup.org/v1/*
       validate:
         message: 'Unsupported profile requested.'
         pattern:

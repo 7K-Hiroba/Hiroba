@@ -40,7 +40,7 @@ export class PlatformProduct extends Chart {
       metadata: {
         name: props.name,
         labels: {
-          'platform.yourcompany.io/managed-by': 'platform-consumer-sdk',
+          'platform.7kgroup.org/managed-by': 'platform-consumer-sdk',
           ...(props.metadata?.team && { team: props.metadata.team }),
         },
       },

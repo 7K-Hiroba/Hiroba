@@ -9,3 +9,4 @@ export * from './quota';
 export * from './cost';
 export * from './lifecycle';
 export * from './testing';
+export * from './e2e';

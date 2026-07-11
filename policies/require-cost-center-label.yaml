@@ -9,7 +9,7 @@ spec:
       match:
         resources:
           kinds:
-            - platform.yourcompany.io/v1/ObservabilityStack
+            - platform.7kgroup.org/v1/ObservabilityStack
       validate:
         message: "ObservabilityStack must have spec.costCenter"
         pattern:

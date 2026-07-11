@@ -48,7 +48,7 @@ export class TeamObservability extends Chart {
       spec.provider = props.provider;
       spec.compositionSelector = {
         matchLabels: {
-          'platform.yourcompany.io/provider': props.provider,
+          'platform.7kgroup.org/provider': props.provider,
         },
       };
     }
@@ -62,14 +62,14 @@ export class TeamObservability extends Chart {
     }
 
     new ApiObject(this, 'stack', {
-      apiVersion: 'platform.yourcompany.io/v1',
+      apiVersion: 'platform.7kgroup.org/v1',
       kind: 'ObservabilityStackClaim',
       metadata: {
         name: `${props.team}-observability`,
         labels: {
           team: props.team,
           'cost-center': props.costCenter,
-          'platform.yourcompany.io/stack': 'observability',
+          'platform.7kgroup.org/stack': 'observability',
         },
       },
       spec,

@@ -1,19 +1,35 @@
+# v2 namespaced authoring (the legacy Claim model is gone in Crossplane v2).
+#
+# Developers create XRs directly in their team namespace. Because a ClusterRole cannot be
+# namespace-scoped, authoring access is granted per-namespace with a Role + RoleBinding.
+# This file is a TEMPLATE — replicate per team namespace (team-api, team-data, ...).
+---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
+  namespace: team-api
   name: platform-developer
 rules:
-  - apiGroups: ['platform.yourcompany.io']
+  - apiGroups: ['platform.7kgroup.org']
     resources:
-      - 'grafanainstanceclaims'
-      - 'lokiinstanceclaims'
-      - 'prometheusinstanceclaims'
-      - 'observabilitystackclaims'
+      - 'postgresinstances'
+      - 'objectbuckets'
     verbs: ['get', 'list', 'watch', 'create', 'update', 'patch', 'delete']
-  - apiGroups: ['platform.yourcompany.io']
-    resources:
-      - 'grafanainstances'
-      - 'lokiinstances'
-      - 'prometheusinstances'
-      - 'observabilitystacks'
+  # Read connection secrets the orchestrator/providers write into the namespace.
+  - apiGroups: ['']
+    resources: ['secrets']
     verbs: ['get', 'list', 'watch']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: team-api
+  name: platform-developer
+subjects:
+  - kind: Group
+    name: team-api
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: platform-developer
+  apiGroup: rbac.authorization.k8s.io
