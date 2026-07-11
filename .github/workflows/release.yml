@@ -65,7 +65,7 @@ jobs:
       path: packages/primitives
       version: ${{ fromJson(needs.resolve.outputs.versions)['packages/primitives'] }}
       image: platform-primitives
-      prebuild: npm run synth -w @7k-hiroba/primitives
+      prebuild: npm run build -w @7k-hiroba/shared && npm run synth -w @7k-hiroba/primitives
     secrets: inherit
 
   npm:
