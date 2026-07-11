@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      cdk8s: ${{ steps.filter.outputs.cdk8s }}
+      function: ${{ steps.filter.outputs.function }}
+      primitives: ${{ steps.filter.outputs.primitives }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            cdk8s:
+              - 'packages/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - '.github/workflows/ci.yml'
+            function:
+              - 'functions/platform/**'
+            primitives:
+              - 'packages/postgres/**'
+              - 'packages/object-storage/**'
+              - 'packages/primitives/**'
+
+  pr-title:
+    if: github.event_name == 'pull_request'
+    uses: 7K-Group/workflows-library/.github/workflows/ci-lint-pr-title.yml@v1
+    secrets: inherit
+
+  secret-scan:
+    uses: 7K-Group/workflows-library/.github/workflows/ci-secret-scan.yml@v1
+
+  cdk8s:
+    needs: detect
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.cdk8s == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/ci-cdk8s.yml@v1
+    with:
+      path: .
+
+  function:
+    needs: detect
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.function == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@v1
+    with:
+      path: functions/platform
+      go-version: '1.23'
+
+  xpkg:
+    needs: [detect, cdk8s]
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.primitives == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane.yml@v1
+    with:
+      path: packages/primitives
+      prebuild: npm run synth -w @platform-engineering/primitives
+
+  e2e:
+    needs: [detect, cdk8s, function]
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.cdk8s == 'true' || needs.detect.outputs.function == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/ci-e2e-kind.yml@v1
+    with:
+      path: .
+      setup-script: scripts/e2e-setup.sh
+
+  # Integration gate: builds the primitives xpkg and installs it into kind. Promote to a
+  # required check after the first successful run in CI.
+  xpkg-e2e:
+    needs: [detect, xpkg]
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.primitives == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane-e2e.yml@v1
+    with:
+      path: packages/primitives
+      image: platform-primitives
+      prebuild: npm run synth -w @platform-engineering/primitives

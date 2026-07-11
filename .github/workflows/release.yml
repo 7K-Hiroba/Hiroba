@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}'
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    uses: 7K-Group/workflows-library/.github/workflows/release-please.yml@v1
+    secrets: inherit
+
+  resolve:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Resolve released versions from tags
+        id: versions
+        run: |
+          git fetch --tags --force
+          declare -A map=( ["functions/platform"]="function-platform" ["packages/primitives"]="platform-primitives" )
+          json=$(jq -n '{}')
+          for path in "${!map[@]}"; do
+            prefix="${map[$path]}"
+            tag=$(git tag -l "${prefix}-v*" --sort=-v:refname | head -1)
+            ver="${tag#${prefix}-v}"
+            json=$(echo "$json" | jq --arg p "$path" --arg v "$ver" '.[$p]=$v')
+            echo "$path -> ${ver:-<none>} (tag ${tag:-<none>})"
+          done
+          echo "versions=$json" >> "$GITHUB_OUTPUT"
+
+  function:
+    needs: [release-please, resolve]
+    if: ${{ contains(needs.release-please.outputs.paths_released, 'functions/platform') }}
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    with:
+      path: functions/platform
+      package-path: functions/platform/package
+      version: ${{ fromJson(needs.resolve.outputs.versions)['functions/platform'] }}
+      image-name: function-platform
+      function-name: function-platform
+      go-version: '1.23'
+    secrets: inherit
+
+  primitives:
+    needs: [release-please, resolve]
+    if: ${{ contains(needs.release-please.outputs.paths_released, 'packages/primitives') }}
+    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@v1
+    with:
+      path: packages/primitives
+      version: ${{ fromJson(needs.resolve.outputs.versions)['packages/primitives'] }}
+      image: platform-primitives
+      prebuild: npm run synth -w @platform-engineering/primitives
+    secrets: inherit

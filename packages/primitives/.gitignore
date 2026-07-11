@@ -1,0 +1,3 @@
+# Aggregated at build time from member packages (see aggregate.sh).
+*.k8s.yaml
+*.xpkg

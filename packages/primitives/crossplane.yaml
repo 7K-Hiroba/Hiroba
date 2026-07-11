@@ -1,0 +1,23 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: platform-primitives
+  annotations:
+    meta.crossplane.io/maintainer: Platform Engineering
+    meta.crossplane.io/source: github.com/7K-Hiroba/Hiroba
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: >-
+      Agnostic reusable primitives for the 7KGroup platform: PostgresInstance
+      (RDS / Cloud SQL / Azure DB / CNPG) and ObjectBucket (S3 / Garage / GCS /
+      Azure Blob). Each is a Crossplane v2 namespaced XR reconciled by the central
+      orchestrator function (ADR 007). One XRD per primitive; provider branching
+      lives in the function, not in Compositions.
+    meta.crossplane.io/readme: |
+      # platform-primitives
+
+      Bundles the `PostgresInstance` and `ObjectBucket` XRDs and their thin
+      Pipeline Compositions. Requires the `function-platform` Composition Function
+      to be installed in the cluster (it is referenced by name in each Composition).
+spec:
+  crossplane:
+    version: '>=v2.0.0'

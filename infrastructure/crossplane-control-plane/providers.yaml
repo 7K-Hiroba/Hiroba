@@ -1,20 +1,62 @@
+# Crossplane v2 control-plane providers (namespaced managed resources).
+#
+# Provider installs are cluster-scoped (`pkg.crossplane.io/v1 Provider`); a v2 provider
+# image ships BOTH namespaced (`*.aws.m.upbound.io`) and legacy cluster-scoped MRs.
+# Hiroba is Crossplane v2-only and consumes the namespaced variants exclusively (ADR 007).
+#
+# Versions are pinned intentionally — bump deliberately. Namespaced AWS MRs require a
+# v2.x provider image; pin to the latest namespaced-capable release for your control plane.
+---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-aws-rds
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-rds:v1.0.0
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v2.0.0
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-aws-s3
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.0.0
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.0.0
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-aws-iam
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-iam:v1.0.0
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v2.0.0
+---
+# EXAMPLE: per-team namespaced ProviderConfig (per-tenant credential isolation, ADR 007).
+#
+# The orchestrator resolves `spec.providerConfigRef` to `<team>-<provider>` in the XR's
+# namespace (overridable via `spec.providerConfigRef.name`). A namespaced MR and its
+# ProviderConfig MUST live in the same namespace. Credentials are synced into the team
+# namespace by External Secrets Operator from Vault (secret name is illustrative).
+#
+# Replicate the Namespace + ProviderConfig (+ the ESO ExternalSecret) per team.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-api
+  labels:
+    platform.yourcompany.io/team: team-api
+---
+apiVersion: aws.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  namespace: team-api
+  name: team-api-aws # matches <team>-<provider> resolved by the orchestrator
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: team-api
+      name: team-api-aws-creds # synced into the namespace by ESO from Vault
+      key: creds
+---
+# In-cluster backends (CNPG for Postgres, Garage for object storage) are namespaced
+# operators and need no ProviderConfig: the orchestrator emits their resources directly
+# in the XR namespace.
