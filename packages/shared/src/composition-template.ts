@@ -66,10 +66,6 @@ export function createPlatformXrd(
     spec.claimNames = config.claimNames;
   }
 
-  if (config.connectionSecretKeys) {
-    spec.connectionSecretKeys = config.connectionSecretKeys;
-  }
-
   return new ApiObject(scope, id, {
     apiVersion: 'apiextensions.crossplane.io/v2',
     kind: 'CompositeResourceDefinition',

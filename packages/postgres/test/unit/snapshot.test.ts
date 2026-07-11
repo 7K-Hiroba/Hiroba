@@ -1,9 +1,9 @@
 import { Testing } from 'cdk8s';
-import { PostgresInstanceXrd, POSTGRES_CONFIG } from '../../src/xrd';
+import { PostgresInstanceXrd } from '../../src/xrd';
 import { PostgresInstanceComposition } from '../../src/composition';
 
 describe('PostgresInstance manifests', () => {
-  test('XRD is namespaced and declares the connection contract', () => {
+  test('XRD is namespaced and omits v1-only connection secrets', () => {
     const app = Testing.app();
     const xrd = new PostgresInstanceXrd(app, 'xrd');
     const [manifest] = Testing.synth(xrd) as any[];
@@ -11,7 +11,7 @@ describe('PostgresInstance manifests', () => {
     expect(manifest.apiVersion).toBe('apiextensions.crossplane.io/v2');
     expect(manifest.spec.scope).toBe('Namespaced');
     expect(manifest.spec.claimNames).toBeUndefined();
-    expect(manifest.spec.connectionSecretKeys).toEqual(POSTGRES_CONFIG.connectionSecretKeys);
+    expect(manifest.spec.connectionSecretKeys).toBeUndefined();
   });
 
   test('Composition delegates to the orchestrator function', () => {
