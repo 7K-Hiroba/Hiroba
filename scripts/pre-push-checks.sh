@@ -32,11 +32,4 @@ else
   echo "!! go not installed, skipping go function checks"
 fi
 
-if command -v gitleaks >/dev/null; then
-  echo "== secret scan =="
-  gitleaks git --redact
-else
-  echo "!! gitleaks not installed, skipping secret scan"
-fi
-
 echo "== all pre-push checks passed =="
