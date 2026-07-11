@@ -17,6 +17,31 @@
       "release-type": "simple",
       "bump-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md"
+    },
+    "packages/shared": {
+      "package-name": "shared",
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/postgres": {
+      "package-name": "postgres",
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/object-storage": {
+      "package-name": "object-storage",
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "consumer-sdk/typescript": {
+      "package-name": "platform-consumer",
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "tools/create-product": {
+      "package-name": "create-product",
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }

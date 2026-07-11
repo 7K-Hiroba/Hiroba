@@ -80,11 +80,13 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # npm trusted publishing (OIDC) requires Node >= 22.14 / npm >= 11.5.1.
+          node-version: '24'
           cache: npm
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run build
+      # Publishes via npm Trusted Publishing (OIDC) — no NPM_TOKEN. Each package
+      # must have a trusted publisher configured on npmjs.com pointing at this
+      # repo + workflow filename (release.yml).
       - run: ./scripts/publish-npm.sh
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
