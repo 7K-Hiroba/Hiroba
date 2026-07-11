@@ -54,7 +54,7 @@ jobs:
       version: ${{ fromJson(needs.resolve.outputs.versions)['functions/platform'] }}
       image-name: function-platform
       function-name: function-platform
-      go-version: '1.23'
+      go-version: '1.25'
     secrets: inherit
 
   primitives:

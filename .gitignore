@@ -10,3 +10,4 @@ coverage/
 *.swp
 *.swo
 *~
+functions/platform/coverage.out
