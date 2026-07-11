@@ -17,7 +17,7 @@
     "lint": "eslint '**/*.{ts,tsx,js}'",
     "lint:fix": "eslint '**/*.{ts,tsx,js}' --fix",
     "format": "prettier --write '**/*.{ts,tsx,js,json,md,yaml,yml}'",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @platform-engineering/shared && npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:unit": "npm run test:unit --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspaces --if-present",
