@@ -3,7 +3,7 @@
   "packages/primitives": "0.0.0",
   "packages/shared": "1.0.0",
   "packages/postgres": "1.0.0",
-  "packages/object-storage": "1.0.0",
+  "packages/object-storage": "2.0.0",
   "consumer-sdk/typescript": "1.0.0",
   "tools/create-product": "1.0.0"
 }

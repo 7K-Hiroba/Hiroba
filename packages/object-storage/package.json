@@ -1,6 +1,6 @@
 {
   "name": "@7k-hiroba/object-storage",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Agnostic object-storage primitive with provider toggle (S3 / Garage / GCS / Azure Blob). Reconciled by the central orchestrator function (ADR 007).",
   "license": "Apache-2.0",
   "repository": {
