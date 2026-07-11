@@ -5,10 +5,10 @@ import {
   createBaseSchema,
   createPlatformXrd,
   POSTGRES_CONNECTION_KEYS,
-} from '@platform-engineering/shared';
+} from '@7k-hiroba/shared';
 
 export const POSTGRES_CONFIG: PlatformProductConfig = {
-  group: 'platform.yourcompany.io',
+  group: 'platform.7kgroup.org',
   version: 'v1',
   kind: 'PostgresInstance',
   plural: 'postgresinstances',

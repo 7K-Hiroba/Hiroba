@@ -8,7 +8,7 @@ describe('PlatformProduct SDK', () => {
     const product = new PlatformProduct(chart, 'redis', {
       id: 'redis',
       name: 'my-redis',
-      apiVersion: 'platform.yourcompany.io/v1',
+      apiVersion: 'platform.7kgroup.org/v1',
       kind: 'Redis',
       plural: 'redises',
       spec: {

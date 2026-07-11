@@ -7,7 +7,7 @@ Internal platform engineering framework using **Crossplane** (infrastructure orc
 This repository is the central framework repository. It contains the shared platform library, consumer SDK, scaffolding tools, examples, and policies. Individual product stacks live in dedicated repositories.
 
 ```
-platform-engineering/
+hiroba/
 ├── packages/          # Shared platform library
 ├── consumer-sdk/      # Developer-facing libraries
 ├── tools/             # Scaffolding and documentation tools

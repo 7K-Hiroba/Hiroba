@@ -1,6 +1,6 @@
 import { ApiObject, Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { createOrchestratedComposition } from '@platform-engineering/shared';
+import { createOrchestratedComposition } from '@7k-hiroba/shared';
 import { POSTGRES_CONFIG } from './xrd';
 
 /**
@@ -17,7 +17,7 @@ export class PostgresInstanceComposition extends Chart {
   define(): ApiObject {
     return createOrchestratedComposition(this, 'composition', {
       config: POSTGRES_CONFIG,
-      labels: { 'platform.yourcompany.io/category': 'database' },
+      labels: { 'platform.7kgroup.org/category': 'database' },
     });
   }
 }

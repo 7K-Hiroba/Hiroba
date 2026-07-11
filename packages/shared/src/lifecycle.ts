@@ -40,12 +40,12 @@ export class LifecycleHelper extends Chart {
 
 export function createCompositionRevisionSelector(name: string, version: string): any {
   return new ApiObject(new Chart(undefined as any, 'temp'), 'selector', {
-    apiVersion: 'platform.yourcompany.io/v1',
+    apiVersion: 'platform.7kgroup.org/v1',
     kind: 'CompositionRevisionSelector',
     metadata: { name },
     spec: {
       labels: {
-        'platform.yourcompany.io/version': version,
+        'platform.7kgroup.org/version': version,
       },
     },
   }).toJson();

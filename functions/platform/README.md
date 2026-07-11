@@ -49,7 +49,7 @@ go run ./cmd --insecure --address :9443
 
 - Pin `function-sdk-go` to the version matching the control plane and re-run `go mod tidy`.
 - Map managed-resource connection details onto the primitive connection contracts
-  (`POSTGRES_CONNECTION_KEYS` / `OBJECT_STORAGE_CONNECTION_KEYS` in `@platform-engineering/shared`)
+  (`POSTGRES_CONNECTION_KEYS` / `OBJECT_STORAGE_CONNECTION_KEYS` in `@7k-hiroba/shared`)
   via `connectionDetails` transforms so stacks can consume them uniformly.
 - Add `gcp`/`azure` (postgres) and `gcs`/`azureBlob`/`local` (object storage) branches.
 - Add a stack handler example (e.g. `ObservabilityStack`) that emits `PostgresInstance`

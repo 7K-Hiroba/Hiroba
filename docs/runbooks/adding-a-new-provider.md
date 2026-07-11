@@ -38,7 +38,7 @@ Create `packages/<product>/src/compositions/<myprovider>.ts`:
   - Use `SomeResourceV1Beta1.manifest({ ... })` as the `base` of Crossplane patch-and-transform resources.
 - Emit the concrete resources needed for the backend.
 - Normalize connection secrets so downstream consumers see a stable shape.
-- Use `createProviderCompositionName()` and `createProviderCompositionLabels()` from `@platform-engineering/shared`.
+- Use `createProviderCompositionName()` and `createProviderCompositionLabels()` from `@7k-hiroba/shared`.
 - Patch `spec.providerConfigRef.name` and `spec.region` (for cloud providers) from the composite into managed resources.
 - For Garage, map `spec.providerConfigRef.name` to `spec.clusterRef.name`.
 

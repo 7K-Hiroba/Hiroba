@@ -15,7 +15,7 @@ program
   .option('--description <description>', 'Product description')
   .option('--features <features>', 'Comma-separated feature names', '')
   .option('--provider <provider>', 'Base managed resource API version (e.g., rds.aws.upbound.io/v1beta1)', 'example.org/v1')
-  .option('--maintainers <maintainers>', 'Maintainer email', 'platform-team@yourcompany.com')
+  .option('--maintainers <maintainers>', 'Maintainer email', 'platform-team@7kgroup.org')
   .option('--output <output>', 'Output directory', 'packages')
   .action((options) => {
     const productNameLower = toKebabCase(options.name);

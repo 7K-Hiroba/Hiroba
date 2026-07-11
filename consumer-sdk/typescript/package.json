@@ -1,8 +1,19 @@
 {
-  "name": "@yourcompany/platform-consumer",
+  "name": "@7k-hiroba/platform-consumer",
   "version": "1.0.0",
-  "private": true,
   "description": "Developer-facing TypeScript SDK for the internal platform",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7K-Hiroba/Hiroba.git",
+    "directory": "consumer-sdk/typescript"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

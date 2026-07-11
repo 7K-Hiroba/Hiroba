@@ -1,4 +1,4 @@
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: GrafanaInstanceClaim
 metadata:
   name: dev-grafana
@@ -6,7 +6,7 @@ metadata:
   labels:
     team: team-api
     cost-center: cc-12345
-    platform.yourcompany.io/stack: grafana
+    platform.7kgroup.org/stack: grafana
 spec:
   profile: development
   provider: cnpg

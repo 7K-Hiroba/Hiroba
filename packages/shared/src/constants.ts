@@ -27,7 +27,7 @@ export const PROFILE_DEFAULTS: Record<Profile, ProfileDefaults> = {
   },
 };
 
-export const MANDATORY_LABELS = ['team', 'cost-center', 'platform.yourcompany.io/stack'];
+export const MANDATORY_LABELS = ['team', 'cost-center', 'platform.7kgroup.org/stack'];
 
 export const DEFAULT_PROVIDER_CONFIG = 'default';
 

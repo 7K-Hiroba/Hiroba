@@ -66,7 +66,7 @@ jobs:
     uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane.yml@v1
     with:
       path: packages/primitives
-      prebuild: npm run synth -w @platform-engineering/primitives
+      prebuild: npm run synth -w @7k-hiroba/primitives
 
   e2e:
     needs: [detect, cdk8s, function]
@@ -85,4 +85,4 @@ jobs:
     with:
       path: packages/primitives
       image: platform-primitives
-      prebuild: npm run synth -w @platform-engineering/primitives
+      prebuild: npm run synth -w @7k-hiroba/primitives

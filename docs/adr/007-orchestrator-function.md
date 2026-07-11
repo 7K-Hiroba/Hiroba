@@ -72,7 +72,7 @@ per-team credential isolation.
 - [ ] Remove deprecated `CloudProvider` / `MultiCloudResourceConfig` aliases in
       `packages/shared/src/types.ts`.
 - [ ] Collapse the duplicated `packages/shared` in the Observability Stack repo; consume
-      Hiroba's `@platform-engineering/shared` as the single source of truth.
+      Hiroba's `@7k-hiroba/shared` as the single source of truth.
 
 ## Related
 

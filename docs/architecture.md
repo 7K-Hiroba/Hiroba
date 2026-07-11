@@ -41,7 +41,7 @@ See [ADR 006: Multi-Provider Compositions](./adr/006-multi-provider-compositions
 ## Repository Layout
 
 ```
-platform-engineering/
+hiroba/
 ├── packages/          # Primitive platform products
 ├── stacks/            # Composite platform products
 ├── consumer-sdk/      # Developer-facing libraries

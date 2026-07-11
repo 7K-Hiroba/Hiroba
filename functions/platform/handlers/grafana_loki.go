@@ -57,14 +57,14 @@ func Grafana(oxr *resource.Composite) (platform.Desired, error) {
 
 	// 1. Child PostgresInstance (database for Grafana).
 	pg := composed.New()
-	pg.SetAPIVersion("platform.yourcompany.io/v1")
+	pg.SetAPIVersion("platform.7kgroup.org/v1")
 	pg.SetKind("PostgresInstance")
 	pg.SetName(name + "-db")
 	pg.SetNamespace(ns)
 	pg.SetLabels(map[string]string{
 		"team":                                platform.Team(oxr),
-		"platform.yourcompany.io/stack":       "observability",
-		"platform.yourcompany.io/consumed-by": name,
+		"platform.7kgroup.org/stack":       "observability",
+		"platform.7kgroup.org/consumed-by": name,
 	})
 	pgSpec := map[string]any{
 		"profile":    platform.SpecString(oxr, "profile"),
@@ -142,14 +142,14 @@ func Loki(oxr *resource.Composite) (platform.Desired, error) {
 
 	// 1. Child ObjectBucket (log storage for Loki).
 	ob := composed.New()
-	ob.SetAPIVersion("platform.yourcompany.io/v1")
+	ob.SetAPIVersion("platform.7kgroup.org/v1")
 	ob.SetKind("ObjectBucket")
 	ob.SetName(name + "-bucket")
 	ob.SetNamespace(ns)
 	ob.SetLabels(map[string]string{
 		"team":                                platform.Team(oxr),
-		"platform.yourcompany.io/stack":       "observability",
-		"platform.yourcompany.io/consumed-by": name,
+		"platform.7kgroup.org/stack":       "observability",
+		"platform.7kgroup.org/consumed-by": name,
 	})
 	obSpec := map[string]any{
 		"profile":    platform.SpecString(oxr, "profile"),

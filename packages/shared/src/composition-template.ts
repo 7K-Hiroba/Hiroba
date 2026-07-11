@@ -13,8 +13,8 @@ export function createProviderCompositionLabels(
   provider: InfrastructureProvider,
 ): Record<string, string> {
   return {
-    'platform.yourcompany.io/product': productName,
-    'platform.yourcompany.io/provider': provider,
+    'platform.7kgroup.org/product': productName,
+    'platform.7kgroup.org/provider': provider,
   };
 }
 
@@ -175,7 +175,7 @@ export function createOrchestratedComposition(
     metadata: {
       name: opts.config.singular,
       labels: {
-        'platform.yourcompany.io/product': opts.config.singular,
+        'platform.7kgroup.org/product': opts.config.singular,
         ...(opts.labels ?? {}),
       },
     },

@@ -3,7 +3,7 @@ kind: ClusterRole
 metadata:
   name: platform-admin
 rules:
-  - apiGroups: ['platform.yourcompany.io']
+  - apiGroups: ['platform.7kgroup.org']
     resources: ['*']
     verbs: ['*']
   - apiGroups: ['apiextensions.crossplane.io']

@@ -34,7 +34,7 @@ export function assertFieldValue(
 
 export function createFixtureClaim(name: string, spec: Record<string, unknown>): any {
   return {
-    apiVersion: 'platform.yourcompany.io/v1',
+    apiVersion: 'platform.7kgroup.org/v1',
     kind: 'PlatformFixture',
     metadata: { name },
     spec,

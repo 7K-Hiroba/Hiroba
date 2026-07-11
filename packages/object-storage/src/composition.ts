@@ -1,6 +1,6 @@
 import { ApiObject, Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { createOrchestratedComposition } from '@platform-engineering/shared';
+import { createOrchestratedComposition } from '@7k-hiroba/shared';
 import { OBJECT_STORAGE_CONFIG } from './xrd';
 
 /**
@@ -17,7 +17,7 @@ export class ObjectBucketComposition extends Chart {
   define(): ApiObject {
     return createOrchestratedComposition(this, 'composition', {
       config: OBJECT_STORAGE_CONFIG,
-      labels: { 'platform.yourcompany.io/category': 'storage' },
+      labels: { 'platform.7kgroup.org/category': 'storage' },
     });
   }
 }

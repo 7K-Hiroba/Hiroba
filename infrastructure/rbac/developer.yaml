@@ -10,7 +10,7 @@ metadata:
   namespace: team-api
   name: platform-developer
 rules:
-  - apiGroups: ['platform.yourcompany.io']
+  - apiGroups: ['platform.7kgroup.org']
     resources:
       - 'postgresinstances'
       - 'objectbuckets'

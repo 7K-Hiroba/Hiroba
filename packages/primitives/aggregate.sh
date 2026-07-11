@@ -9,8 +9,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$ROOT/../.." && pwd)"
 
 members=(
-  "@platform-engineering/postgres"
-  "@platform-engineering/object-storage"
+  "@7k-hiroba/postgres"
+  "@7k-hiroba/object-storage"
 )
 dirs=(
   "$REPO/packages/postgres"

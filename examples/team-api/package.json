@@ -7,7 +7,7 @@
     "synth": "cdk8s synth"
   },
   "dependencies": {
-    "@yourcompany/platform-consumer": "1.0.0",
+    "@7k-hiroba/platform-consumer": "1.0.0",
     "cdk8s": "^2.68.0",
     "constructs": "^10.3.0"
   },

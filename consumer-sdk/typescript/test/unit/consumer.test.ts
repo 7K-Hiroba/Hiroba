@@ -6,7 +6,7 @@ describe('TeamObservability', () => {
     const app = Testing.app();
     const chart = new TeamObservability(app, 'obs', {
       profile: 'production',
-      domain: 'obs.team-api.yourcompany.com',
+      domain: 'obs.team-api.example.com',
       team: 'team-api',
       costCenter: 'cc-12345',
       sso: true,
@@ -16,14 +16,14 @@ describe('TeamObservability', () => {
     expect(snapshot).toContain('ObservabilityStackClaim');
     expect(snapshot).toContain('team-api');
     expect(snapshot).toContain('cc-12345');
-    expect(snapshot).toContain('obs.team-api.yourcompany.com');
+    expect(snapshot).toContain('obs.team-api.example.com');
   });
 
   test('sets provider and compositionSelector when given', () => {
     const app = Testing.app();
     const chart = new TeamObservability(app, 'obs', {
       profile: 'production',
-      domain: 'obs.team-api.yourcompany.com',
+      domain: 'obs.team-api.example.com',
       team: 'team-api',
       costCenter: 'cc-12345',
       provider: 'garage',
@@ -31,6 +31,6 @@ describe('TeamObservability', () => {
     const snapshot = JSON.stringify(Testing.synth(chart));
     expect(snapshot).toContain('"provider":"garage"');
     expect(snapshot).toContain('"compositionSelector"');
-    expect(snapshot).toContain('"platform.yourcompany.io/provider":"garage"');
+    expect(snapshot).toContain('"platform.7kgroup.org/provider":"garage"');
   });
 });

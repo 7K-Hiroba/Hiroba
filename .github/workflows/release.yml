@@ -65,5 +65,26 @@ jobs:
       path: packages/primitives
       version: ${{ fromJson(needs.resolve.outputs.versions)['packages/primitives'] }}
       image: platform-primitives
-      prebuild: npm run synth -w @platform-engineering/primitives
+      prebuild: npm run synth -w @7k-hiroba/primitives
     secrets: inherit
+
+  npm:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: ./scripts/publish-npm.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

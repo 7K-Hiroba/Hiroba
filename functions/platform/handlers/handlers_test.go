@@ -16,7 +16,7 @@ func toComposite(xr *composite.Unstructured) *resource.Composite {
 
 func newXR(kind, name, ns, team string) *composite.Unstructured {
 	xr := composite.New()
-	xr.SetAPIVersion("platform.yourcompany.io/v1")
+	xr.SetAPIVersion("platform.7kgroup.org/v1")
 	xr.SetKind(kind)
 	xr.SetName(name)
 	xr.SetNamespace(ns)

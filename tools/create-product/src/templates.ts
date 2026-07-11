@@ -55,7 +55,7 @@ function writeFile(baseDir: string, relativePath: string, content: string): void
 function packageJsonTemplate(vars: ProductTemplateVars): string {
   return JSON.stringify(
     {
-      name: `@platform-engineering/${vars.productNameLower}`,
+      name: `@7k-hiroba/${vars.productNameLower}`,
       version: '1.0.0',
       private: true,
       description: vars.description,
@@ -71,7 +71,7 @@ function packageJsonTemplate(vars: ProductTemplateVars): string {
         package: 'cp dist/*.yaml package/ && crossplane build configuration package/',
       },
       dependencies: {
-        '@platform-engineering/shared': '1.0.0',
+        '@7k-hiroba/shared': '1.0.0',
         cdk8s: '^2.68.0',
         constructs: '^10.3.0',
       },
@@ -176,7 +176,7 @@ function xrdTemplate(vars: ProductTemplateVars): string {
 
   return `import { Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { createPlatformXrd } from '@platform-engineering/shared';
+import { createPlatformXrd } from '@7k-hiroba/shared';
 
 export interface ${vars.productKind}Spec {
   readonly profile: 'development' | 'production' | 'staging';
@@ -195,7 +195,7 @@ export class ${vars.productKind}Xrd extends Chart {
     super(scope, id);
 
     createPlatformXrd(this, 'xrd', {
-      group: 'platform.yourcompany.io',
+      group: 'platform.7kgroup.org',
       version: 'v1',
       kind: '${vars.productKind}',
       plural: '${vars.productPlural}',
@@ -240,7 +240,7 @@ function compositionTemplate(vars: ProductTemplateVars): string {
 
   return `import { ApiObject, Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { deletionPolicyPatch, mandatoryLabelPatches, optionalPatch, regionPatch, transformMap } from '@platform-engineering/shared';
+import { deletionPolicyPatch, mandatoryLabelPatches, optionalPatch, regionPatch, transformMap } from '@7k-hiroba/shared';
 
 export class ${vars.productKind}Composition extends Chart {
   constructor(scope: Construct, id: string) {
@@ -252,12 +252,12 @@ export class ${vars.productKind}Composition extends Chart {
       metadata: {
         name: '${vars.productNameLower}-composition',
         labels: {
-          'platform.yourcompany.io/product': '${vars.productNameLower}',
+          'platform.7kgroup.org/product': '${vars.productNameLower}',
         },
       },
       spec: {
         compositeTypeRef: {
-          apiVersion: 'platform.yourcompany.io/v1',
+          apiVersion: 'platform.7kgroup.org/v1',
           kind: '${vars.productKind}',
         },
         mode: 'Pipeline',
@@ -327,7 +327,7 @@ describe('${vars.productKind} manifests', () => {
 function fixtureXrTemplate(vars: ProductTemplateVars): string {
   const featureLines = vars.features.map((feature) => `    ${feature.toLowerCase()}:\n      enabled: true`).join('\n');
 
-  return `apiVersion: platform.yourcompany.io/v1
+  return `apiVersion: platform.7kgroup.org/v1
 kind: ${vars.productKind}
 metadata:
   name: test-${vars.productNameLower}
@@ -359,7 +359,7 @@ metadata:
   name: ${vars.productNameLower}-platform
   annotations:
     meta.crossplane.io/maintainer: ${vars.maintainers}
-    meta.crossplane.io/source: github.com/yourcompany/platform-engineering
+    meta.crossplane.io/source: github.com/7K-Hiroba/Hiroba
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
       ${vars.description}

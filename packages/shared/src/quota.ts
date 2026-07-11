@@ -22,10 +22,10 @@ export class PlatformQuotaXrd extends Chart {
       apiVersion: 'apiextensions.crossplane.io/v2',
       kind: 'CompositeResourceDefinition',
       metadata: {
-        name: 'platformquotas.platform.yourcompany.io',
+        name: 'platformquotas.platform.7kgroup.org',
       },
       spec: {
-        group: 'platform.yourcompany.io',
+        group: 'platform.7kgroup.org',
         names: {
           kind: 'PlatformQuota',
           plural: 'platformquotas',
@@ -75,7 +75,7 @@ export function createPlatformQuota(scope: Construct, id: string, spec: QuotaSpe
   const chart = new Chart(scope, id);
 
   new ApiObject(chart, 'quota', {
-    apiVersion: 'platform.yourcompany.io/v1',
+    apiVersion: 'platform.7kgroup.org/v1',
     kind: 'PlatformQuota',
     metadata: { name: `${spec.scope}-quota` },
     spec,

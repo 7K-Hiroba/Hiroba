@@ -22,10 +22,10 @@ export class PlatformCatalogXrd extends Chart {
       apiVersion: 'apiextensions.crossplane.io/v2',
       kind: 'CompositeResourceDefinition',
       metadata: {
-        name: 'platformcatalogs.platform.yourcompany.io',
+        name: 'platformcatalogs.platform.7kgroup.org',
       },
       spec: {
-        group: 'platform.yourcompany.io',
+        group: 'platform.7kgroup.org',
         names: {
           kind: 'PlatformCatalog',
           plural: 'platformcatalogs',
@@ -90,7 +90,7 @@ export function createPlatformCatalogChart(scope: Construct, id: string, product
   new PlatformCatalogXrd(chart, 'xrd');
 
   new ApiObject(chart, 'catalog', {
-    apiVersion: 'platform.yourcompany.io/v1',
+    apiVersion: 'platform.7kgroup.org/v1',
     kind: 'PlatformCatalog',
     metadata: {
       name: 'platform-catalog',

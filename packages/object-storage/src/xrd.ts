@@ -5,10 +5,10 @@ import {
   createBaseSchema,
   createPlatformXrd,
   OBJECT_STORAGE_CONNECTION_KEYS,
-} from '@platform-engineering/shared';
+} from '@7k-hiroba/shared';
 
 export const OBJECT_STORAGE_CONFIG: PlatformProductConfig = {
-  group: 'platform.yourcompany.io',
+  group: 'platform.7kgroup.org',
   version: 'v1',
   kind: 'ObjectBucket',
   plural: 'objectbuckets',

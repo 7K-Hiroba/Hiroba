@@ -65,7 +65,7 @@ kubectl apply -f examples/grafana-dev.yaml
 Example claim:
 
 ```yaml
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: GrafanaInstanceClaim
 metadata:
   name: team-api-grafana
@@ -75,7 +75,7 @@ metadata:
     environment: production
 spec:
   profile: production
-  domain: grafana.team-api.yourcompany.com
+  domain: grafana.team-api.example.com
   team: team-api
   costCenter: cc-12345
   features:
@@ -92,20 +92,20 @@ spec:
 Install the SDK in your application repository:
 
 ```bash
-npm install @yourcompany/platform-consumer
+npm install @7k-hiroba/platform-consumer
 ```
 
 Create a file `src/main.ts`:
 
 ```typescript
 import { App } from 'cdk8s';
-import { TeamObservability } from '@yourcompany/platform-consumer';
+import { TeamObservability } from '@7k-hiroba/platform-consumer';
 
 const app = new App({ outdir: 'dist' });
 
 new TeamObservability(app, 'obs', {
   profile: 'production',
-  domain: 'obs.team-api.yourcompany.com',
+  domain: 'obs.team-api.example.com',
   team: 'team-api',
   costCenter: 'cc-12345',
   modules: {
@@ -133,14 +133,14 @@ For teams that need products not yet wrapped in high-level helpers:
 
 ```typescript
 import { App } from 'cdk8s';
-import { PlatformProduct, createPlatformApp } from '@yourcompany/platform-consumer';
+import { PlatformProduct, createPlatformApp } from '@7k-hiroba/platform-consumer';
 
 const app = new App({ outdir: 'dist' });
 
 const cache = new PlatformProduct(app, 'redis', {
   id: 'redis',
   name: 'checkout-cache',
-  apiVersion: 'platform.yourcompany.io/v1',
+  apiVersion: 'platform.7kgroup.org/v1',
   kind: 'Redis',
   plural: 'redises',
   spec: {
@@ -154,7 +154,7 @@ const cache = new PlatformProduct(app, 'redis', {
 const db = new PlatformProduct(app, 'postgres', {
   id: 'postgres',
   name: 'checkout-db',
-  apiVersion: 'platform.yourcompany.io/v1',
+  apiVersion: 'platform.7kgroup.org/v1',
   kind: 'Postgresql',
   plural: 'postgresqls',
   spec: {
@@ -201,7 +201,7 @@ cd examples/my-service
     "synth": "npx ts-node src/main.ts"
   },
   "dependencies": {
-    "@yourcompany/platform-consumer": "*",
+    "@7k-hiroba/platform-consumer": "*",
     "cdk8s": "^2.68.0"
   },
   "devDependencies": {
@@ -217,13 +217,13 @@ Use the SDK to declare the infrastructure your service needs:
 
 ```typescript
 import { App } from 'cdk8s';
-import { TeamObservability } from '@yourcompany/platform-consumer';
+import { TeamObservability } from '@7k-hiroba/platform-consumer';
 
 const app = new App({ outdir: 'dist' });
 
 new TeamObservability(app, 'obs', {
   profile: 'development',
-  domain: 'obs.my-service.yourcompany.com',
+  domain: 'obs.my-service.example.com',
   team: 'my-team',
   costCenter: 'cc-00000',
   modules: { grafana: true, loki: true, prometheus: false },
@@ -283,7 +283,7 @@ In `src/xrd.ts`, declare the composite resource schema:
 ```typescript
 import { Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { createPlatformXrd, createBaseSchema } from '@platform-engineering/shared';
+import { createPlatformXrd, createBaseSchema } from '@7k-hiroba/shared';
 
 export class MyStackXrd extends Chart {
   constructor(scope: Construct, id: string) {
@@ -293,7 +293,7 @@ export class MyStackXrd extends Chart {
       this,
       'xrd',
       {
-        group: 'platform.yourcompany.io',
+        group: 'platform.7kgroup.org',
         kind: 'MyStack',
         plural: 'mystacks',
         singular: 'mystack',
@@ -335,11 +335,11 @@ export class MyStackComposition extends Chart {
       kind: 'Composition',
       metadata: {
         name: 'mystack-composition',
-        labels: { 'platform.yourcompany.io/product': 'mystack' },
+        labels: { 'platform.7kgroup.org/product': 'mystack' },
       },
       spec: {
         compositeTypeRef: {
-          apiVersion: 'platform.yourcompany.io/v1',
+          apiVersion: 'platform.7kgroup.org/v1',
           kind: 'MyStack',
         },
         mode: 'Pipeline',
@@ -354,7 +354,7 @@ export class MyStackComposition extends Chart {
                 {
                   name: 'grafana',
                   base: {
-                    apiVersion: 'platform.yourcompany.io/v1',
+                    apiVersion: 'platform.7kgroup.org/v1',
                     kind: 'GrafanaInstance',
                     spec: {
                       profile: '',
@@ -524,13 +524,13 @@ describe('MyProduct composition', () => {
 Use the shared testing helpers for common assertions:
 
 ```typescript
-import { assertResourceExists, assertFieldValue } from '@platform-engineering/shared';
+import { assertResourceExists, assertFieldValue } from '@7k-hiroba/shared';
 ```
 
 Run tests for a single workspace:
 
 ```bash
-npm run test:unit --workspace=@platform-engineering/grafana
+npm run test:unit --workspace=@7k-hiroba/grafana
 ```
 
 Run all tests:

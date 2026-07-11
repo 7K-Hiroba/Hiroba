@@ -5,7 +5,7 @@
 ### GrafanaInstance
 
 ```yaml
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: GrafanaInstanceClaim
 metadata:
   name: my-grafana
@@ -16,7 +16,7 @@ spec:
   providerConfigRef:
     name: aws-provider
   region: us-east-1
-  domain: grafana.team-api.yourcompany.com
+  domain: grafana.team-api.example.com
   features:
     sso:
       enabled: true
@@ -33,7 +33,7 @@ spec:
 ### LokiInstance
 
 ```yaml
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: LokiInstanceClaim
 metadata:
   name: my-loki
@@ -51,7 +51,7 @@ spec:
 ### PrometheusInstance
 
 ```yaml
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: PrometheusInstanceClaim
 metadata:
   name: my-prometheus
@@ -68,7 +68,7 @@ spec:
 ### ObservabilityStack
 
 ```yaml
-apiVersion: platform.yourcompany.io/v1
+apiVersion: platform.7kgroup.org/v1
 kind: ObservabilityStackClaim
 metadata:
   name: team-api-observability
@@ -79,7 +79,7 @@ spec:
   providerConfigRef:
     name: aws-provider
   region: us-east-1
-  domain: obs.team-api.yourcompany.com
+  domain: obs.team-api.example.com
   team: team-api
   costCenter: cc-12345
   modules:

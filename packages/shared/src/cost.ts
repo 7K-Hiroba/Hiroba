@@ -27,7 +27,7 @@ export function mandatoryCostLabelPatches(): any[] {
     {
       type: 'FromCompositeFieldPath',
       fromFieldPath: 'metadata.name',
-      toFieldPath: 'metadata.labels[platform.yourcompany.io/claim]',
+      toFieldPath: 'metadata.labels[platform.7kgroup.org/claim]',
     },
   ];
 }

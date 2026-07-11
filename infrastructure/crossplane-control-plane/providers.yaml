@@ -42,7 +42,7 @@ kind: Namespace
 metadata:
   name: team-api
   labels:
-    platform.yourcompany.io/team: team-api
+    platform.7kgroup.org/team: team-api
 ---
 apiVersion: aws.m.upbound.io/v1beta1
 kind: ProviderConfig
