@@ -21,27 +21,62 @@
     "packages/shared": {
       "package-name": "shared",
       "release-type": "node",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[\"packages/shared\"].version"
+        }
+      ]
     },
     "packages/postgres": {
       "package-name": "postgres",
       "release-type": "node",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[\"packages/postgres\"].version"
+        }
+      ]
     },
     "packages/object-storage": {
       "package-name": "object-storage",
       "release-type": "node",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[\"packages/object-storage\"].version"
+        }
+      ]
     },
     "consumer-sdk/typescript": {
       "package-name": "platform-consumer",
       "release-type": "node",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[\"consumer-sdk/typescript\"].version"
+        }
+      ]
     },
     "tools/create-product": {
       "package-name": "create-product",
       "release-type": "node",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "package-lock.json",
+          "jsonpath": "$.packages[\"tools/create-product\"].version"
+        }
+      ]
     }
   }
 }
