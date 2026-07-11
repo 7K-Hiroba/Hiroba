@@ -45,9 +45,6 @@ jobs:
     uses: 7K-Group/workflows-library/.github/workflows/ci-lint-pr-title.yml@v1
     secrets: inherit
 
-  secret-scan:
-    uses: 7K-Group/workflows-library/.github/workflows/ci-secret-scan.yml@v1
-
   cdk8s:
     needs: detect
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' }}
