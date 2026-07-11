@@ -6,6 +6,8 @@ export function kubectl(args: string[], input?: string): string {
       input,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
+      // Large CRDs (e.g. ESO's clustersecretstores) exceed the 1 MiB default.
+      maxBuffer: 64 * 1024 * 1024,
     });
   } catch (err: any) {
     const stderr = err.stderr ? String(err.stderr) : '';
