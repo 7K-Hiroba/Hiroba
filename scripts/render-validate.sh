@@ -9,12 +9,15 @@
 set -euo pipefail
 
 REPO="$(git rev-parse --show-toplevel)"
+# HIROBA_ROOT points at the Hiroba framework repo (function source). Defaults to
+# this repo; consumer repos set it to their sibling Hiroba checkout.
+HIROBA_ROOT="${HIROBA_ROOT:-$REPO}"
 PKG_DIR="$REPO/$1"
 BIN="$(mktemp -d)/function-platform"
 XP_VERSION="${CROSSPLANE_VERSION:-v2.3.3}"
 XP_BIN="$(mktemp -d)/crossplane"
 
-cd "$REPO/functions/platform"
+cd "$HIROBA_ROOT/functions/platform"
 
 # Build the function, scan for vulnerabilities, and fetch the crossplane CLI
 # concurrently to save time.

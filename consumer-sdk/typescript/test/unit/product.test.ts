@@ -1,54 +1,98 @@
-import { Chart, Testing } from 'cdk8s';
-import { PlatformProduct, createPlatformApp } from '../../src';
+import { Testing } from 'cdk8s';
+import { PlatformXr, PostgresInstance } from '../../src';
 
-describe('PlatformProduct SDK', () => {
-  test('creates product claim with labels', () => {
+describe('PlatformXr', () => {
+  test('emits a namespaced v1alpha1 XR with team label', () => {
     const app = Testing.app();
-    const chart = new Chart(app, 'test');
-    const product = new PlatformProduct(chart, 'redis', {
-      id: 'redis',
+    const xr0 = new PlatformXr(app, 'redis', {
       name: 'my-redis',
-      apiVersion: 'platform.7kgroup.org/v1',
-      kind: 'Redis',
-      plural: 'redises',
-      spec: {
-        profile: 'production',
-        team: 'platform',
-        costCenter: 'cc-123',
-        features: { ha: { enabled: true } },
-      },
-      metadata: { team: 'platform' },
+      namespace: 'team-api',
+      kind: 'RedisInstance',
+      spec: { profile: 'production', team: 'team-api', costCenter: 'cc-123' },
     });
-    const results = Testing.synth(product);
-    const claims = results.filter((r: any) => r.kind === 'Redis');
-    expect(claims.length).toBe(1);
-    expect(claims[0].metadata.labels.team).toBe('platform');
+    const [xr] = Testing.synth(xr0) as any[];
+    expect(xr.apiVersion).toBe('platform.7kgroup.org/v1alpha1');
+    expect(xr.kind).toBe('RedisInstance');
+    expect(xr.metadata.namespace).toBe('team-api');
+    expect(xr.metadata.labels.team).toBe('team-api');
+    expect(xr.spec.claimNames).toBeUndefined();
+  });
+
+  test('rejects invalid profile with a helpful error', () => {
+    const app = Testing.app();
+    expect(
+      () =>
+        new PlatformXr(app, 'x', {
+          name: 'x',
+          namespace: 'ns',
+          kind: 'RedisInstance',
+          spec: { profile: 'prod', team: 't', costCenter: 'c' },
+        }),
+    ).toThrow(/spec\.profile must be one of development, staging, production/);
+  });
+
+  test('rejects missing team', () => {
+    const app = Testing.app();
+    expect(
+      () =>
+        new PlatformXr(app, 'x', {
+          name: 'x',
+          namespace: 'ns',
+          kind: 'RedisInstance',
+          spec: { profile: 'production', costCenter: 'c' },
+        }),
+    ).toThrow(/spec\.team/);
   });
 });
 
-describe('PlatformApp SDK', () => {
-  test('creates PlatformApp with multiple products', () => {
+describe('PostgresInstance', () => {
+  test('emits a typed XR with features', () => {
     const app = Testing.app();
-    const chart = new Chart(app, 'test');
-    const appChart = createPlatformApp(chart, 'checkout-app', {
-      name: 'checkout',
-      team: 'payments',
-      costCenter: 'cc-999',
-      environment: 'production',
-      products: [
-        {
-          product: 'Redis',
-          name: 'checkout-cache',
-          spec: { profile: 'production', team: 'payments', costCenter: 'cc-999' },
-        },
-        {
-          product: 'Postgresql',
-          name: 'checkout-db',
-          spec: { profile: 'production', team: 'payments', costCenter: 'cc-999' },
-        },
-      ],
+    const pg = new PostgresInstance(app, 'db', {
+      name: 'checkout-db',
+      namespace: 'team-api',
+      profile: 'production',
+      team: 'team-api',
+      costCenter: 'cc-123',
+      provider: 'aws',
+      storageGB: 100,
+      database: 'checkout',
+      features: { ha: true, backup: true },
     });
-    const results = Testing.synth(appChart);
-    expect(results.some((r: any) => r.kind === 'PlatformApp')).toBe(true);
+    const [xr] = Testing.synth(pg) as any[];
+    expect(xr.kind).toBe('PostgresInstance');
+    expect(xr.spec.provider).toBe('aws');
+    expect(xr.spec.storageGB).toBe(100);
+    expect(xr.spec.features.ha.enabled).toBe(true);
+  });
+
+  test('rejects invalid storageGB', () => {
+    const app = Testing.app();
+    expect(
+      () =>
+        new PostgresInstance(app, 'db', {
+          name: 'db',
+          namespace: 'ns',
+          profile: 'development',
+          team: 't',
+          costCenter: 'c',
+          storageGB: 0,
+        }),
+    ).toThrow(/storageGB/);
+  });
+
+  test('rejects invalid database name', () => {
+    const app = Testing.app();
+    expect(
+      () =>
+        new PostgresInstance(app, 'db', {
+          name: 'db',
+          namespace: 'ns',
+          profile: 'development',
+          team: 't',
+          costCenter: 'c',
+          database: 'Not-Valid',
+        }),
+    ).toThrow(/database/);
   });
 });

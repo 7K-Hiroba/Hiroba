@@ -1,36 +1,68 @@
 import { Testing } from 'cdk8s';
-import { TeamObservability } from '../../src/observability-stack';
+import { TeamObservability } from '../../src';
 
 describe('TeamObservability', () => {
-  test('synths an ObservabilityStackClaim', () => {
+  test('synths a namespaced ObservabilityStack XR (no Claims)', () => {
     const app = Testing.app();
     const chart = new TeamObservability(app, 'obs', {
+      namespace: 'team-api',
       profile: 'production',
-      domain: 'obs.team-api.example.com',
       team: 'team-api',
       costCenter: 'cc-12345',
-      sso: true,
-      alerting: true,
+      modules: {
+        grafana: { domain: 'obs.team-api.example.com' },
+        metrics: { backend: 'prometheus' },
+      },
     });
-    const snapshot = JSON.stringify(Testing.synth(chart));
-    expect(snapshot).toContain('ObservabilityStackClaim');
-    expect(snapshot).toContain('team-api');
-    expect(snapshot).toContain('cc-12345');
-    expect(snapshot).toContain('obs.team-api.example.com');
+    const [xr] = Testing.synth(chart) as any[];
+    expect(xr.apiVersion).toBe('platform.7kgroup.org/v1alpha1');
+    expect(xr.kind).toBe('ObservabilityStack');
+    expect(xr.metadata.namespace).toBe('team-api');
+    expect(xr.metadata.name).toBe('team-api-observability');
+    expect(xr.spec.modules.grafana.domain).toBe('obs.team-api.example.com');
+    expect(xr.spec.modules.metrics.backend).toBe('prometheus');
+    expect(JSON.stringify(xr)).not.toContain('Claim');
+    expect(xr.spec.compositionSelector).toBeUndefined();
   });
 
-  test('sets provider and compositionSelector when given', () => {
+  test('defaults all modules enabled', () => {
     const app = Testing.app();
     const chart = new TeamObservability(app, 'obs', {
-      profile: 'production',
-      domain: 'obs.team-api.example.com',
-      team: 'team-api',
-      costCenter: 'cc-12345',
-      provider: 'garage',
+      namespace: 'ns',
+      profile: 'development',
+      team: 't',
+      costCenter: 'c',
     });
-    const snapshot = JSON.stringify(Testing.synth(chart));
-    expect(snapshot).toContain('"provider":"garage"');
-    expect(snapshot).toContain('"compositionSelector"');
-    expect(snapshot).toContain('"platform.7kgroup.org/provider":"garage"');
+    const [xr] = Testing.synth(chart) as any[];
+    for (const mod of ['grafana', 'loki', 'metrics', 'alloy']) {
+      expect(xr.spec.modules[mod].enabled).toBe(true);
+    }
+  });
+
+  test('rejects invalid retentionDays at synth time', () => {
+    const app = Testing.app();
+    expect(
+      () =>
+        new TeamObservability(app, 'obs', {
+          namespace: 'ns',
+          profile: 'development',
+          team: 't',
+          costCenter: 'c',
+          modules: { metrics: { retentionDays: 0 } },
+        }),
+    ).toThrow(/retentionDays/);
+  });
+
+  test('forwards module values escape hatch', () => {
+    const app = Testing.app();
+    const chart = new TeamObservability(app, 'obs', {
+      namespace: 'ns',
+      profile: 'production',
+      team: 't',
+      costCenter: 'c',
+      modules: { grafana: { values: { persistence: { enabled: true } } } },
+    });
+    const [xr] = Testing.synth(chart) as any[];
+    expect(xr.spec.modules.grafana.values.persistence.enabled).toBe(true);
   });
 });

@@ -1,78 +1,73 @@
-import { ApiObject, Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-
-export type Profile = 'development' | 'production' | 'staging';
-
-export type InfrastructureProvider = 'aws' | 'garage' | 'cnpg' | 'local';
+import { PlatformXr, Profile } from './product';
 
 export interface TeamObservabilityProps {
+  readonly name?: string;
+  readonly namespace: string;
   readonly profile: Profile;
-  readonly domain: string;
   readonly team: string;
   readonly costCenter: string;
-  readonly provider?: InfrastructureProvider;
-  readonly providerConfigRef?: {
-    readonly name?: string;
-  };
-  readonly region?: string;
   readonly modules?: {
-    readonly grafana?: boolean;
-    readonly loki?: boolean;
-    readonly prometheus?: boolean;
+    readonly grafana?: {
+      readonly enabled?: boolean;
+      readonly domain?: string;
+      readonly values?: Record<string, unknown>;
+    };
+    readonly loki?: {
+      readonly enabled?: boolean;
+      readonly values?: Record<string, unknown>;
+    };
+    readonly metrics?: {
+      readonly enabled?: boolean;
+      readonly backend?: 'prometheus' | 'mimir';
+      readonly retentionDays?: number;
+      readonly values?: Record<string, unknown>;
+    };
+    readonly alloy?: {
+      readonly enabled?: boolean;
+      readonly values?: Record<string, unknown>;
+    };
   };
-  readonly sso?: boolean;
-  readonly alerting?: boolean;
 }
 
-export class TeamObservability extends Chart {
+function moduleSpec(
+  mod: Record<string, unknown> | undefined,
+  defaults: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!mod) return defaults;
+  const out: Record<string, unknown> = { ...mod };
+  if (out.enabled === undefined) out.enabled = defaults.enabled;
+  return out;
+}
+
+/**
+ * TeamObservability emits a namespaced ObservabilityStack XR: Grafana + Loki + a
+ * metrics backend (Prometheus or Mimir) + Alloy, wired by the platform orchestrator.
+ */
+export class TeamObservability extends PlatformXr {
   constructor(scope: Construct, id: string, props: TeamObservabilityProps) {
-    super(scope, id);
-
-    const spec: Record<string, unknown> = {
-      profile: props.profile,
-      domain: props.domain,
-      team: props.team,
-      costCenter: props.costCenter,
-      modules: {
-        grafana: { enabled: props.modules?.grafana ?? true },
-        loki: { enabled: props.modules?.loki ?? true },
-        prometheus: { enabled: props.modules?.prometheus ?? true },
-      },
-      globalFeatures: {
-        sso: { enabled: props.sso ?? props.profile === 'production' },
-        alerting: { enabled: props.alerting ?? false },
-      },
-    };
-
-    if (props.provider) {
-      spec.provider = props.provider;
-      spec.compositionSelector = {
-        matchLabels: {
-          'platform.7kgroup.org/provider': props.provider,
-        },
-      };
+    if (props.modules?.metrics?.retentionDays !== undefined) {
+      const r = props.modules.metrics.retentionDays;
+      if (!Number.isInteger(r) || r < 1 || r > 365) {
+        throw new Error('platform-consumer: metrics.retentionDays must be an integer between 1 and 365');
+      }
     }
 
-    if (props.providerConfigRef) {
-      spec.providerConfigRef = props.providerConfigRef;
-    }
-
-    if (props.region) {
-      spec.region = props.region;
-    }
-
-    new ApiObject(this, 'stack', {
-      apiVersion: 'platform.7kgroup.org/v1',
-      kind: 'ObservabilityStackClaim',
-      metadata: {
-        name: `${props.team}-observability`,
-        labels: {
-          team: props.team,
-          'cost-center': props.costCenter,
-          'platform.7kgroup.org/stack': 'observability',
+    super(scope, id, {
+      name: props.name ?? `${props.team}-observability`,
+      namespace: props.namespace,
+      kind: 'ObservabilityStack',
+      spec: {
+        profile: props.profile,
+        team: props.team,
+        costCenter: props.costCenter,
+        modules: {
+          grafana: moduleSpec(props.modules?.grafana, { enabled: true }),
+          loki: moduleSpec(props.modules?.loki, { enabled: true }),
+          metrics: moduleSpec(props.modules?.metrics, { enabled: true, backend: 'prometheus' }),
+          alloy: moduleSpec(props.modules?.alloy, { enabled: true }),
         },
       },
-      spec,
     });
   }
 }
