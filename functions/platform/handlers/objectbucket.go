@@ -50,7 +50,7 @@ func bucketS3(hc *platform.HandlerContext) (*platform.Result, error) {
 	if platform.FeatureEnabled(oxr, "versioning") {
 		_ = unstructured.SetNestedField(o, "Enabled", "spec", "forProvider", "versioning", "status")
 	}
-	platform.SetProviderConfigRef(o, platform.ResolveProviderConfig(oxr, "s3"))
+	platform.SetProviderConfigRef(o, cd.GetAPIVersion(), platform.ResolveProviderConfig(oxr, "s3"))
 	platform.TagOwnership(o, oxr)
 
 	endpoint := fmt.Sprintf("https://s3.%s.amazonaws.com", region)

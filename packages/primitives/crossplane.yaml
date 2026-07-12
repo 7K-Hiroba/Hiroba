@@ -21,3 +21,6 @@ metadata:
 spec:
   crossplane:
     version: '>=v2.0.0'
+  dependsOn:
+    - function: harbor.7kgroup.org/7khiroba/function-platform
+      version: '>=v1.0.0'

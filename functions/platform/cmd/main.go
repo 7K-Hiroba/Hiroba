@@ -26,7 +26,7 @@ import (
 
 func main() {
 	addr := flag.String("address", ":9443", "gRPC listen address")
-	tlsDir := flag.String("tls-certs-dir", "/tls", "directory containing tls.crt and tls.key (mTLS)")
+	tlsDir := flag.String("tls-certs-dir", "/tls/server", "directory containing tls.crt and tls.key (mTLS)")
 	insecure := flag.Bool("insecure", false, "serve without TLS (local development only)")
 	metricsAddr := flag.String("metrics-address", ":8080", "Prometheus metrics listen address")
 	debug := flag.Bool("debug", false, "enable debug logging")

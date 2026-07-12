@@ -86,7 +86,7 @@ func postgresRDS(hc *platform.HandlerContext) (*platform.Result, error) {
 	_ = unstructured.SetNestedField(o, database, "spec", "forProvider", "dbName")
 	_ = unstructured.SetNestedField(o, username, "spec", "forProvider", "username")
 	_ = unstructured.SetNestedField(o, deletionPolicy, "spec", "deletionPolicy")
-	platform.SetProviderConfigRef(o, platform.ResolveProviderConfig(oxr, "aws"))
+	platform.SetProviderConfigRef(o, cd.GetAPIVersion(), platform.ResolveProviderConfig(oxr, "aws"))
 	platform.WriteConnectionSecretToRef(o, ns, name+"-conn")
 	platform.TagOwnership(o, oxr)
 
@@ -102,6 +102,7 @@ func postgresRDS(hc *platform.HandlerContext) (*platform.Result, error) {
 
 	// Normalize the provider-native connection details (endpoint/port/username/
 	// password) onto the stable contract keys once RDS publishes them.
+	platform.MarkReady(res, hc, resource.Name("pg"))
 	obs, ok := hc.Observed[resource.Name("pg")]
 	if !ok || len(obs.ConnectionDetails) == 0 {
 		res.Warnings = append(res.Warnings, "connection details not yet available from RDS instance")
@@ -178,7 +179,7 @@ func postgresCNPG(hc *platform.HandlerContext) (*platform.Result, error) {
 		Status: map[string]any{
 			"phase":               "Provisioning",
 			"endpoint":            fmt.Sprintf("%s:%d", host, postgresPort),
-			"connectionSecretRef": map[string]any{"name": name + "-conn"},
+			"connectionSecretRef": map[string]any{"name": name + "-pg-app"},
 		},
 		ConnectionDetails: resource.ConnectionDetails{
 			"host":     []byte(host),
@@ -189,6 +190,10 @@ func postgresCNPG(hc *platform.HandlerContext) (*platform.Result, error) {
 		Warnings: []string{
 			fmt.Sprintf("password and uri are published by the CNPG operator secret %q (keys: username, password, dbname, host, port, uri)", name+"-pg-app"),
 		},
+	}
+	platform.MarkReady(res, hc, resource.Name("pg"))
+	if platform.ObservedReady(hc, resource.Name("pg")) {
+		res.Status["phase"] = "Ready"
 	}
 	return res, nil
 }

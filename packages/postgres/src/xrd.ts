@@ -7,7 +7,6 @@ import {
   API_GROUP,
   API_VERSION,
   POSTGRES_PROVIDERS,
-  POSTGRES_CONNECTION_KEYS,
   PRODUCT_CONTRACTS,
 } from '@7k-hiroba/shared';
 
@@ -19,7 +18,6 @@ export const POSTGRES_CONFIG: PlatformProductConfig = {
   singular: PRODUCT_CONTRACTS.postgres.singular,
   shortNames: ['pg', 'pgi'],
   scope: 'Namespaced',
-  connectionSecretKeys: [...POSTGRES_CONNECTION_KEYS],
 };
 
 export class PostgresInstanceXrd extends Chart {
@@ -62,7 +60,6 @@ export class PostgresInstanceXrd extends Chart {
         },
         features: {
           type: 'object',
-          additionalProperties: false,
           properties: {
             ha: {
               type: 'object',

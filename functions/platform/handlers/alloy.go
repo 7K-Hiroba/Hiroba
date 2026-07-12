@@ -58,5 +58,9 @@ func Alloy(hc *platform.HandlerContext) (*platform.Result, error) {
 		chartVersion(oxr, "ALLOY_CHART_VERSION", defaultAlloyChartVersion), merged)
 	res.Desired[resource.Name("alloy")] = &resource.DesiredComposed{Resource: rel}
 	res.Status = map[string]any{"phase": "Provisioning"}
+	platform.MarkReady(res, hc, resource.Name("alloy"))
+	if platform.ObservedReady(hc, resource.Name("alloy")) {
+		res.Status["phase"] = "Ready"
+	}
 	return res, nil
 }

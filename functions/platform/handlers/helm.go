@@ -11,14 +11,13 @@ import (
 const (
 	grafanaChartsRepo     = "https://grafana.github.io/helm-charts"
 	prometheusChartsRepo  = "https://prometheus-community.github.io/helm-charts"
-	helmProviderConfigRef = "default"
-)
+	)
 
 // helmRelease builds a provider-helm Release composed resource with the given chart
 // coordinates. Values are applied with mergeValues precedence.
 func helmRelease(oxr *resource.Composite, name, chart, repo, version string, values map[string]any) *composed.Unstructured {
 	rel := composed.New()
-	rel.SetAPIVersion("helm.crossplane.io/v1beta1")
+	rel.SetAPIVersion("helm.m.crossplane.io/v1beta1")
 	rel.SetKind("Release")
 	rel.SetNamespace(oxr.Resource.GetNamespace())
 	rel.SetName(name)
@@ -28,7 +27,7 @@ func helmRelease(oxr *resource.Composite, name, chart, repo, version string, val
 	_ = unstructured.SetNestedField(o, version, "spec", "forProvider", "chart", "version")
 	_ = unstructured.SetNestedField(o, oxr.Resource.GetNamespace(), "spec", "forProvider", "namespace")
 	_ = unstructured.SetNestedField(o, true, "spec", "forProvider", "wait")
-	platform.SetProviderConfigRef(o, helmProviderConfigRef)
+	platform.SetProviderConfigRef(o, rel.GetAPIVersion(), platform.ResolveProviderConfig(oxr, "helm"))
 	if len(values) > 0 {
 		_ = unstructured.SetNestedField(o, values, "spec", "forProvider", "values")
 	}

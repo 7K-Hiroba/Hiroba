@@ -78,21 +78,18 @@ func Mimir(hc *platform.HandlerContext) (*platform.Result, error) {
 		},
 	}
 
-	// Inject non-secret storage settings once the child publishes them.
+	// Inject non-secret storage settings from the child XR's status (Crossplane
+	// v2 drops XR-level connection secrets, so status.endpoint is authoritative).
 	res := &platform.Result{Desired: desired}
-	if cd := childConnectionDetails(hc, resource.Name("bucket")); len(cd) > 0 {
-		s3 := wired["mimir"].(map[string]any)["structuredConfig"].(map[string]any)["blocks_storage"].(map[string]any)["s3"].(map[string]any)
-		if bucket := string(cd["bucket"]); bucket != "" {
-			s3["bucket_name"] = bucket
-		}
-		if endpoint := string(cd["endpoint"]); endpoint != "" {
-			s3["endpoint"] = endpoint
-		}
-		if region := string(cd["region"]); region != "" {
-			s3["region"] = region
-		}
+	s3 := wired["mimir"].(map[string]any)["structuredConfig"].(map[string]any)["blocks_storage"].(map[string]any)["s3"].(map[string]any)
+	s3["bucket_name"] = childSpecString(hc, resource.Name("bucket"), "bucket", name+"-bucket")
+	if ep := childStatusString(hc, resource.Name("bucket"), "endpoint"); ep != "" {
+		s3["endpoint"] = ep
 	} else {
-		res.Warnings = append(res.Warnings, "object storage connection details not yet available from child ObjectBucket; Release will be updated when ready")
+		res.Warnings = append(res.Warnings, "object storage endpoint not yet available from child ObjectBucket; Release will be updated when ready")
+	}
+	if region := childSpecString(hc, resource.Name("bucket"), "region", ""); region != "" {
+		s3["region"] = region
 	}
 
 	merged := deepMerge(userValues(oxr), wired)
@@ -108,6 +105,11 @@ func Mimir(hc *platform.HandlerContext) (*platform.Result, error) {
 	res.ConnectionDetails = resource.ConnectionDetails{
 		"url":            []byte(endpoint),
 		"remoteWriteUrl": []byte(endpoint + "/api/v1/push"),
+	}
+	platform.MarkReady(res, hc, resource.Name("mimir"))
+	platform.MarkReady(res, hc, resource.Name("bucket"))
+	if platform.ObservedReady(hc, resource.Name("mimir")) && platform.ObservedReady(hc, resource.Name("bucket")) {
+		res.Status["phase"] = "Ready"
 	}
 	return res, nil
 }

@@ -39,6 +39,19 @@ func stackLabels(oxr *resource.Composite, consumedBy string) map[string]string {
 	}
 }
 
+// childSpecString reads a string field from a child composed XR's spec.
+func childSpecString(hc *platform.HandlerContext, name resource.Name, field, fallback string) string {
+	obs, ok := hc.Observed[name]
+	if !ok || obs.Resource == nil {
+		return fallback
+	}
+	v, _, _ := unstructured.NestedString(obs.Resource.Object, "spec", field)
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
 // childConnectionDetails returns the resolved connection details of a child
 // primitive XR (composed resource), or nil when not yet available.
 func childConnectionDetails(hc *platform.HandlerContext, name resource.Name) resource.ConnectionDetails {
@@ -90,9 +103,18 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 	desired[resource.Name("db")] = &resource.DesiredComposed{Resource: pg}
 
 	// 2. Helm Release for the official Grafana chart.
-	connSecret := name + "-db-conn"
+	// The child PostgresInstance owns the secret name (status.connectionSecretRef);
+	// fall back to the CNPG operator secret convention for the deterministic name.
+	connSecret := name + "-db-pg-app"
+	if obs, ok := hc.Observed[resource.Name("db")]; ok && obs.Resource != nil {
+		if ref, found, _ := unstructured.NestedMap(obs.Resource.Object, "status", "connectionSecretRef"); found {
+			if n, ok := ref["name"].(string); ok && n != "" {
+				connSecret = n
+			}
+		}
+	}
 	rel := composed.New()
-	rel.SetAPIVersion("helm.crossplane.io/v1beta1")
+	rel.SetAPIVersion("helm.m.crossplane.io/v1beta1")
 	rel.SetKind("Release")
 	rel.SetNamespace(ns)
 	rel.SetName(name + "-grafana")
@@ -102,7 +124,7 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 	_ = unstructured.SetNestedField(ro, chartVersion(oxr, "GRAFANA_CHART_VERSION", defaultGrafanaChartVersion), "spec", "forProvider", "chart", "version")
 	_ = unstructured.SetNestedField(ro, ns, "spec", "forProvider", "namespace")
 	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "wait")
-	platform.SetProviderConfigRef(ro, "default") // in-cluster helm provider config
+	platform.SetProviderConfigRef(ro, rel.GetAPIVersion(), platform.ResolveProviderConfig(oxr, "helm")) // in-cluster helm provider config
 
 	_ = unstructured.SetNestedField(ro, "postgres", "spec", "forProvider", "values", "grafana.ini", "database", "type")
 	_ = unstructured.SetNestedField(ro, "disable", "spec", "forProvider", "values", "grafana.ini", "database", "ssl_mode")
@@ -128,26 +150,16 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 		setReleaseValues(rel, merged)
 	}
 
-	// Inject non-secret database settings once the child publishes them.
-	if cd := childConnectionDetails(hc, resource.Name("db")); len(cd) > 0 {
-		host := string(cd["host"])
-		port := string(cd["port"])
-		database := string(cd["database"])
-		user := string(cd["username"])
-		if host != "" {
-			if port != "" {
-				host = fmt.Sprintf("%s:%s", host, port)
-			}
-			_ = unstructured.SetNestedField(ro, host, "spec", "forProvider", "values", "grafana.ini", "database", "host")
-		}
-		if database != "" {
-			_ = unstructured.SetNestedField(ro, database, "spec", "forProvider", "values", "grafana.ini", "database", "name")
-		}
-		if user != "" {
-			_ = unstructured.SetNestedField(ro, user, "spec", "forProvider", "values", "grafana.ini", "database", "user")
-		}
+	// Inject non-secret database settings from the child XR's status (Crossplane
+	// v2 drops XR-level connection secrets, so status.endpoint is authoritative).
+	// host:port, database and username are deterministic for the CNPG path.
+	if ep := childStatusString(hc, resource.Name("db"), "endpoint"); ep != "" {
+		_ = unstructured.SetNestedField(ro, ep, "spec", "forProvider", "values", "grafana.ini", "database", "host")
+		database := childSpecString(hc, resource.Name("db"), "database", "app")
+		_ = unstructured.SetNestedField(ro, database, "spec", "forProvider", "values", "grafana.ini", "database", "name")
+		_ = unstructured.SetNestedField(ro, "app", "spec", "forProvider", "values", "grafana.ini", "database", "user")
 	} else {
-		res.Warnings = append(res.Warnings, "database connection details not yet available from child PostgresInstance; Release will be updated when ready")
+		res.Warnings = append(res.Warnings, "database endpoint not yet available from child PostgresInstance; Release will be updated when ready")
 	}
 	_ = unstructured.SetNestedField(ro, envValueFrom, "spec", "forProvider", "values", "envValueFrom")
 
@@ -158,6 +170,11 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 	desired[resource.Name("grafana")] = &resource.DesiredComposed{Resource: rel}
 	endpoint := fmt.Sprintf("http://%s-grafana.%s.svc:80", name, ns)
 	res.Status = map[string]any{"phase": "Provisioning", "endpoint": endpoint}
+	platform.MarkReady(res, hc, resource.Name("grafana"))
+	platform.MarkReady(res, hc, resource.Name("db"))
+	if platform.ObservedReady(hc, resource.Name("grafana")) && platform.ObservedReady(hc, resource.Name("db")) {
+		res.Status["phase"] = "Ready"
+	}
 	return res, nil
 }
 
@@ -201,7 +218,7 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 	// 2. Helm Release for the official Loki (distributed) chart.
 	connSecret := name + "-bucket-conn"
 	rel := composed.New()
-	rel.SetAPIVersion("helm.crossplane.io/v1beta1")
+	rel.SetAPIVersion("helm.m.crossplane.io/v1beta1")
 	rel.SetKind("Release")
 	rel.SetNamespace(ns)
 	rel.SetName(name + "-loki")
@@ -211,7 +228,7 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 	_ = unstructured.SetNestedField(ro, chartVersion(oxr, "LOKI_CHART_VERSION", defaultLokiChartVersion), "spec", "forProvider", "chart", "version")
 	_ = unstructured.SetNestedField(ro, ns, "spec", "forProvider", "namespace")
 	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "wait")
-	platform.SetProviderConfigRef(ro, "default")
+	platform.SetProviderConfigRef(ro, rel.GetAPIVersion(), platform.ResolveProviderConfig(oxr, "helm"))
 
 	// Credentials at runtime from the child connection secret.
 	extraEnv := []any{
@@ -236,19 +253,17 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 
 	res := &platform.Result{Desired: desired}
 
-	// Inject non-secret storage settings once the child publishes them.
-	if cd := childConnectionDetails(hc, resource.Name("bucket")); len(cd) > 0 {
-		if bucket := string(cd["bucket"]); bucket != "" {
-			_ = unstructured.SetNestedField(ro, bucket, "spec", "forProvider", "values", "loki", "storage", "s3", "bucketnames")
-		}
-		if endpoint := string(cd["endpoint"]); endpoint != "" {
-			_ = unstructured.SetNestedField(ro, endpoint, "spec", "forProvider", "values", "loki", "storage", "s3", "endpoint")
-		}
-		if region := string(cd["region"]); region != "" {
-			_ = unstructured.SetNestedField(ro, region, "spec", "forProvider", "values", "loki", "storage", "s3", "region")
-		}
+	// Inject non-secret storage settings from the child XR's status (Crossplane
+	// v2 drops XR-level connection secrets, so status.endpoint is authoritative).
+	bucketName := childSpecString(hc, resource.Name("bucket"), "bucket", name+"-bucket")
+	_ = unstructured.SetNestedField(ro, bucketName, "spec", "forProvider", "values", "loki", "storage", "s3", "bucketnames")
+	if ep := childStatusString(hc, resource.Name("bucket"), "endpoint"); ep != "" {
+		_ = unstructured.SetNestedField(ro, ep, "spec", "forProvider", "values", "loki", "storage", "s3", "endpoint")
 	} else {
-		res.Warnings = append(res.Warnings, "object storage connection details not yet available from child ObjectBucket; Release will be updated when ready")
+		res.Warnings = append(res.Warnings, "object storage endpoint not yet available from child ObjectBucket; Release will be updated when ready")
+	}
+	if region := childSpecString(hc, resource.Name("bucket"), "region", ""); region != "" {
+		_ = unstructured.SetNestedField(ro, region, "spec", "forProvider", "values", "loki", "storage", "s3", "region")
 	}
 
 	// User values escape hatch (chart defaults < user values < platform wiring).
@@ -261,6 +276,11 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 	res.Status = map[string]any{
 		"phase":    "Provisioning",
 		"endpoint": fmt.Sprintf("http://%s-loki-gateway.%s.svc:80", name, ns),
+	}
+	platform.MarkReady(res, hc, resource.Name("loki"))
+	platform.MarkReady(res, hc, resource.Name("bucket"))
+	if platform.ObservedReady(hc, resource.Name("loki")) && platform.ObservedReady(hc, resource.Name("bucket")) {
+		res.Status["phase"] = "Ready"
 	}
 	return res, nil
 }

@@ -59,10 +59,6 @@ export function createPlatformXrd(
     spec.names.shortNames = config.shortNames;
   }
 
-  if (config.connectionSecretKeys && config.connectionSecretKeys.length > 0) {
-    spec.connectionSecretKeys = config.connectionSecretKeys;
-  }
-
   return new ApiObject(scope, id, {
     apiVersion: 'apiextensions.crossplane.io/v2',
     kind: 'CompositeResourceDefinition',
@@ -95,7 +91,6 @@ export function createBaseSchema(): object {
     providerConfigRef: {
       type: 'object',
       required: ['name'],
-      additionalProperties: false,
       properties: {
         name: { type: 'string' },
       },
@@ -103,7 +98,6 @@ export function createBaseSchema(): object {
     writeConnectionSecretToRef: {
       type: 'object',
       required: ['name'],
-      additionalProperties: false,
       properties: {
         name: { type: 'string' },
       },
@@ -115,26 +109,8 @@ export function createBaseSchema(): object {
     },
     features: {
       type: 'object',
-      additionalProperties: {
-        type: 'object',
-        required: ['enabled'],
-        properties: {
-          enabled: { type: 'boolean' },
-          config: { type: 'object' },
-          secretRef: {
-            type: 'object',
-            required: ['source'],
-            properties: {
-              source: { type: 'string', enum: ['external-secrets', 'native', 'generated'] },
-              store: { type: 'string' },
-              path: { type: 'string' },
-              property: { type: 'string' },
-              name: { type: 'string' },
-              namespace: { type: 'string' },
-            },
-          },
-        },
-      },
+      description:
+        'Feature toggles. Shape per feature: { enabled: boolean, config?: object, secretRef?: { source, store?, path?, property?, name?, namespace? } }. Validated semantically by the orchestrator.',
     },
   };
 }

@@ -1,6 +1,8 @@
 package platform
 
 import (
+	"strings"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/crossplane/function-sdk-go/resource"
@@ -88,12 +90,18 @@ func ResolveProviderConfig(oxr *resource.Composite, provider string) string {
 }
 
 // SetProviderConfigRef stamps a namespaced ProviderConfig reference onto a composed
-// managed resource.
-func SetProviderConfigRef(obj map[string]any, name string) {
-	_ = unstructured.SetNestedField(obj, map[string]any{
-		"kind": "ProviderConfig",
-		"name": name,
-	}, "spec", "providerConfigRef")
+// managed resource. Namespaced (m.*) provider APIs require the kind discriminator;
+// cluster-scoped legacy APIs forbid it, so callers pass the composed resource's
+// apiVersion and we include kind only for namespaced groups.
+func SetProviderConfigRef(obj map[string]any, apiVersion, name string) {
+	if strings.Contains(apiVersion, ".m.") {
+		_ = unstructured.SetNestedField(obj, map[string]any{
+			"kind": "ProviderConfig",
+			"name": name,
+		}, "spec", "providerConfigRef")
+		return
+	}
+	_ = unstructured.SetNestedField(obj, name, "spec", "providerConfigRef", "name")
 }
 
 // WriteConnectionSecretToRef configures where Crossplane writes a managed resource's
@@ -129,5 +137,39 @@ func LabelOwnership(obj map[string]any, oxr *resource.Composite) {
 	SetLabel(obj, contract.LabelTeam, Team(oxr))
 	if cc := CostCenter(oxr); cc != "" {
 		SetLabel(obj, contract.LabelCostCenter, cc)
+	}
+}
+
+// ObservedReady reports whether the named observed composed resource is ready:
+// either it carries a Ready=True condition, or its status.phase reads as a
+// healthy state (CNPG convention). Used by handlers to set explicit readiness
+// on desired resources (function pipeline treats unset readiness as unready).
+func ObservedReady(hc *HandlerContext, name resource.Name) bool {
+	obs, ok := hc.Observed[name]
+	if !ok || obs.Resource == nil {
+		return false
+	}
+	if c := obs.Resource.GetCondition("Ready"); c.Status == "True" {
+		return true
+	}
+	phase, _, _ := unstructured.NestedString(obs.Resource.Object, "status", "phase")
+	switch phase {
+	case "Cluster in healthy state", "Ready", "Available", "Running":
+		return true
+	}
+	return false
+}
+
+// MarkReady sets explicit readiness on a desired composed resource when the
+// observed counterpart is ready.
+func MarkReady(res *Result, hc *HandlerContext, name resource.Name) {
+	d, ok := res.Desired[name]
+	if !ok {
+		return
+	}
+	if ObservedReady(hc, name) {
+		d.Ready = resource.ReadyTrue
+	} else {
+		d.Ready = resource.ReadyFalse
 	}
 }

@@ -42,6 +42,14 @@ func Prometheus(hc *platform.HandlerContext) (*platform.Result, error) {
 				"retention": fmt.Sprintf("%dd", retention),
 			},
 		},
+		// The bundled Grafana keeps its chart-provisioned default datasource;
+		// the sidecar is disabled so it does not pick up GrafanaInstance
+		// datasource ConfigMaps (grafana_datasource label) in shared namespaces.
+		"grafana": map[string]any{
+			"sidecar": map[string]any{
+				"datasources": map[string]any{"enabled": false},
+			},
+		},
 	}
 
 	// defaults < user values < platform wiring
@@ -50,7 +58,7 @@ func Prometheus(hc *platform.HandlerContext) (*platform.Result, error) {
 		chartVersion(oxr, "PROMETHEUS_CHART_VERSION", defaultPrometheusChartVersion), merged)
 
 	endpoint := fmt.Sprintf("http://%s.%s.svc:9090", service, ns)
-	return &platform.Result{
+	res := &platform.Result{
 		Desired: platform.Desired{
 			resource.Name("prometheus"): {Resource: rel},
 		},
@@ -63,5 +71,10 @@ func Prometheus(hc *platform.HandlerContext) (*platform.Result, error) {
 			"remoteWriteUrl":  []byte(endpoint + "/api/v1/write"),
 			"alertmanagerUrl": []byte(fmt.Sprintf("http://%s-alertmanager.%s.svc:9093", fullname, ns)),
 		},
-	}, nil
+	}
+	platform.MarkReady(res, hc, resource.Name("prometheus"))
+	if platform.ObservedReady(hc, resource.Name("prometheus")) {
+		res.Status["phase"] = "Ready"
+	}
+	return res, nil
 }

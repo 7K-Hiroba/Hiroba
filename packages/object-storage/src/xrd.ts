@@ -7,7 +7,6 @@ import {
   API_GROUP,
   API_VERSION,
   OBJECT_STORAGE_PROVIDERS,
-  OBJECT_STORAGE_CONNECTION_KEYS,
   PRODUCT_CONTRACTS,
 } from '@7k-hiroba/shared';
 
@@ -19,7 +18,6 @@ export const OBJECT_STORAGE_CONFIG: PlatformProductConfig = {
   singular: PRODUCT_CONTRACTS.objectStorage.singular,
   shortNames: ['ob', 'bucket'],
   scope: 'Namespaced',
-  connectionSecretKeys: [...OBJECT_STORAGE_CONNECTION_KEYS],
 };
 
 export class ObjectBucketXrd extends Chart {
@@ -47,7 +45,6 @@ export class ObjectBucketXrd extends Chart {
         },
         features: {
           type: 'object',
-          additionalProperties: false,
           properties: {
             versioning: {
               type: 'object',

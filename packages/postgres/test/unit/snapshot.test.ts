@@ -12,9 +12,8 @@ describe('PostgresInstance manifests', () => {
     expect(manifest.spec.scope).toBe('Namespaced');
     expect(manifest.spec.claimNames).toBeUndefined();
     expect(manifest.spec.versions[0].name).toBe('v1alpha1');
-    expect(manifest.spec.connectionSecretKeys).toEqual(
-      expect.arrayContaining(['host', 'port', 'username', 'password', 'database', 'uri']),
-    );
+    // Crossplane v2 drops XR-level connection secrets; status is the contract.
+    expect(manifest.spec.connectionSecretKeys).toBeUndefined();
     expect(manifest.spec.versions[0].schema.openAPIV3Schema.properties.status).toBeDefined();
   });
 

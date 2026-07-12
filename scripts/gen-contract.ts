@@ -177,7 +177,8 @@ function main(): void {
   const contract = loadContract();
   const outputs: Array<[string, string]> = [
     [TS_OUT, renderTs(contract)],
-    [GO_OUT, renderGo(contract)],
+    // gofmt the Go output so committed code matches gofmt'ed trees.
+    [GO_OUT, execSync('gofmt', { input: renderGo(contract), encoding: 'utf-8' })],
   ];
 
   let stale = false;

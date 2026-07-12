@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -78,7 +79,6 @@ func TestPostgresAWSProviderConfigConvention(t *testing.T) {
 		t.Errorf("MR name = %q, want deterministic checkout-db-pg", got)
 	}
 	assertField(t, obj, "team-api-aws", "spec", "providerConfigRef", "name")
-	assertField(t, obj, "ProviderConfig", "spec", "providerConfigRef", "kind")
 	assertField(t, obj, "postgres", "spec", "forProvider", "engine")
 	assertField(t, obj, "eu-west-1", "spec", "forProvider", "region")
 	// Contract profile defaults: production = db.r6g.xlarge, multiAZ, 30-day backups, Orphan.
@@ -261,7 +261,6 @@ func TestObjectBucketS3(t *testing.T) {
 		t.Errorf("MR namespace = %q, want XR namespace %q", got, "team-api")
 	}
 	assertField(t, dc.Resource.Object, "team-api-s3", "spec", "providerConfigRef", "name")
-	assertField(t, dc.Resource.Object, "ProviderConfig", "spec", "providerConfigRef", "kind")
 	if got := dc.Resource.GetKind(); got != "Bucket" {
 		t.Fatalf("want S3 Bucket, got %s", got)
 	}
@@ -307,29 +306,28 @@ func TestGrafanaEmitsPostgresAndRelease(t *testing.T) {
 	// Password wired from the child connection secret.
 	secretName, _, _ := unstructured.NestedString(rel,
 		"spec", "forProvider", "values", "envValueFrom", "GF_DATABASE_PASSWORD", "secretKeyRef", "name")
-	if secretName != "obs-db-conn" {
-		t.Errorf("GF_DATABASE_PASSWORD secretRef = %q, want obs-db-conn", secretName)
+	if secretName != "obs-db-pg-app" {
+		t.Errorf("GF_DATABASE_PASSWORD secretRef = %q, want obs-db-pg-app (CNPG operator secret fallback)", secretName)
 	}
 }
 
 func TestGrafanaInjectsObservedDBDetails(t *testing.T) {
 	xr := newXR("GrafanaInstance", "obs", "ns", "team-x")
 	setSpec(xr, map[string]any{"team": "team-x"})
+	child := composed.New()
+	child.SetAPIVersion(contract.APIGroupVersion)
+	child.SetKind("PostgresInstance")
+	_ = unstructured.SetNestedField(child.Object, "obs-pg-rw.ns.svc:5432", "status", "endpoint")
+	_ = unstructured.SetNestedField(child.Object, "grafana", "spec", "database")
 	observed := map[resource.Name]resource.ObservedComposed{
-		resource.Name("db"): {
-			ConnectionDetails: resource.ConnectionDetails{
-				"host":     []byte("obs-pg-rw.ns.svc"),
-				"port":     []byte("5432"),
-				"database": []byte("grafana"),
-				"username": []byte("app"),
-			},
-		},
+		resource.Name("db"): {Resource: child},
 	}
 	res, err := Grafana(newHandlerContext(xr, observed))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	rel := composedByKind(res)["Release"]
+	// v2: DB settings derive from the child XR's status.endpoint, not connection secrets.
 	assertField(t, rel, "obs-pg-rw.ns.svc:5432", "spec", "forProvider", "values", "grafana.ini", "database", "host")
 	assertField(t, rel, "grafana", "spec", "forProvider", "values", "grafana.ini", "database", "name")
 	assertField(t, rel, "app", "spec", "forProvider", "values", "grafana.ini", "database", "user")
@@ -390,14 +388,14 @@ func TestLokiEmitsBucketAndRelease(t *testing.T) {
 func TestLokiInjectsObservedBucketDetails(t *testing.T) {
 	xr := newXR("LokiInstance", "logs", "ns", "team-x")
 	setSpec(xr, map[string]any{"team": "team-x"})
+	bucket := composed.New()
+	bucket.SetAPIVersion(contract.APIGroupVersion)
+	bucket.SetKind("ObjectBucket")
+	_ = unstructured.SetNestedField(bucket.Object, "https://s3.us-east-1.amazonaws.com", "status", "endpoint")
+	_ = unstructured.SetNestedField(bucket.Object, "logs-bucket", "spec", "bucket")
+	_ = unstructured.SetNestedField(bucket.Object, "us-east-1", "spec", "region")
 	observed := map[resource.Name]resource.ObservedComposed{
-		resource.Name("bucket"): {
-			ConnectionDetails: resource.ConnectionDetails{
-				"bucket":   []byte("logs-bucket"),
-				"endpoint": []byte("https://s3.us-east-1.amazonaws.com"),
-				"region":   []byte("us-east-1"),
-			},
-		},
+		resource.Name("bucket"): {Resource: bucket},
 	}
 	res, err := Loki(newHandlerContext(xr, observed))
 	if err != nil {
@@ -466,5 +464,48 @@ func TestLokiChartVersionDefault(t *testing.T) {
 	}
 	if got := releaseChartVersion(t, res); got != "0.79.0" {
 		t.Errorf("chart version = %q, want default 0.79.0", got)
+	}
+}
+
+func TestPostgresCNPGReadinessFromObservedPhase(t *testing.T) {
+	xr := newXR("PostgresInstance", "db", "ns", "team-x")
+	setSpec(xr, map[string]any{"provider": "cnpg", "team": "team-x"})
+
+	cluster := composed.New()
+	cluster.SetAPIVersion("postgresql.cnpg.io/v1")
+	cluster.SetKind("Cluster")
+	_ = unstructured.SetNestedField(cluster.Object, "Cluster in healthy state", "status", "phase")
+
+	observed := map[resource.Name]resource.ObservedComposed{
+		resource.Name("pg"): {Resource: cluster},
+	}
+	res, err := Postgres(newHandlerContext(xr, observed))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Desired[resource.Name("pg")].Ready != resource.ReadyTrue {
+		t.Errorf("pg desired readiness = %v, want ReadyTrue", res.Desired[resource.Name("pg")].Ready)
+	}
+	if got := res.Status["phase"]; got != "Ready" {
+		t.Errorf("status.phase = %v, want Ready", got)
+	}
+	if got := res.Status["connectionSecretRef"].(map[string]any)["name"]; got != "db-pg-app" {
+		t.Errorf("connectionSecretRef.name = %v, want db-pg-app (CNPG operator secret)", got)
+	}
+}
+
+func TestPostgresCNPGNotReadyWhenObservedMissing(t *testing.T) {
+	xr := newXR("PostgresInstance", "db", "ns", "team-x")
+	setSpec(xr, map[string]any{"provider": "cnpg", "team": "team-x"})
+
+	res, err := Postgres(newHandlerContext(xr, nil))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Desired[resource.Name("pg")].Ready != resource.ReadyFalse {
+		t.Errorf("pg desired readiness = %v, want ReadyFalse", res.Desired[resource.Name("pg")].Ready)
+	}
+	if got := res.Status["phase"]; got != "Provisioning" {
+		t.Errorf("status.phase = %v, want Provisioning", got)
 	}
 }

@@ -111,6 +111,24 @@ func ObservabilityStack(hc *platform.HandlerContext) (*platform.Result, error) {
 	}
 
 	res.Status["endpoint"] = fmt.Sprintf("http://%s-grafana-grafana.%s.svc:80", name, ns)
+
+	// Readiness: the stack is ready when every enabled child is ready. The
+	// datasource ConfigMap is static content and counts as ready when emitted.
+	allReady := true
+	for childName := range desired {
+		n := resource.Name(childName)
+		if n == resource.Name("datasources") {
+			desired[n].Ready = resource.ReadyTrue
+			continue
+		}
+		platform.MarkReady(res, hc, n)
+		if !platform.ObservedReady(hc, n) {
+			allReady = false
+		}
+	}
+	if allReady && len(desired) > 0 {
+		res.Status["phase"] = "Ready"
+	}
 	return res, nil
 }
 
