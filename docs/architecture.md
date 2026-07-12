@@ -51,6 +51,16 @@ Observability (consumer repo, ADR 008):
   `<team>-<provider>` ProviderConfigs in the XR namespace (e.g. `team-api-helm`,
   `team-api-aws`).
 
+## Dependency Gate
+
+The orchestrator fails fast when a required operator is missing. `contract/contract.json`
+declares required CRDs per XR kind and provider (`dependencies`); before dispatching
+to a handler, the function verifies those CRDs are installed (discovery API, 60s
+cache). A missing dependency aborts the reconcile with a fatal, client-actionable
+error naming the CRDs and the operator to install — installing operators stays the
+platform operator's responsibility, and the error is visible via
+`kubectl describe <xr>`. Outside a cluster (render, tests) the check is a no-op.
+
 ## Provider & Profile Defaults
 
 Precedence: `spec.*` override > function env config (`PLATFORM_DEFAULT_*`) >

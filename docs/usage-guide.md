@@ -212,8 +212,20 @@ Register the handler in `cmd/main.go` and add tests in `handlers/handlers_test.g
 ### 5. Update the contract
 
 Add the product to `contract/contract.json` (kind, plural, providers, profiles,
-connection keys) and run `npm run gen:contract`. The `--check` gate in
-`scripts/pre-push-checks.sh` enforces freshness.
+connection keys) and declare its operator dependencies so missing operators fail
+fast with an actionable error:
+
+```json
+"dependencies": {
+  "RedisInstance": {
+    "*": [{ "crd": "releases.helm.m.crossplane.io", "hint": "install provider-helm" }],
+    "aws": [{ "crd": "instances.elasticache.aws.m.upbound.io", "hint": "install provider-aws-elasticache" }]
+  }
+}
+```
+
+Run `npm run gen:contract`. The `--check` gate in `scripts/pre-push-checks.sh`
+enforces freshness.
 
 ## Validation and Deployment
 
