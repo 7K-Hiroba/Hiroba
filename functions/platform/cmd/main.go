@@ -62,7 +62,9 @@ func main() {
 	log.Info("platform defaults", "postgres", cfg.DefaultProvider("postgres", contract.PostgresDefaultProvider),
 		"objectStorage", cfg.DefaultProvider("objectStorage", contract.ObjectStorageDefaultProvider))
 
-	fn := &platform.Function{Log: log, Registry: reg, Config: cfg}
+	checker := platform.NewInClusterChecker(log)
+
+	fn := &platform.Function{Log: log, Registry: reg, Config: cfg, Dependencies: checker}
 
 	// mTLS by default (Crossplane always connects with mTLS); --insecure is for
 	// local development and `crossplane composition render` only.

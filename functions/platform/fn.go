@@ -7,7 +7,10 @@ import (
 	"github.com/crossplane/function-sdk-go/logging"
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
+	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
+
+	"github.com/7k-hiroba/hiroba/functions/platform/internal/contract"
 )
 
 // Function is the central orchestrator. Every primitive/stack Composition runs a single
@@ -19,6 +22,8 @@ type Function struct {
 	Log      logging.Logger
 	Registry *Registry
 	Config   Config
+	// Dependencies verifies required CRDs before dispatch. NoopChecker when nil.
+	Dependencies DependencyChecker
 }
 
 // RunFunction is the gRPC entrypoint invoked by Crossplane for each reconciliation.
@@ -65,6 +70,13 @@ func (f *Function) RunFunction(ctx context.Context, req *fnv1.RunFunctionRequest
 	}
 
 	log.Debug("orchestrating composite", "apiVersion", apiVersion, "kind", kind, "namespace", ns, "name", name)
+
+	// Dependency gate: fail fast with an actionable message when the operator(s)
+	// backing this kind+provider are not installed (contract.Dependencies).
+	if err := f.checkDependencies(ctx, oxr, kind); err != nil {
+		response.Fatal(rsp, err)
+		return rsp, nil
+	}
 
 	res, err := handler(&HandlerContext{
 		Ctx:      ctx,
@@ -123,4 +135,37 @@ func (f *Function) RunFunction(ctx context.Context, req *fnv1.RunFunctionRequest
 	response.Normalf(rsp, "orchestrated %d composed resource(s) for %s/%s (kind=%s)",
 		len(res.Desired), ns, name, kind)
 	return rsp, nil
+}
+
+// checkDependencies resolves the effective provider for the XR and verifies the
+// CRDs declared in contract.Dependencies are installed. A missing dependency
+// aborts the reconcile with a client-actionable error naming the operator to
+// install; installing operators is the platform operator's responsibility.
+func (f *Function) checkDependencies(ctx context.Context, oxr *resource.Composite, kind string) error {
+	checker := f.Dependencies
+	if checker == nil {
+		checker = NoopChecker{}
+	}
+
+	provider := SpecString(oxr, "provider")
+	if provider == "" {
+		product := contract.ProductByKind[kind]
+		fallback := contract.DefaultProviderByKind[kind]
+		if product != "" {
+			provider = f.Config.DefaultProvider(product, fallback)
+		}
+	}
+
+	deps := contract.RequiredDependencies(kind, provider)
+	if len(deps) == 0 {
+		return nil
+	}
+	crds := make([]string, 0, len(deps))
+	for _, d := range deps {
+		crds = append(crds, d.CRD)
+	}
+	if missing := checker.Missing(ctx, crds); len(missing) > 0 {
+		return DependencyError(kind, provider, deps, missing)
+	}
+	return nil
 }

@@ -32,6 +32,11 @@ interface ProductContract {
   connectionKeys: string[];
 }
 
+interface Dependency {
+  crd: string;
+  hint: string;
+}
+
 interface Contract {
   apiGroup: string;
   apiVersion: string;
@@ -39,6 +44,7 @@ interface Contract {
   labels: { team: string; costCenter: string; stack: string };
   profiles: Record<string, ProfileDefaults>;
   products: Record<string, ProductContract>;
+  dependencies?: Record<string, Record<string, Dependency[]>>;
 }
 
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -100,6 +106,17 @@ function renderTs(c: Contract): string {
       '',
     );
   }
+
+  lines.push(
+    'export interface Dependency {',
+    '  readonly crd: string;',
+    '  readonly hint: string;',
+    '}',
+    '',
+    '/** Required CRDs per XR kind and provider ("*" = all providers). */',
+    `export const DEPENDENCIES = ${JSON.stringify(c.dependencies ?? {}, null, 2)} as const satisfies Record<string, Record<string, readonly Dependency[]>>;`,
+    '',
+  );
 
   return lines.join('\n');
 }
@@ -168,6 +185,60 @@ function renderGo(c: Contract): string {
     }
     lines.push(`var ${exported}ConnectionKeys = ${goStringSlice(product.connectionKeys)}`, '');
   }
+
+  lines.push(
+    '// ProductByKind maps an XR kind to its contract product key.',
+    'var ProductByKind = map[string]string{',
+  );
+  for (const [name, product] of Object.entries(c.products)) {
+    lines.push(`\t${JSON.stringify(product.kind)}: ${JSON.stringify(name)},`);
+  }
+  lines.push('}', '');
+
+  lines.push(
+    '// DefaultProviderByKind maps an XR kind to its contract default provider.',
+    'var DefaultProviderByKind = map[string]string{',
+  );
+  for (const [, product] of Object.entries(c.products)) {
+    lines.push(`\t${JSON.stringify(product.kind)}: ${JSON.stringify(product.defaultProvider)},`);
+  }
+  lines.push('}', '');
+
+  lines.push(
+    '// Dependency is a CRD that must be installed before the given XR kind can be',
+    '// reconciled, plus an actionable install hint surfaced to the client.',
+    'type Dependency struct {',
+    '\tCRD  string',
+    '\tHint string',
+    '}',
+    '',
+    '// Dependencies maps XR kind -> provider ("*" = all providers) -> required CRDs.',
+    'var Dependencies = map[string]map[string][]Dependency{',
+  );
+  for (const [kind, byProvider] of Object.entries(c.dependencies ?? {})) {
+    lines.push(`\t${JSON.stringify(kind)}: {`);
+    for (const [provider, deps] of Object.entries(byProvider)) {
+      const items = deps.map((d) => `{CRD: ${JSON.stringify(d.crd)}, Hint: ${JSON.stringify(d.hint)}}`).join(', ');
+      lines.push(`\t\t${JSON.stringify(provider)}: {${items}},`);
+    }
+    lines.push('\t},');
+  }
+  lines.push('}', '');
+
+  lines.push(
+    '// RequiredDependencies returns the CRDs required for the given XR kind and',
+    '// provider: the union of the wildcard ("*") and provider-specific entries.',
+    'func RequiredDependencies(kind, provider string) []Dependency {',
+    '\tbyProvider, ok := Dependencies[kind]',
+    '\tif !ok {',
+    '\t\treturn nil',
+    '\t}',
+    '\tout := append([]Dependency{}, byProvider["*"]...)',
+    '\tout = append(out, byProvider[provider]...)',
+    '\treturn out',
+    '}',
+    '',
+  );
 
   return lines.join('\n');
 }

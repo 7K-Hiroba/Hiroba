@@ -190,6 +190,27 @@ spec:
 EOF
 kubectl --context "${CTX}" wait --for=condition=Healthy function.pkg.crossplane.io/function-platform --timeout=300s
 
+
+echo "=== Granting function-platform CRD read access (dependency gate) ==="
+kubectl --context "${CTX}" apply -f "$REPO/infrastructure/crossplane-control-plane/function-rbac.yaml"
+# The function's SA is named after the active FunctionRevision.
+FN_REV=$(kubectl --context "${CTX}" get functionrevision.pkg.crossplane.io -o jsonpath='{.items[?(@.spec.desiredState=="Active")].metadata.name}' | tr ' ' '\n' | head -1)
+FN_SA="${FN_REV}"
+kubectl --context "${CTX}" apply -f - <<RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: function-platform:crd-reader
+subjects:
+  - kind: ServiceAccount
+    name: ${FN_SA}
+    namespace: crossplane-system
+roleRef:
+  kind: ClusterRole
+  name: function-platform:crd-reader
+  apiGroup: rbac.authorization.k8s.io
+RBAC
+
 echo "=== Bootstrap complete ==="
 echo "Next: install the primitives and products, then per-team setup:"
 echo "  kubectl --context ${CTX} apply -f packages/postgres/dist/{xrd,composition}.k8s.yaml"

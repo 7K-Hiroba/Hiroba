@@ -2,6 +2,7 @@ package platform
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
@@ -195,5 +196,71 @@ func TestRegistryDispatchIncludesAPIVersion(t *testing.T) {
 	}
 	if _, ok := reg.Get("platform.7kgroup.org/v9", "Widget"); ok {
 		t.Error("different apiVersion must not match")
+	}
+}
+
+func setSpecField(xr *composite.Unstructured, key, value string) {
+	_ = unstructured.SetNestedField(xr.Object, value, "spec", key)
+}
+
+type fakeChecker struct{ missing []string }
+
+func (f fakeChecker) Missing(_ context.Context, crds []string) []string {
+	if len(crds) == 0 {
+		return nil
+	}
+	return f.missing
+}
+
+func TestRunFunctionMissingDependencyIsFatal(t *testing.T) {
+	reg := NewRegistry()
+	called := false
+	reg.Register(contract.APIGroupVersion, "PostgresInstance", func(hc *HandlerContext) (*Result, error) {
+		called = true
+		return &Result{}, nil
+	})
+	fn := &Function{
+		Registry:     reg,
+		Dependencies: fakeChecker{missing: []string{"clusters.postgresql.cnpg.io"}},
+	}
+	xr := newTestXR(contract.APIGroupVersion, "PostgresInstance", "db", "ns")
+	setSpecField(xr, "provider", "cnpg")
+	rsp, err := fn.RunFunction(context.Background(), newRequest(t, xr))
+	if err != nil {
+		t.Fatalf("unexpected gRPC error: %v", err)
+	}
+	if !hasFatal(rsp) {
+		t.Fatal("expected fatal result for missing CRD")
+	}
+	if called {
+		t.Error("handler must not run when dependencies are missing")
+	}
+	found := false
+	for _, r := range rsp.GetResults() {
+		if strings.Contains(r.GetMessage(), "clusters.postgresql.cnpg.io") &&
+			strings.Contains(r.GetMessage(), "CloudNativePG operator") {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("fatal message must name the missing CRD and the install hint")
+	}
+}
+
+func TestRunFunctionDependencyGatePassesWhenInstalled(t *testing.T) {
+	reg := NewRegistry()
+	called := false
+	reg.Register(contract.APIGroupVersion, "PostgresInstance", func(hc *HandlerContext) (*Result, error) {
+		called = true
+		return &Result{}, nil
+	})
+	fn := &Function{Registry: reg, Dependencies: fakeChecker{}}
+	xr := newTestXR(contract.APIGroupVersion, "PostgresInstance", "db", "ns")
+	setSpecField(xr, "provider", "cnpg")
+	if _, err := fn.RunFunction(context.Background(), newRequest(t, xr)); err != nil {
+		t.Fatalf("unexpected gRPC error: %v", err)
+	}
+	if !called {
+		t.Error("handler must run when all dependencies are installed")
 	}
 }

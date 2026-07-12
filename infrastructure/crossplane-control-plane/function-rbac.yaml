@@ -1,0 +1,17 @@
+# RBAC for function-platform's dependency gate (contract.Dependencies):
+# the function reads the cluster's CRD inventory to fail fast with an
+# actionable error when an operator backing an XR kind is not installed.
+#
+# The ClusterRoleBinding subject is the function's generated ServiceAccount
+# (name varies per package revision, e.g. function-platform-<hash>). It is
+# created by scripts/e2e-setup.sh, which resolves the SA by label
+# pkg.crossplane.io/function=function-platform. When installing the function
+# by other means, bind this ClusterRole to that SA.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: function-platform:crd-reader
+rules:
+  - apiGroups: ['apiextensions.k8s.io']
+    resources: ['customresourcedefinitions']
+    verbs: ['get', 'list']

@@ -45,3 +45,61 @@ const ObjectStorageDefaultProvider = "garage"
 const ObjectStorageDefaultRegion = "us-east-1"
 
 var ObjectStorageConnectionKeys = []string{"endpoint", "bucket", "region", "accessKeyId", "secretAccessKey", "uri"}
+
+// ProductByKind maps an XR kind to its contract product key.
+var ProductByKind = map[string]string{
+	"PostgresInstance": "postgres",
+	"ObjectBucket":     "objectStorage",
+}
+
+// DefaultProviderByKind maps an XR kind to its contract default provider.
+var DefaultProviderByKind = map[string]string{
+	"PostgresInstance": "cnpg",
+	"ObjectBucket":     "garage",
+}
+
+// Dependency is a CRD that must be installed before the given XR kind can be
+// reconciled, plus an actionable install hint surfaced to the client.
+type Dependency struct {
+	CRD  string
+	Hint string
+}
+
+// Dependencies maps XR kind -> provider ("*" = all providers) -> required CRDs.
+var Dependencies = map[string]map[string][]Dependency{
+	"PostgresInstance": {
+		"cnpg": {{CRD: "clusters.postgresql.cnpg.io", Hint: "install the CloudNativePG operator: helm upgrade --install cnpg cnpg/cloudnative-pg -n cnpg-system --create-namespace"}},
+		"aws":  {{CRD: "instances.rds.aws.m.upbound.io", Hint: "install provider-aws-rds: kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml"}},
+	},
+	"ObjectBucket": {
+		"garage": {{CRD: "garagebuckets.garage.rajsingh.info", Hint: "install the Garage operator (garage.rajsingh.info)"}},
+		"s3":     {{CRD: "buckets.s3.aws.m.upbound.io", Hint: "install provider-aws-s3: kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml"}},
+	},
+	"GrafanaInstance": {
+		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh) and a namespaced <team>-helm ProviderConfig (scripts/team-setup.sh)"}},
+	},
+	"LokiInstance": {
+		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
+	},
+	"PrometheusInstance": {
+		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
+	},
+	"MimirInstance": {
+		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
+	},
+	"AlloyInstance": {
+		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
+	},
+}
+
+// RequiredDependencies returns the CRDs required for the given XR kind and
+// provider: the union of the wildcard ("*") and provider-specific entries.
+func RequiredDependencies(kind, provider string) []Dependency {
+	byProvider, ok := Dependencies[kind]
+	if !ok {
+		return nil
+	}
+	out := append([]Dependency{}, byProvider["*"]...)
+	out = append(out, byProvider[provider]...)
+	return out
+}
