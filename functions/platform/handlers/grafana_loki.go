@@ -116,6 +116,18 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 
 	res := &platform.Result{Desired: desired}
 
+	// Deterministic service name + datasource sidecar for stack-provided
+	// GrafanaDatasource ConfigMaps.
+	_ = unstructured.SetNestedField(ro, name+"-grafana", "spec", "forProvider", "values", "fullnameOverride")
+	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "values", "sidecar", "datasources", "enabled")
+	_ = unstructured.SetNestedField(ro, "grafana_datasource", "spec", "forProvider", "values", "sidecar", "datasources", "label")
+
+	// User values escape hatch (chart defaults < user values < platform wiring).
+	if uv := userValues(oxr); len(uv) > 0 {
+		merged := deepMerge(uv, releaseValues(rel))
+		setReleaseValues(rel, merged)
+	}
+
 	// Inject non-secret database settings once the child publishes them.
 	if cd := childConnectionDetails(hc, resource.Name("db")); len(cd) > 0 {
 		host := string(cd["host"])
@@ -144,7 +156,8 @@ func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
 	}
 
 	desired[resource.Name("grafana")] = &resource.DesiredComposed{Resource: rel}
-	res.Status = map[string]any{"phase": "Provisioning"}
+	endpoint := fmt.Sprintf("http://%s-grafana.%s.svc:80", name, ns)
+	res.Status = map[string]any{"phase": "Provisioning", "endpoint": endpoint}
 	return res, nil
 }
 
@@ -219,6 +232,7 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 
 	_ = unstructured.SetNestedField(ro, "s3", "spec", "forProvider", "values", "loki", "storage", "type")
 	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "values", "loki", "storage", "s3", "s3forcepathstyle")
+	_ = unstructured.SetNestedField(ro, name+"-loki", "spec", "forProvider", "values", "fullnameOverride")
 
 	res := &platform.Result{Desired: desired}
 
@@ -237,7 +251,16 @@ func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
 		res.Warnings = append(res.Warnings, "object storage connection details not yet available from child ObjectBucket; Release will be updated when ready")
 	}
 
+	// User values escape hatch (chart defaults < user values < platform wiring).
+	if uv := userValues(oxr); len(uv) > 0 {
+		merged := deepMerge(uv, releaseValues(rel))
+		setReleaseValues(rel, merged)
+	}
+
 	desired[resource.Name("loki")] = &resource.DesiredComposed{Resource: rel}
-	res.Status = map[string]any{"phase": "Provisioning"}
+	res.Status = map[string]any{
+		"phase":    "Provisioning",
+		"endpoint": fmt.Sprintf("http://%s-loki-gateway.%s.svc:80", name, ns),
+	}
 	return res, nil
 }
