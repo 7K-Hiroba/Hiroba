@@ -4,15 +4,19 @@ import {
   PlatformProductConfig,
   createBaseSchema,
   createPlatformXrd,
+  API_GROUP,
+  API_VERSION,
+  OBJECT_STORAGE_PROVIDERS,
   OBJECT_STORAGE_CONNECTION_KEYS,
+  PRODUCT_CONTRACTS,
 } from '@7k-hiroba/shared';
 
 export const OBJECT_STORAGE_CONFIG: PlatformProductConfig = {
-  group: 'platform.7kgroup.org',
-  version: 'v1',
-  kind: 'ObjectBucket',
-  plural: 'objectbuckets',
-  singular: 'objectbucket',
+  group: API_GROUP,
+  version: API_VERSION,
+  kind: PRODUCT_CONTRACTS.objectStorage.kind,
+  plural: PRODUCT_CONTRACTS.objectStorage.plural,
+  singular: PRODUCT_CONTRACTS.objectStorage.singular,
   shortNames: ['ob', 'bucket'],
   scope: 'Namespaced',
   connectionSecretKeys: [...OBJECT_STORAGE_CONNECTION_KEYS],
@@ -32,29 +36,30 @@ export class ObjectBucketXrd extends Chart {
         ...base,
         provider: {
           type: 'string',
-          enum: ['s3', 'garage', 'gcs', 'azureBlob', 'local'],
-          description:
-            'Backing object store. s3=AWS, gcs=Google Cloud Storage, azureBlob=Azure Blob, garage/local=in-cluster.',
+          enum: [...OBJECT_STORAGE_PROVIDERS],
+          default: PRODUCT_CONTRACTS.objectStorage.defaultProvider,
+          description: 'Backing object store. s3=AWS, garage=in-cluster (default).',
         },
         bucket: {
           type: 'string',
+          pattern: '^[a-z0-9][a-z0-9.-]*$',
           description: 'Bucket name override. Defaults to the XR name when unset.',
-        },
-        region: {
-          type: 'string',
-          description: 'Region/location for managed buckets. Defaults to the cluster default.',
         },
         features: {
           type: 'object',
-          additionalProperties: {
-            type: 'object',
-            required: ['enabled'],
-            properties: {
-              enabled: { type: 'boolean' },
-              config: { type: 'object' },
+          additionalProperties: false,
+          properties: {
+            versioning: {
+              type: 'object',
+              required: ['enabled'],
+              properties: { enabled: { type: 'boolean' } },
+            },
+            encryption: {
+              type: 'object',
+              required: ['enabled'],
+              properties: { enabled: { type: 'boolean' } },
             },
           },
-          description: 'Optional toggles: versioning, encryption, website.',
         },
       },
       ['profile', 'team', 'costCenter'],

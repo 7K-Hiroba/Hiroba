@@ -24,7 +24,8 @@
     "validate": "npm run validate --workspaces --if-present",
     "package": "npm run package --workspaces --if-present",
     "publish": "npm run publish --workspaces --if-present",
-    "prepare": "husky"
+    "prepare": "husky",
+    "gen:contract": "ts-node scripts/gen-contract.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

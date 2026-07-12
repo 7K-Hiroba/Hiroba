@@ -4,15 +4,19 @@ import {
   PlatformProductConfig,
   createBaseSchema,
   createPlatformXrd,
+  API_GROUP,
+  API_VERSION,
+  POSTGRES_PROVIDERS,
   POSTGRES_CONNECTION_KEYS,
+  PRODUCT_CONTRACTS,
 } from '@7k-hiroba/shared';
 
 export const POSTGRES_CONFIG: PlatformProductConfig = {
-  group: 'platform.7kgroup.org',
-  version: 'v1',
-  kind: 'PostgresInstance',
-  plural: 'postgresinstances',
-  singular: 'postgresinstance',
+  group: API_GROUP,
+  version: API_VERSION,
+  kind: PRODUCT_CONTRACTS.postgres.kind,
+  plural: PRODUCT_CONTRACTS.postgres.plural,
+  singular: PRODUCT_CONTRACTS.postgres.singular,
   shortNames: ['pg', 'pgi'],
   scope: 'Namespaced',
   connectionSecretKeys: [...POSTGRES_CONNECTION_KEYS],
@@ -32,14 +36,9 @@ export class PostgresInstanceXrd extends Chart {
         ...base,
         provider: {
           type: 'string',
-          enum: ['aws', 'gcp', 'azure', 'cnpg'],
-          description:
-            'Backing provider. aws=RDS, gcp=Cloud SQL, azure=Database for PostgreSQL, cnpg=in-cluster operator.',
-        },
-        engine: {
-          type: 'string',
-          enum: ['postgres'],
-          default: 'postgres',
+          enum: [...POSTGRES_PROVIDERS],
+          default: PRODUCT_CONTRACTS.postgres.defaultProvider,
+          description: 'Backing provider. aws=RDS, cnpg=in-cluster operator (default).',
         },
         version: {
           type: 'string',
@@ -49,6 +48,7 @@ export class PostgresInstanceXrd extends Chart {
         storageGB: {
           type: 'integer',
           minimum: 1,
+          maximum: 65536,
           default: 20,
         },
         instanceClass: {
@@ -57,19 +57,30 @@ export class PostgresInstanceXrd extends Chart {
         },
         database: {
           type: 'string',
-          description: 'Initial database name to create.',
+          pattern: '^[a-z][a-z0-9_]*$',
+          description: 'Initial database name to create. Defaults to "app".',
         },
         features: {
           type: 'object',
-          additionalProperties: {
-            type: 'object',
-            required: ['enabled'],
-            properties: {
-              enabled: { type: 'boolean' },
-              config: { type: 'object' },
+          additionalProperties: false,
+          properties: {
+            ha: {
+              type: 'object',
+              required: ['enabled'],
+              properties: { enabled: { type: 'boolean' } },
+              description: 'High availability (Multi-AZ on AWS, multiple instances on CNPG).',
+            },
+            backup: {
+              type: 'object',
+              required: ['enabled'],
+              properties: { enabled: { type: 'boolean' } },
+            },
+            readReplicas: {
+              type: 'object',
+              required: ['enabled'],
+              properties: { enabled: { type: 'boolean' } },
             },
           },
-          description: 'Optional toggles: ha, backup, readReplicas.',
         },
       },
       ['profile', 'team', 'costCenter'],

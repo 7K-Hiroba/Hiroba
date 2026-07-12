@@ -22,7 +22,21 @@ export function createPlatformXrd(
             spec: {
               type: 'object',
               required: requiredFields,
+              additionalProperties: false,
               properties: schemaProperties,
+            },
+            status: {
+              type: 'object',
+              properties: {
+                phase: { type: 'string' },
+                endpoint: { type: 'string' },
+                connectionSecretRef: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                  },
+                },
+              },
             },
           },
         },
@@ -81,9 +95,19 @@ export function createBaseSchema(): object {
     providerConfigRef: {
       type: 'object',
       required: ['name'],
+      additionalProperties: false,
       properties: {
         name: { type: 'string' },
       },
+    },
+    writeConnectionSecretToRef: {
+      type: 'object',
+      required: ['name'],
+      additionalProperties: false,
+      properties: {
+        name: { type: 'string' },
+      },
+      description: 'Where the connection secret is written. Defaults to "<xr-name>-conn" in the XR namespace.',
     },
     deletionPolicy: {
       type: 'string',

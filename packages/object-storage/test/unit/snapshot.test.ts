@@ -3,7 +3,7 @@ import { ObjectBucketXrd } from '../../src/xrd';
 import { ObjectBucketComposition } from '../../src/composition';
 
 describe('ObjectBucket manifests', () => {
-  test('XRD is namespaced and omits v1-only connection secrets', () => {
+  test('XRD is namespaced v1alpha1 and publishes the connection contract', () => {
     const app = Testing.app();
     const xrd = new ObjectBucketXrd(app, 'xrd');
     const [manifest] = Testing.synth(xrd) as any[];
@@ -11,7 +11,11 @@ describe('ObjectBucket manifests', () => {
     expect(manifest.apiVersion).toBe('apiextensions.crossplane.io/v2');
     expect(manifest.spec.scope).toBe('Namespaced');
     expect(manifest.spec.claimNames).toBeUndefined();
-    expect(manifest.spec.connectionSecretKeys).toBeUndefined();
+    expect(manifest.spec.versions[0].name).toBe('v1alpha1');
+    expect(manifest.spec.connectionSecretKeys).toEqual(
+      expect.arrayContaining(['endpoint', 'bucket', 'region', 'accessKeyId', 'secretAccessKey', 'uri']),
+    );
+    expect(manifest.spec.versions[0].schema.openAPIV3Schema.properties.status).toBeDefined();
   });
 
   test('Composition delegates to the orchestrator function', () => {

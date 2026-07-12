@@ -11,85 +11,144 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/7k-hiroba/hiroba/functions/platform"
+	"github.com/7k-hiroba/hiroba/functions/platform/internal/contract"
 )
 
-// instanceClassByProfile maps a profile to a default RDS instance class when the XR does
-// not set spec.instanceClass.
-var instanceClassByProfile = map[string]string{
-	"development": "db.t3.micro",
-	"staging":     "db.t3.small",
-	"production":  "db.t3.medium",
-}
+const postgresPort = 5432
 
 // Postgres handles kind=PostgresInstance, switching on spec.provider.
-func Postgres(oxr *resource.Composite) (platform.Desired, error) {
+// Precedence for provider selection: spec.provider > platform config default >
+// contract default (cnpg).
+func Postgres(hc *platform.HandlerContext) (*platform.Result, error) {
+	oxr := hc.OXR
 	provider := platform.SpecString(oxr, "provider")
 	if provider == "" {
-		provider = "cnpg" // in-cluster default
+		provider = hc.Config.DefaultProvider("postgres", contract.PostgresDefaultProvider)
 	}
 	switch provider {
 	case "aws":
-		return postgresRDS(oxr)
+		return postgresRDS(hc)
 	case "cnpg":
-		return postgresCNPG(oxr)
+		return postgresCNPG(hc)
 	default:
-		return nil, fmt.Errorf("provider %q is not yet implemented for PostgresInstance", provider)
+		return nil, fmt.Errorf("provider %q is not implemented for PostgresInstance (supported: %v)",
+			provider, contract.PostgresProviders)
 	}
 }
 
-func postgresRDS(oxr *resource.Composite) (platform.Desired, error) {
+func postgresRDS(hc *platform.HandlerContext) (*platform.Result, error) {
+	oxr := hc.OXR
 	name := oxr.Resource.GetName()
 	ns := oxr.Resource.GetNamespace()
+	defaults := platform.ProfileDefaults(oxr)
 
-	region := platform.SpecString(oxr, "region")
-	if region == "" {
-		region = "us-east-1"
+	region := platform.SpecStringDefault(oxr, contract.PostgresDefaultRegion, "region")
+	version := platform.SpecStringDefault(oxr, "15", "version")
+	database := platform.SpecStringDefault(oxr, "app", "database")
+	username := "dbadmin"
+
+	class := platform.SpecStringDefault(oxr, defaults.InstanceClass, "instanceClass")
+	storageGB, found := platform.SpecInt64(oxr, "storageGB")
+	if !found || storageGB < 1 {
+		storageGB = 20
 	}
-	class := platform.SpecString(oxr, "instanceClass")
-	if class == "" {
-		class = instanceClassByProfile[platform.SpecString(oxr, "profile")]
+
+	// High availability: explicit feature toggle wins over the profile default.
+	multiAZ := defaults.MultiAZ
+	if _, found := platform.SpecBool(oxr, "features", "ha", "enabled"); found {
+		multiAZ = platform.FeatureEnabled(oxr, "ha")
 	}
-	version := platform.SpecString(oxr, "version")
-	if version == "" {
-		version = "15"
+
+	// Backups: profile default retention; an explicit backup.enabled=false disables.
+	backupRetention := defaults.BackupRetentionDays
+	if b, found := platform.SpecBool(oxr, "features", "backup", "enabled"); found && !b {
+		backupRetention = 0
 	}
-	db := platform.SpecString(oxr, "database")
-	if db == "" {
-		db = "app"
-	}
+
+	deletionPolicy := platform.SpecStringDefault(oxr, defaults.DeletionPolicy, "deletionPolicy")
 
 	cd := composed.New()
 	cd.SetAPIVersion("rds.aws.m.upbound.io/v1beta1")
 	cd.SetKind("Instance")
 	cd.SetNamespace(ns)
-	cd.SetGenerateName(name + "-pg-")
+	cd.SetName(name + "-pg")
 	o := cd.Object
 	_ = unstructured.SetNestedField(o, "postgres", "spec", "forProvider", "engine")
 	_ = unstructured.SetNestedField(o, version, "spec", "forProvider", "engineVersion")
 	_ = unstructured.SetNestedField(o, class, "spec", "forProvider", "instanceClass")
-	_ = unstructured.SetNestedField(o, int64(20), "spec", "forProvider", "allocatedStorage")
-	_ = unstructured.SetNestedField(o, true, "spec", "forProvider", "storageEncrypted")
+	_ = unstructured.SetNestedField(o, storageGB, "spec", "forProvider", "allocatedStorage")
+	_ = unstructured.SetNestedField(o, defaults.StorageEncrypted, "spec", "forProvider", "storageEncrypted")
+	_ = unstructured.SetNestedField(o, multiAZ, "spec", "forProvider", "multiAZ")
+	_ = unstructured.SetNestedField(o, backupRetention, "spec", "forProvider", "backupRetentionPeriod")
+	_ = unstructured.SetNestedField(o, defaults.DeletionProtection, "spec", "forProvider", "deletionProtection")
 	_ = unstructured.SetNestedField(o, false, "spec", "forProvider", "publiclyAccessible")
 	_ = unstructured.SetNestedField(o, region, "spec", "forProvider", "region")
-	_ = unstructured.SetNestedField(o, db, "spec", "forProvider", "dbName")
-	_ = unstructured.SetNestedField(o, "Orphan", "spec", "deletionPolicy")
+	_ = unstructured.SetNestedField(o, database, "spec", "forProvider", "dbName")
+	_ = unstructured.SetNestedField(o, username, "spec", "forProvider", "username")
+	_ = unstructured.SetNestedField(o, deletionPolicy, "spec", "deletionPolicy")
 	platform.SetProviderConfigRef(o, platform.ResolveProviderConfig(oxr, "aws"))
 	platform.WriteConnectionSecretToRef(o, ns, name+"-conn")
-	platform.Tag(o, "team", platform.Team(oxr))
-	if cc := platform.CostCenter(oxr); cc != "" {
-		platform.Tag(o, "cost-center", cc)
+	platform.TagOwnership(o, oxr)
+
+	res := &platform.Result{
+		Desired: platform.Desired{
+			resource.Name("pg"): {Resource: cd},
+		},
+		Status: map[string]any{
+			"phase":               "Provisioning",
+			"connectionSecretRef": map[string]any{"name": name + "-conn"},
+		},
 	}
 
-	return platform.Desired{resource.Name(name + "-pg"): &resource.DesiredComposed{Resource: cd}}, nil
+	// Normalize the provider-native connection details (endpoint/port/username/
+	// password) onto the stable contract keys once RDS publishes them.
+	obs, ok := hc.Observed[resource.Name("pg")]
+	if !ok || len(obs.ConnectionDetails) == 0 {
+		res.Warnings = append(res.Warnings, "connection details not yet available from RDS instance")
+		return res, nil
+	}
+	host := string(obs.ConnectionDetails["endpoint"])
+	port := string(obs.ConnectionDetails["port"])
+	if port == "" {
+		port = fmt.Sprintf("%d", postgresPort)
+	}
+	user := string(obs.ConnectionDetails["username"])
+	if user == "" {
+		user = username
+	}
+	password := obs.ConnectionDetails["password"]
+
+	res.ConnectionDetails = resource.ConnectionDetails{
+		"host":     []byte(host),
+		"port":     []byte(port),
+		"username": []byte(user),
+		"password": password,
+		"database": []byte(database),
+		"uri": []byte(fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+			user, string(password), host, port, database)),
+	}
+	res.Status["endpoint"] = fmt.Sprintf("%s:%s", host, port)
+	res.Status["phase"] = "Ready"
+	return res, nil
 }
 
-func postgresCNPG(oxr *resource.Composite) (platform.Desired, error) {
+func postgresCNPG(hc *platform.HandlerContext) (*platform.Result, error) {
+	oxr := hc.OXR
 	name := oxr.Resource.GetName()
 	ns := oxr.Resource.GetNamespace()
 
-	db := platform.SpecString(oxr, "database")
-	if db == "" {
-		db = "app"
+	version := platform.SpecStringDefault(oxr, "15", "version")
+	database := platform.SpecStringDefault(oxr, "app", "database")
+	username := "app"
+
+	storageGB, found := platform.SpecInt64(oxr, "storageGB")
+	if !found || storageGB < 1 {
+		storageGB = 20
+	}
+
+	instances := int64(1)
+	if platform.FeatureEnabled(oxr, "ha") || platform.Profile(oxr) == "production" {
+		instances = 3
 	}
 
 	cd := composed.New()
@@ -98,9 +157,38 @@ func postgresCNPG(oxr *resource.Composite) (platform.Desired, error) {
 	cd.SetName(name + "-pg")
 	cd.SetNamespace(ns)
 	o := cd.Object
-	_ = unstructured.SetNestedField(o, int64(1), "spec", "instances")
-	_ = unstructured.SetNestedField(o, "10Gi", "spec", "storage", "size")
-	_ = unstructured.SetNestedField(o, db, "spec", "bootstrap", "initdb", "database")
+	_ = unstructured.SetNestedField(o, instances, "spec", "instances")
+	_ = unstructured.SetNestedField(o, fmt.Sprintf("%dGi", storageGB), "spec", "storage", "size")
+	_ = unstructured.SetNestedField(o,
+		fmt.Sprintf("ghcr.io/cloudnative-pg/postgresql:%s", version), "spec", "imageName")
+	_ = unstructured.SetNestedField(o, database, "spec", "bootstrap", "initdb", "database")
+	_ = unstructured.SetNestedField(o, username, "spec", "bootstrap", "initdb", "owner")
+	platform.LabelOwnership(o, oxr)
 
-	return platform.Desired{resource.Name(name + "-pg"): &resource.DesiredComposed{Resource: cd}}, nil
+	// CNPG publishes deterministic in-cluster service DNS names, so host/port/
+	// database/username are known immediately. The operator-generated password
+	// lives in the `<name>-pg-app` secret; the function cannot read arbitrary
+	// cluster secrets, so password/uri are intentionally omitted and surfaced
+	// via the operator secret (documented in the API reference).
+	host := fmt.Sprintf("%s-pg-rw.%s.svc", name, ns)
+	res := &platform.Result{
+		Desired: platform.Desired{
+			resource.Name("pg"): {Resource: cd},
+		},
+		Status: map[string]any{
+			"phase":               "Provisioning",
+			"endpoint":            fmt.Sprintf("%s:%d", host, postgresPort),
+			"connectionSecretRef": map[string]any{"name": name + "-conn"},
+		},
+		ConnectionDetails: resource.ConnectionDetails{
+			"host":     []byte(host),
+			"port":     []byte(fmt.Sprintf("%d", postgresPort)),
+			"username": []byte(username),
+			"database": []byte(database),
+		},
+		Warnings: []string{
+			fmt.Sprintf("password and uri are published by the CNPG operator secret %q (keys: username, password, dbname, host, port, uri)", name+"-pg-app"),
+		},
+	}
+	return res, nil
 }

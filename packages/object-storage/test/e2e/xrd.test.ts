@@ -11,9 +11,9 @@ function synthXrdYaml(): string {
   return JSON.stringify(manifest);
 }
 
-function invalidClaimYaml(name: string, spec: Record<string, unknown>): string {
+function invalidXrYaml(name: string, spec: Record<string, unknown>): string {
   return JSON.stringify({
-    apiVersion: 'platform.7kgroup.org/v1',
+    apiVersion: 'platform.7kgroup.org/v1alpha1',
     kind: 'ObjectBucket',
     metadata: { name, namespace: 'default' },
     spec,
@@ -30,8 +30,8 @@ describe('ObjectBucket XRD (cluster)', () => {
     waitFor(`xrd/${XRD_NAME}`, 'Established', 300);
   }, 360_000);
 
-  test('claim missing required fields is rejected by the API server', () => {
-    const yaml = invalidClaimYaml('e2e-invalid-missing-fields', {
+  test('XR missing required fields is rejected by the API server', () => {
+    const yaml = invalidXrYaml('e2e-invalid-missing-fields', {
       profile: 'development',
       team: 'platform',
       provider: 'garage',
@@ -39,8 +39,8 @@ describe('ObjectBucket XRD (cluster)', () => {
     expect(() => kubectlApplyYaml(yaml)).toThrow(/costCenter|Required value/i);
   }, 60_000);
 
-  test('claim with provider outside the enum is rejected by the API server', () => {
-    const yaml = invalidClaimYaml('e2e-invalid-bad-provider', {
+  test('XR with provider outside the enum is rejected by the API server', () => {
+    const yaml = invalidXrYaml('e2e-invalid-bad-provider', {
       profile: 'development',
       team: 'platform',
       costCenter: 'cc-1234',

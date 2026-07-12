@@ -1,75 +1,78 @@
 // Command function-platform is the central Crossplane composition orchestrator (ADR 007).
 //
 // It serves a single FunctionRunnerService over gRPC. The handler registry is wired here;
-// adding a new primitive means registering its kind → handler mapping.
+// adding a new primitive means registering its apiVersion/kind → handler mapping.
+//
+// Platform-wide defaults are configured via environment variables:
+//
+//	PLATFORM_DEFAULT_POSTGRES_PROVIDER       default provider for PostgresInstance
+//	PLATFORM_DEFAULT_OBJECT_STORAGE_PROVIDER default provider for ObjectBucket
+//
+// Precedence: XR spec.provider > these env defaults > contract defaults.
 package main
 
 import (
-	"crypto/tls"
 	"flag"
-	"net"
 	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
+	"sort"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
+	function "github.com/crossplane/function-sdk-go"
 	"github.com/crossplane/function-sdk-go/logging"
-	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 
 	"github.com/7k-hiroba/hiroba/functions/platform"
 	"github.com/7k-hiroba/hiroba/functions/platform/handlers"
+	"github.com/7k-hiroba/hiroba/functions/platform/internal/contract"
 )
 
 func main() {
 	addr := flag.String("address", ":9443", "gRPC listen address")
-	tlsDir := flag.String("tls-certs-dir", "/tls", "directory containing tls.crt and tls.key")
+	tlsDir := flag.String("tls-certs-dir", "/tls", "directory containing tls.crt and tls.key (mTLS)")
 	insecure := flag.Bool("insecure", false, "serve without TLS (local development only)")
+	metricsAddr := flag.String("metrics-address", ":8080", "Prometheus metrics listen address")
+	debug := flag.Bool("debug", false, "enable debug logging")
 	flag.Parse()
 
-	log := logging.NewNopLogger()
+	log, err := logging.NewLogger(*debug)
+	if err != nil {
+		panic(err)
+	}
 
 	reg := platform.NewRegistry()
-	reg.Register("PostgresInstance", handlers.Postgres)
-	reg.Register("ObjectBucket", handlers.ObjectBucket)
-	reg.Register("GrafanaInstance", handlers.Grafana)
-	reg.Register("LokiInstance", handlers.Loki)
+	reg.Register(contract.APIGroupVersion, "PostgresInstance", handlers.Postgres)
+	reg.Register(contract.APIGroupVersion, "ObjectBucket", handlers.ObjectBucket)
+	reg.Register(contract.APIGroupVersion, "GrafanaInstance", handlers.Grafana)
+	reg.Register(contract.APIGroupVersion, "LokiInstance", handlers.Loki)
 
-	fn := &platform.Function{Log: log, Registry: reg}
-
-	srv, err := newServer(*tlsDir, *insecure)
-	if err != nil {
-		panic(err)
-	}
-	fnv1.RegisterFunctionRunnerServiceServer(srv, fn)
-
-	lis, err := net.Listen("tcp", *addr)
-	if err != nil {
-		panic(err)
+	cfg := platform.Config{
+		DefaultProviders: map[string]string{
+			"postgres":      os.Getenv("PLATFORM_DEFAULT_POSTGRES_PROVIDER"),
+			"objectStorage": os.Getenv("PLATFORM_DEFAULT_OBJECT_STORAGE_PROVIDER"),
+		},
 	}
 
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-		<-sig
-		srv.GracefulStop()
-	}()
+	keys := reg.Keys()
+	sort.Strings(keys)
+	for _, k := range keys {
+		log.Info("registered handler", "composite", k)
+	}
+	log.Info("platform defaults", "postgres", cfg.DefaultProvider("postgres", contract.PostgresDefaultProvider),
+		"objectStorage", cfg.DefaultProvider("objectStorage", contract.ObjectStorageDefaultProvider))
 
-	if err := srv.Serve(lis); err != nil {
-		panic(err)
-	}
-}
+	fn := &platform.Function{Log: log, Registry: reg, Config: cfg}
 
-func newServer(tlsDir string, insecure bool) (*grpc.Server, error) {
-	if insecure {
-		return grpc.NewServer(), nil
+	// mTLS by default (Crossplane always connects with mTLS); --insecure is for
+	// local development and `crossplane composition render` only.
+	opts := []function.ServeOption{
+		function.Listen("tcp", *addr),
+		function.Insecure(*insecure),
+		function.WithMetricsServer(*metricsAddr),
 	}
-	cert, err := tls.LoadX509KeyPair(filepath.Join(tlsDir, "tls.crt"), filepath.Join(tlsDir, "tls.key"))
-	if err != nil {
-		return nil, err
+	if !*insecure {
+		opts = append(opts, function.MTLSCertificates(*tlsDir))
 	}
-	creds := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12})
-	return grpc.NewServer(grpc.Creds(creds)), nil
+
+	if err := function.Serve(fn, opts...); err != nil {
+		log.Info("function terminated", "error", err)
+		os.Exit(1)
+	}
 }

@@ -1,0 +1,57 @@
+{
+  "$schema": "./contract.schema.json",
+  "apiGroup": "platform.7kgroup.org",
+  "apiVersion": "v1alpha1",
+  "orchestratorFunction": "function-platform",
+  "labels": {
+    "team": "team",
+    "costCenter": "cost-center",
+    "stack": "platform.7kgroup.org/stack"
+  },
+  "profiles": {
+    "development": {
+      "instanceClass": "db.t3.micro",
+      "multiAZ": false,
+      "backupRetentionDays": 1,
+      "deletionProtection": false,
+      "storageEncrypted": false,
+      "deletionPolicy": "Delete"
+    },
+    "staging": {
+      "instanceClass": "db.t3.small",
+      "multiAZ": false,
+      "backupRetentionDays": 7,
+      "deletionProtection": false,
+      "storageEncrypted": true,
+      "deletionPolicy": "Delete"
+    },
+    "production": {
+      "instanceClass": "db.r6g.xlarge",
+      "multiAZ": true,
+      "backupRetentionDays": 30,
+      "deletionProtection": true,
+      "storageEncrypted": true,
+      "deletionPolicy": "Orphan"
+    }
+  },
+  "products": {
+    "postgres": {
+      "kind": "PostgresInstance",
+      "plural": "postgresinstances",
+      "singular": "postgresinstance",
+      "providers": ["aws", "cnpg"],
+      "defaultProvider": "cnpg",
+      "defaultRegion": "us-east-1",
+      "connectionKeys": ["host", "port", "username", "password", "database", "uri"]
+    },
+    "objectStorage": {
+      "kind": "ObjectBucket",
+      "plural": "objectbuckets",
+      "singular": "objectbucket",
+      "providers": ["s3", "garage"],
+      "defaultProvider": "garage",
+      "defaultRegion": "us-east-1",
+      "connectionKeys": ["endpoint", "bucket", "region", "accessKeyId", "secretAccessKey", "uri"]
+    }
+  }
+}

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/7k-hiroba/hiroba/functions/platform"
+	"github.com/7k-hiroba/hiroba/functions/platform/internal/contract"
 )
 
 const (
@@ -29,55 +30,64 @@ func chartVersion(oxr *resource.Composite, envKey, def string) string {
 	return def
 }
 
+// stackLabels labels a child primitive XR as part of the observability stack.
+func stackLabels(oxr *resource.Composite, consumedBy string) map[string]string {
+	return map[string]string{
+		"team":                             platform.Team(oxr),
+		"platform.7kgroup.org/stack":       "observability",
+		"platform.7kgroup.org/consumed-by": consumedBy,
+	}
+}
+
+// childConnectionDetails returns the resolved connection details of a child
+// primitive XR (composed resource), or nil when not yet available.
+func childConnectionDetails(hc *platform.HandlerContext, name resource.Name) resource.ConnectionDetails {
+	obs, ok := hc.Observed[name]
+	if !ok {
+		return nil
+	}
+	return obs.ConnectionDetails
+}
+
 // Grafana handles kind=GrafanaInstance. It emits:
 //   - a child PostgresInstance XR (owned; hierarchical composition, ADR 007), and
-//   - a provider-helm Release installing the official grafana/grafana chart, wired to the
-//     child PostgresInstance connection secret for its database.
+//   - a provider-helm Release installing the official grafana/grafana chart, wired to
+//     the child PostgresInstance connection details for its database.
 //
-// NOTE: the PostgresInstance connection secret keys are normalized to the platform
-// contract (POSTGRES_CONNECTION_KEYS) by the postgres handler; the chart values below
-// reference that secret by its deterministic name (<xr>-db-conn). Confirm the GF_*
-// mapping once the contract mapping is finalized.
-func Grafana(oxr *resource.Composite) (platform.Desired, error) {
+// Non-secret database settings (host/port/name/user) are injected into the chart
+// values from the child XR's resolved connection details; the password is sourced at
+// pod runtime via envValueFrom from the child's connection secret (<child>-conn).
+func Grafana(hc *platform.HandlerContext) (*platform.Result, error) {
+	oxr := hc.OXR
 	name := oxr.Resource.GetName()
 	ns := oxr.Resource.GetNamespace()
 
 	domain := platform.SpecString(oxr, "domain")
-	provider := platform.SpecString(oxr, "provider")
-	if provider == "" {
-		provider = "cnpg"
-	}
-	// Map observability providers onto the postgres primitive's vocabulary.
-	dbProvider := provider
-	if provider == "garage" || provider == "local" {
-		dbProvider = "cnpg"
-	}
 
 	desired := platform.Desired{}
 
-	// 1. Child PostgresInstance (database for Grafana).
+	// 1. Child PostgresInstance (database for Grafana). The child's provider comes
+	// from the platform/contract default unless overridden via spec.dbProvider.
 	pg := composed.New()
-	pg.SetAPIVersion("platform.7kgroup.org/v1")
+	pg.SetAPIVersion(contract.APIGroupVersion)
 	pg.SetKind("PostgresInstance")
 	pg.SetName(name + "-db")
 	pg.SetNamespace(ns)
-	pg.SetLabels(map[string]string{
-		"team":                                platform.Team(oxr),
-		"platform.7kgroup.org/stack":       "observability",
-		"platform.7kgroup.org/consumed-by": name,
-	})
+	pg.SetLabels(stackLabels(oxr, name))
 	pgSpec := map[string]any{
-		"profile":    platform.SpecString(oxr, "profile"),
-		"provider":   dbProvider,
+		"profile":    platform.Profile(oxr),
 		"team":       platform.Team(oxr),
 		"costCenter": platform.CostCenter(oxr),
 		"database":   "grafana",
+	}
+	if p := platform.SpecString(oxr, "dbProvider"); p != "" {
+		_ = unstructured.SetNestedField(pgSpec, p, "provider")
 	}
 	if region := platform.SpecString(oxr, "region"); region != "" {
 		_ = unstructured.SetNestedField(pgSpec, region, "region")
 	}
 	pg.Object["spec"] = pgSpec
-	desired[resource.Name(name+"-db")] = &resource.DesiredComposed{Resource: pg}
+	desired[resource.Name("db")] = &resource.DesiredComposed{Resource: pg}
 
 	// 2. Helm Release for the official Grafana chart.
 	connSecret := name + "-db-conn"
@@ -94,74 +104,86 @@ func Grafana(oxr *resource.Composite) (platform.Desired, error) {
 	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "wait")
 	platform.SetProviderConfigRef(ro, "default") // in-cluster helm provider config
 
-	// Database via env sourced from the PostgresInstance connection secret.
 	_ = unstructured.SetNestedField(ro, "postgres", "spec", "forProvider", "values", "grafana.ini", "database", "type")
 	_ = unstructured.SetNestedField(ro, "disable", "spec", "forProvider", "values", "grafana.ini", "database", "ssl_mode")
-	envFrom := []any{
-		map[string]any{"secretRef": map[string]any{"name": connSecret}},
+
+	// Password is always sourced from the child connection secret at runtime.
+	envValueFrom := map[string]any{
+		"GF_DATABASE_PASSWORD": map[string]any{
+			"secretKeyRef": map[string]any{"name": connSecret, "key": "password"},
+		},
 	}
-	_ = unstructured.SetNestedField(ro, envFrom, "spec", "forProvider", "values", "extraEnvFrom")
+
+	res := &platform.Result{Desired: desired}
+
+	// Inject non-secret database settings once the child publishes them.
+	if cd := childConnectionDetails(hc, resource.Name("db")); len(cd) > 0 {
+		host := string(cd["host"])
+		port := string(cd["port"])
+		database := string(cd["database"])
+		user := string(cd["username"])
+		if host != "" {
+			if port != "" {
+				host = fmt.Sprintf("%s:%s", host, port)
+			}
+			_ = unstructured.SetNestedField(ro, host, "spec", "forProvider", "values", "grafana.ini", "database", "host")
+		}
+		if database != "" {
+			_ = unstructured.SetNestedField(ro, database, "spec", "forProvider", "values", "grafana.ini", "database", "name")
+		}
+		if user != "" {
+			_ = unstructured.SetNestedField(ro, user, "spec", "forProvider", "values", "grafana.ini", "database", "user")
+		}
+	} else {
+		res.Warnings = append(res.Warnings, "database connection details not yet available from child PostgresInstance; Release will be updated when ready")
+	}
+	_ = unstructured.SetNestedField(ro, envValueFrom, "spec", "forProvider", "values", "envValueFrom")
 
 	if domain != "" {
 		_ = unstructured.SetNestedField(ro, domain, "spec", "forProvider", "values", "grafana.ini", "server", "root_url")
 	}
 
-	desired[resource.Name(name+"-grafana")] = &resource.DesiredComposed{Resource: rel}
-	return desired, nil
+	desired[resource.Name("grafana")] = &resource.DesiredComposed{Resource: rel}
+	res.Status = map[string]any{"phase": "Provisioning"}
+	return res, nil
 }
 
 // Loki handles kind=LokiInstance. It emits:
 //   - a child ObjectBucket XR (owned; hierarchical composition, ADR 007), and
 //   - a provider-helm Release installing the official grafana/loki-distributed chart,
-//     wired to the child ObjectBucket connection secret for object storage.
+//     wired to the child ObjectBucket connection details for object storage.
 //
-// Mirrors the proven Mimir Release shape (structuredConfig + extraEnvFrom). The ObjectBucket
-// connection secret keys follow OBJECT_STORAGE_CONNECTION_KEYS; confirm the s3 env-key
-// mapping once the contract mapping is finalized.
-func Loki(oxr *resource.Composite) (platform.Desired, error) {
+// Non-secret storage settings (bucket/endpoint/region) are injected into the chart
+// values from the child XR's resolved connection details; credentials are sourced at
+// pod runtime via env from the child's connection secret (<child>-conn).
+func Loki(hc *platform.HandlerContext) (*platform.Result, error) {
+	oxr := hc.OXR
 	name := oxr.Resource.GetName()
 	ns := oxr.Resource.GetNamespace()
 
-	provider := platform.SpecString(oxr, "provider")
-	if provider == "" {
-		provider = "garage"
-	}
-	// Map observability providers onto the object-storage primitive's vocabulary.
-	bucketProvider := provider
-	switch provider {
-	case "aws":
-		bucketProvider = "s3"
-	case "cnpg":
-		bucketProvider = "garage"
-	}
-	if bucketProvider != "s3" && bucketProvider != "garage" && bucketProvider != "gcs" && bucketProvider != "azureBlob" {
-		return nil, fmt.Errorf("provider %q is not supported for Loki storage", provider)
-	}
-
 	desired := platform.Desired{}
 
-	// 1. Child ObjectBucket (log storage for Loki).
+	// 1. Child ObjectBucket (log storage for Loki). Provider from platform/contract
+	// default unless overridden via spec.bucketProvider.
 	ob := composed.New()
-	ob.SetAPIVersion("platform.7kgroup.org/v1")
+	ob.SetAPIVersion(contract.APIGroupVersion)
 	ob.SetKind("ObjectBucket")
 	ob.SetName(name + "-bucket")
 	ob.SetNamespace(ns)
-	ob.SetLabels(map[string]string{
-		"team":                                platform.Team(oxr),
-		"platform.7kgroup.org/stack":       "observability",
-		"platform.7kgroup.org/consumed-by": name,
-	})
+	ob.SetLabels(stackLabels(oxr, name))
 	obSpec := map[string]any{
-		"profile":    platform.SpecString(oxr, "profile"),
-		"provider":   bucketProvider,
+		"profile":    platform.Profile(oxr),
 		"team":       platform.Team(oxr),
 		"costCenter": platform.CostCenter(oxr),
+	}
+	if p := platform.SpecString(oxr, "bucketProvider"); p != "" {
+		_ = unstructured.SetNestedField(obSpec, p, "provider")
 	}
 	if region := platform.SpecString(oxr, "region"); region != "" {
 		_ = unstructured.SetNestedField(obSpec, region, "region")
 	}
 	ob.Object["spec"] = obSpec
-	desired[resource.Name(name+"-bucket")] = &resource.DesiredComposed{Resource: ob}
+	desired[resource.Name("bucket")] = &resource.DesiredComposed{Resource: ob}
 
 	// 2. Helm Release for the official Loki (distributed) chart.
 	connSecret := name + "-bucket-conn"
@@ -178,17 +200,44 @@ func Loki(oxr *resource.Composite) (platform.Desired, error) {
 	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "wait")
 	platform.SetProviderConfigRef(ro, "default")
 
-	// Object storage via structuredConfig sourced from the ObjectBucket connection secret.
-	_ = unstructured.SetNestedField(ro, "s3", "spec", "forProvider", "values", "loki", "storage", "type")
-	_ = unstructured.SetNestedField(ro, "${OBJECT_STORAGE_BUCKET}", "spec", "forProvider", "values", "loki", "storage", "s3", "bucketnames")
-	_ = unstructured.SetNestedField(ro, "${OBJECT_STORAGE_ENDPOINT}", "spec", "forProvider", "values", "loki", "storage", "s3", "endpoint")
-	_ = unstructured.SetNestedField(ro, "${OBJECT_STORAGE_REGION}", "spec", "forProvider", "values", "loki", "storage", "s3", "region")
-	_ = unstructured.SetNestedField(ro, "${OBJECT_STORAGE_ACCESS_KEY_ID}", "spec", "forProvider", "values", "loki", "storage", "s3", "access_key_id")
-	_ = unstructured.SetNestedField(ro, "${OBJECT_STORAGE_SECRET_ACCESS_KEY}", "spec", "forProvider", "values", "loki", "storage", "s3", "secret_access_key")
-	_ = unstructured.SetNestedField(ro, "boltdb-shipper", "spec", "forProvider", "values", "loki", "schemaConfig", "configs", "store")
-	envFrom := []any{map[string]any{"secretRef": map[string]any{"name": connSecret}}}
-	_ = unstructured.SetNestedField(ro, envFrom, "spec", "forProvider", "values", "extraEnvFrom")
+	// Credentials at runtime from the child connection secret.
+	extraEnv := []any{
+		map[string]any{
+			"name": "AWS_ACCESS_KEY_ID",
+			"valueFrom": map[string]any{
+				"secretKeyRef": map[string]any{"name": connSecret, "key": "accessKeyId", "optional": true},
+			},
+		},
+		map[string]any{
+			"name": "AWS_SECRET_ACCESS_KEY",
+			"valueFrom": map[string]any{
+				"secretKeyRef": map[string]any{"name": connSecret, "key": "secretAccessKey", "optional": true},
+			},
+		},
+	}
+	_ = unstructured.SetNestedField(ro, extraEnv, "spec", "forProvider", "values", "extraEnv")
 
-	desired[resource.Name(name+"-loki")] = &resource.DesiredComposed{Resource: rel}
-	return desired, nil
+	_ = unstructured.SetNestedField(ro, "s3", "spec", "forProvider", "values", "loki", "storage", "type")
+	_ = unstructured.SetNestedField(ro, true, "spec", "forProvider", "values", "loki", "storage", "s3", "s3forcepathstyle")
+
+	res := &platform.Result{Desired: desired}
+
+	// Inject non-secret storage settings once the child publishes them.
+	if cd := childConnectionDetails(hc, resource.Name("bucket")); len(cd) > 0 {
+		if bucket := string(cd["bucket"]); bucket != "" {
+			_ = unstructured.SetNestedField(ro, bucket, "spec", "forProvider", "values", "loki", "storage", "s3", "bucketnames")
+		}
+		if endpoint := string(cd["endpoint"]); endpoint != "" {
+			_ = unstructured.SetNestedField(ro, endpoint, "spec", "forProvider", "values", "loki", "storage", "s3", "endpoint")
+		}
+		if region := string(cd["region"]); region != "" {
+			_ = unstructured.SetNestedField(ro, region, "spec", "forProvider", "values", "loki", "storage", "s3", "region")
+		}
+	} else {
+		res.Warnings = append(res.Warnings, "object storage connection details not yet available from child ObjectBucket; Release will be updated when ready")
+	}
+
+	desired[resource.Name("loki")] = &resource.DesiredComposed{Resource: rel}
+	res.Status = map[string]any{"phase": "Provisioning"}
+	return res, nil
 }

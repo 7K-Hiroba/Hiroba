@@ -1,10 +1,13 @@
-export type Profile = 'development' | 'production' | 'staging';
+import type { Profile } from './contract.gen';
 
-export type DeletionPolicy = 'Delete' | 'Orphan' | 'Retain';
+export type { Profile };
+
+export type DeletionPolicy = 'Delete' | 'Orphan';
 
 /**
  * Infrastructure providers supported by the platform, including cloud providers
- * and in-cluster operators.
+ * and in-cluster operators. Each product's XRD constrains this to the subset
+ * its handler implements (see contract/contract.json).
  */
 export type InfrastructureProvider = 'aws' | 'gcp' | 'azure' | 'garage' | 'cnpg' | 'local';
 
@@ -25,15 +28,6 @@ export interface FeatureToggle<T = any> {
   readonly secretRef?: SecretRef;
 }
 
-export interface ProfileDefaults {
-  readonly instanceClass: string;
-  readonly storageEncrypted: boolean;
-  readonly multiAZ: boolean;
-  readonly backupRetentionDays: number;
-  readonly deletionProtection: boolean;
-  readonly publiclyAccessible: boolean;
-}
-
 export interface CommonResourceProps {
   readonly profile: Profile;
   readonly team: string;
@@ -42,76 +36,10 @@ export interface CommonResourceProps {
 
 export interface RegionalProps {
   readonly region?: string;
-  readonly providerConfigRef?: string;
+  readonly providerConfigRef?: { readonly name: string };
 }
 
 export interface PlatformProductSpec extends CommonResourceProps, RegionalProps {
   readonly deletionPolicy?: DeletionPolicy;
   readonly features?: Record<string, FeatureToggle>;
-  /**
-   * @deprecated use the top-level fields instead of metadata sub-block
-   */
-  readonly metadata?: {
-    readonly version?: string;
-    readonly deprecation?: {
-      readonly message: string;
-      readonly replacement?: string;
-    };
-  };
-  readonly version?: string;
-  readonly deprecation?: {
-    readonly message: string;
-    readonly replacement?: string;
-  };
-  /**
-   * Composition revision selection for blue/green and canary rollouts.
-   * https://docs.crossplane.io/latest/concepts/composition-revisions/
-   */
-  readonly compositionRevisionSelector?: {
-    readonly matchLabels: Record<string, string>;
-  };
-  /**
-   * Update policy for composition revision resolution.
-   */
-  readonly compositionUpdatePolicy?: 'Automatic' | 'Manual';
-}
-
-export interface PlatformProductMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly category: string;
-  readonly description: string;
-  readonly primitives: string[];
-  readonly maintainers: string[];
-  readonly deprecation?: {
-    readonly message: string;
-    readonly replacement?: string;
-  };
-}
-
-export interface StorageBackend {
-  readonly type: StorageBackendType;
-  readonly aws?: {
-    readonly bucket?: string;
-    readonly region?: string;
-  };
-  readonly gcp?: {
-    readonly bucket?: string;
-    readonly project?: string;
-  };
-  readonly azure?: {
-    readonly account?: string;
-    readonly container?: string;
-  };
-  readonly garage?: {
-    readonly clusterRef?: string;
-    readonly clusterNamespace?: string;
-  };
-}
-
-export interface InfrastructureResourceConfig {
-  readonly provider: InfrastructureProvider;
-  readonly region: string;
-  readonly providerConfigRef?: string;
-  readonly storageBackend?: StorageBackend;
 }
