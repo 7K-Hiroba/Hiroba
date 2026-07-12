@@ -60,19 +60,37 @@ per-team credential isolation.
 - ADR 006's per-provider Composition file layout is retired.
 - All existing v1 XRDs and `*Claim` usage are removed/rewritten as part of this change.
 
-## v2-only / delete checklist
+## v2-only / delete checklist (completed 2026-07-12)
 
-- [ ] All XRDs emit `apiextensions.crossplane.io/v2` with `spec.scope: Namespaced`.
-- [ ] No `claimNames` on any XRD; no `*Claim` kinds emitted by the consumer SDK.
-- [ ] CI lint gate rejects `apiextensions.crossplane.io/v1` XRDs and any `claimNames`.
-- [ ] Remove per-provider Composition file split (`compositions/{aws,cnpg,garage,...}.ts`).
-- [ ] Remove inline RDS/CNPG from `grafana` and inline S3/Garage from `loki`/`mimir`;
-      replace with claims to `PostgresInstance` / `ObjectBucket`.
-- [ ] Remove dead `functions/grafana-sso/*` remnants.
-- [ ] Remove deprecated `CloudProvider` / `MultiCloudResourceConfig` aliases in
+- [x] All XRDs emit `apiextensions.crossplane.io/v2` with `spec.scope: Namespaced`.
+- [x] No `claimNames` on any XRD; no `*Claim` kinds emitted by the consumer SDK.
+- [x] CI lint gate rejects `apiextensions.crossplane.io/v1` XRDs and any `claimNames`.
+- [x] Remove per-provider Composition file split (`compositions/{aws,cnpg,garage,...}.ts`).
+- [x] Remove inline RDS/CNPG from `grafana` and inline S3/Garage from `loki`/`mimir`;
+      replaced by child `PostgresInstance` / `ObjectBucket` XRs emitted by the handlers.
+- [x] Remove dead `functions/grafana-sso/*` remnants.
+- [x] Remove deprecated `CloudProvider` / `MultiCloudResourceConfig` aliases in
       `packages/shared/src/types.ts`.
-- [ ] Collapse the duplicated `packages/shared` in the Observability Stack repo; consume
+- [x] Collapse the duplicated `packages/shared` in the Observability Stack repo; consume
       Hiroba's `@7k-hiroba/shared` as the single source of truth.
+
+## v2 conformance notes (added 2026-07-12, live e2e on kind)
+
+- Crossplane v2 drops XR-level connection secrets: `connectionSecretKeys` is not
+  supported on v2 XRDs, and function-returned connection details for child XRs are
+  not persisted. The contract surface is `status` (endpoint, phase,
+  connectionSecretRef); cross-child wiring reads the child XR's `status`, not
+  connection details.
+- The v2 XRD -> CRD converter rejects `additionalProperties` combined with
+  `properties` on nested object fields; keep nested schemas structural or free-form.
+- Namespaced provider APIs (`*.m.*`, e.g. `helm.m.crossplane.io/v1beta1`,
+  `*.m.upbound.io/v1beta1`) require `spec.providerConfigRef.kind`; legacy
+  cluster-scoped APIs forbid it. `SetProviderConfigRef` branches on the composed
+  resource's apiVersion.
+- Function pipeline readiness is explicit: composed resources without a readiness
+  verdict are treated as unready. Handlers set readiness from the observed
+  resource's `Ready` condition or a healthy `status.phase`.
+- The function container reads mTLS certs from `/tls/server` (Crossplane v2 mount).
 
 ## Related
 

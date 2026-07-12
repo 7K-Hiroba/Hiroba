@@ -2,6 +2,9 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
+echo "== contract: codegen freshness =="
+npm run gen:contract -- --check
+
 echo "== cdk8s: lint =="
 npm run lint --if-present
 
