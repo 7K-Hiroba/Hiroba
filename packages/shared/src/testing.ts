@@ -32,11 +32,11 @@ export function assertFieldValue(
   }
 }
 
-export function createFixtureClaim(name: string, spec: Record<string, unknown>): any {
+export function createFixtureXr(name: string, namespace: string, spec: Record<string, unknown>): any {
   return {
-    apiVersion: 'platform.7kgroup.org/v1',
+    apiVersion: 'platform.7kgroup.org/v1alpha1',
     kind: 'PlatformFixture',
-    metadata: { name },
+    metadata: { name, namespace },
     spec,
   };
 }

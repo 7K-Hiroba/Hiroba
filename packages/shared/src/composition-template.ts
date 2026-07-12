@@ -1,22 +1,7 @@
-import { ApiObject, Chart } from 'cdk8s';
+import { ApiObject } from 'cdk8s';
 import { Construct } from 'constructs';
-import { InfrastructureProvider } from './types';
-import { PlatformProductConfig, ProductMetadata } from './platform';
+import { PlatformProductConfig } from './platform';
 import { ORCHESTRATOR_FUNCTION_NAME } from './constants';
-
-export function createProviderCompositionName(productName: string, provider: InfrastructureProvider): string {
-  return `${productName}-${provider}-composition`;
-}
-
-export function createProviderCompositionLabels(
-  productName: string,
-  provider: InfrastructureProvider,
-): Record<string, string> {
-  return {
-    'platform.7kgroup.org/product': productName,
-    'platform.7kgroup.org/provider': provider,
-  };
-}
 
 export function createPlatformXrd(
   scope: Construct,
@@ -45,11 +30,9 @@ export function createPlatformXrd(
     },
   ];
 
-  const xrScope = config.scope ?? 'Namespaced';
-
   const spec: Record<string, any> = {
     group: config.group,
-    scope: xrScope,
+    scope: config.scope ?? 'Namespaced',
     names: {
       kind: config.kind,
       plural: config.plural,
@@ -62,8 +45,8 @@ export function createPlatformXrd(
     spec.names.shortNames = config.shortNames;
   }
 
-  if (xrScope === 'Cluster' && config.claimNames) {
-    spec.claimNames = config.claimNames;
+  if (config.connectionSecretKeys && config.connectionSecretKeys.length > 0) {
+    spec.connectionSecretKeys = config.connectionSecretKeys;
   }
 
   return new ApiObject(scope, id, {
@@ -84,7 +67,6 @@ export function createBaseSchema(): object {
     },
     provider: {
       type: 'string',
-      enum: ['aws', 'gcp', 'azure', 'garage', 'cnpg', 'local'],
       description: 'Infrastructure provider for this resource. Defaults to the cluster default if unset.',
     },
     team: {
@@ -97,11 +79,15 @@ export function createBaseSchema(): object {
       type: 'string',
     },
     providerConfigRef: {
-      type: 'string',
+      type: 'object',
+      required: ['name'],
+      properties: {
+        name: { type: 'string' },
+      },
     },
     deletionPolicy: {
       type: 'string',
-      enum: ['Delete', 'Orphan', 'Retain'],
+      enum: ['Delete', 'Orphan'],
     },
     features: {
       type: 'object',
@@ -115,7 +101,7 @@ export function createBaseSchema(): object {
             type: 'object',
             required: ['source'],
             properties: {
-              source: { type: 'string' },
+              source: { type: 'string', enum: ['external-secrets', 'native', 'generated'] },
               store: { type: 'string' },
               path: { type: 'string' },
               property: { type: 'string' },
@@ -127,23 +113,6 @@ export function createBaseSchema(): object {
       },
     },
   };
-}
-
-export abstract class BasePlatformProduct extends Chart {
-  abstract readonly config: PlatformProductConfig;
-  abstract readonly metadata: ProductMetadata;
-
-  constructor(scope: Construct, id: string) {
-    super(scope, id);
-  }
-
-  defineXrd(): ApiObject {
-    return createPlatformXrd(this, 'xrd', this.config, this.getSchemaProperties(), this.getRequiredFields());
-  }
-
-  abstract getSchemaProperties(): object;
-  abstract getRequiredFields(): string[];
-  abstract defineComposition(): ApiObject;
 }
 
 export interface OrchestratedCompositionOpts {

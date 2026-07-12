@@ -32,4 +32,4 @@ e2e-setup:
 	./scripts/e2e-setup.sh
 
 test-e2e: e2e-setup
-	pnpm test:e2e
+	npm run test:e2e

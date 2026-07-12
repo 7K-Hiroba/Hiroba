@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 007](007-orchestrator-function.md) — Crossplane v2 uses namespaced XRDs;
+the Claim model no longer exists and consumers create XRs directly in their namespaces.
 
 ## Context
 

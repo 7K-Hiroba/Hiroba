@@ -26,9 +26,6 @@ export function toKebabCase(value: string): string {
 
 export function generateProductFiles(targetDir: string, vars: ProductTemplateVars): void {
   fs.mkdirSync(targetDir, { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'src', 'features'), { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'src', 'imports'), { recursive: true });
-  fs.mkdirSync(path.join(targetDir, 'src', 'lib'), { recursive: true });
   fs.mkdirSync(path.join(targetDir, 'test', 'fixtures'), { recursive: true });
   fs.mkdirSync(path.join(targetDir, 'test', 'unit'), { recursive: true });
   fs.mkdirSync(path.join(targetDir, 'package'), { recursive: true });
@@ -36,7 +33,7 @@ export function generateProductFiles(targetDir: string, vars: ProductTemplateVar
   writeFile(targetDir, 'package.json', packageJsonTemplate(vars));
   writeFile(targetDir, 'tsconfig.json', tsconfigTemplate());
   writeFile(targetDir, 'jest.config.js', jestConfigTemplate());
-  writeFile(targetDir, 'cdk8s.yaml', cdk8sYamlTemplate(vars));
+  writeFile(targetDir, 'cdk8s.yaml', cdk8sYamlTemplate());
   writeFile(targetDir, 'src/index.ts', indexTemplate(vars));
   writeFile(targetDir, 'src/xrd.ts', xrdTemplate(vars));
   writeFile(targetDir, 'src/composition.ts', compositionTemplate(vars));
@@ -56,13 +53,12 @@ function packageJsonTemplate(vars: ProductTemplateVars): string {
   return JSON.stringify(
     {
       name: `@7k-hiroba/${vars.productNameLower}`,
-      version: '1.0.0',
+      version: '0.0.0',
       private: true,
       description: vars.description,
       main: 'dist/index.js',
       types: 'dist/index.d.ts',
       scripts: {
-        import: 'cdk8s import -o src/imports',
         build: 'tsc',
         synth: 'cdk8s synth',
         test: 'jest',
@@ -71,7 +67,7 @@ function packageJsonTemplate(vars: ProductTemplateVars): string {
         package: 'cp dist/*.yaml package/ && crossplane build configuration package/',
       },
       dependencies: {
-        '@7k-hiroba/shared': '1.0.0',
+        '@7k-hiroba/shared': '^2.0.0',
         cdk8s: '^2.68.0',
         constructs: '^10.3.0',
       },
@@ -125,11 +121,9 @@ function jestConfigTemplate(): string {
 `;
 }
 
-function cdk8sYamlTemplate(_vars: ProductTemplateVars): string {
+function cdk8sYamlTemplate(): string {
   return `language: typescript
 app: npx ts-node src/index.ts
-imports:
-  - k8s@1.28.0
 `;
 }
 
@@ -148,150 +142,54 @@ app.synth();
 }
 
 function xrdTemplate(vars: ProductTemplateVars): string {
-  const featureProperties = vars.features
-    .map((feature) => {
-      const key = feature.toLowerCase();
-      return `      ${key}: {
-        type: 'object',
-        required: ['enabled'],
-        properties: {
-          enabled: { type: 'boolean' },
-          config: { type: 'object' },
-          secretRef: {
-            type: 'object',
-            required: ['source'],
-            properties: {
-              source: { type: 'string' },
-              store: { type: 'string' },
-              path: { type: 'string' },
-              property: { type: 'string' },
-              name: { type: 'string' },
-              namespace: { type: 'string' },
-            },
-          },
-        },
-      },`;
-    })
-    .join('\n');
-
   return `import { Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { createPlatformXrd } from '@7k-hiroba/shared';
+import { PlatformProductConfig, createBaseSchema, createPlatformXrd } from '@7k-hiroba/shared';
 
-export interface ${vars.productKind}Spec {
-  readonly profile: 'development' | 'production' | 'staging';
-  readonly team: string;
-  readonly costCenter: string;
-  readonly region?: string;
-  readonly providerConfigRef?: string;
-  readonly deletionPolicy?: 'Delete' | 'Orphan' | 'Retain';
-  readonly features?: {
-${vars.features.map((f) => `    readonly ${f.toLowerCase()}?: { enabled: boolean };`).join('\n')}
-  };
-}
+export const ${vars.productNameLower.toUpperCase().replace(/-/g, '_')}_CONFIG: PlatformProductConfig = {
+  group: 'platform.7kgroup.org',
+  version: 'v1alpha1',
+  kind: '${vars.productKind}',
+  plural: '${vars.productPlural}',
+  singular: '${vars.productNameLower}',
+  shortNames: ['${vars.productNameLower.slice(0, 2)}'],
+  scope: 'Namespaced',
+  connectionSecretKeys: ['endpoint'],
+};
 
 export class ${vars.productKind}Xrd extends Chart {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    createPlatformXrd(this, 'xrd', {
-      group: 'platform.7kgroup.org',
-      version: 'v1',
-      kind: '${vars.productKind}',
-      plural: '${vars.productPlural}',
-      singular: '${vars.productNameLower}',
-      shortNames: ['${vars.productNameLower.slice(0, 2)}'],
-      claimNames: {
-        kind: '${vars.productKind}Claim',
-        plural: '${vars.productPlural}claims',
+    const base = createBaseSchema() as Record<string, unknown>;
+
+    createPlatformXrd(
+      this,
+      'xrd',
+      ${vars.productNameLower.toUpperCase().replace(/-/g, '_')}_CONFIG,
+      {
+        ...base,
+        // TODO: add product-specific spec fields here
       },
-      connectionSecretKeys: ['endpoint', 'url'],
-    }, {
-      profile: { type: 'string', enum: ['development', 'production', 'staging'] },
-      team: { type: 'string' },
-      costCenter: { type: 'string' },
-      region: { type: 'string' },
-      providerConfigRef: { type: 'string' },
-      deletionPolicy: { type: 'string', enum: ['Delete', 'Orphan', 'Retain'] },
-      features: {
-        type: 'object',
-        properties: {
-${featureProperties}
-        },
-      },
-    }, ['profile', 'team', 'costCenter']);
+      ['profile', 'team', 'costCenter'],
+    );
   }
 }
 `;
 }
 
 function compositionTemplate(vars: ProductTemplateVars): string {
-  const featurePatches = vars.features
-    .map((feature) => {
-      const key = feature.toLowerCase();
-      return `        {
-          type: 'FromCompositeFieldPath',
-          fromFieldPath: 'spec.features.${key}.enabled',
-          toFieldPath: 'spec.replicas',
-          transforms: [transformMap({ 'true': '1', 'false': '0' })],
-        },`;
-    })
-    .join('\n');
-
-  return `import { ApiObject, Chart } from 'cdk8s';
+  return `import { Chart } from 'cdk8s';
 import { Construct } from 'constructs';
-import { deletionPolicyPatch, mandatoryLabelPatches, optionalPatch, regionPatch, transformMap } from '@7k-hiroba/shared';
+import { createOrchestratedComposition } from '@7k-hiroba/shared';
+import { ${vars.productNameLower.toUpperCase().replace(/-/g, '_')}_CONFIG } from './xrd';
 
 export class ${vars.productKind}Composition extends Chart {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    new ApiObject(this, 'composition', {
-      apiVersion: 'apiextensions.crossplane.io/v1',
-      kind: 'Composition',
-      metadata: {
-        name: '${vars.productNameLower}-composition',
-        labels: {
-          'platform.7kgroup.org/product': '${vars.productNameLower}',
-        },
-      },
-      spec: {
-        compositeTypeRef: {
-          apiVersion: 'platform.7kgroup.org/v1',
-          kind: '${vars.productKind}',
-        },
-        mode: 'Pipeline',
-        pipeline: [
-          {
-            step: 'patch-and-transform',
-            functionRef: { name: 'function-patch-and-transform' },
-            input: {
-              apiVersion: 'pt.fn.crossplane.io/v1beta1',
-              kind: 'Resources',
-              resources: [
-                {
-                  name: '${vars.productNameLower}',
-                  base: {
-                    apiVersion: '${vars.provider}',
-                    kind: '${vars.productKind}',
-                    metadata: { name: '' },
-                    spec: {
-                      deletionPolicy: 'Delete',
-                    },
-                  },
-                  patches: [
-                    deletionPolicyPatch(),
-                    regionPatch(),
-                    optionalPatch('spec.providerConfigRef', 'spec.providerConfigRef.name'),
-                    ...mandatoryLabelPatches(),
-${featurePatches}
-                  ],
-                },
-              ],
-            },
-          },
-        ],
-      },
+    createOrchestratedComposition(this, 'composition', {
+      config: ${vars.productNameLower.toUpperCase().replace(/-/g, '_')}_CONFIG,
     });
   }
 }
@@ -304,41 +202,39 @@ import { ${vars.productKind}Xrd } from '../../src/xrd';
 import { ${vars.productKind}Composition } from '../../src/composition';
 
 describe('${vars.productKind} manifests', () => {
-  test('XRD has claim names and connection secret keys', () => {
+  test('XRD is v2 namespaced with connection secret keys', () => {
     const app = Testing.app();
     const xrd = new ${vars.productKind}Xrd(app, 'xrd');
-    const snapshot = JSON.stringify(Testing.synth(xrd));
-    expect(snapshot).toContain('${vars.productKind}Claim');
-    expect(snapshot).toContain('endpoint');
-    expect(snapshot).toContain('url');
+    const [manifest] = Testing.synth(xrd);
+    expect(manifest.apiVersion).toBe('apiextensions.crossplane.io/v2');
+    expect(manifest.spec.scope).toBe('Namespaced');
+    expect(manifest.spec.claimNames).toBeUndefined();
+    expect(manifest.spec.connectionSecretKeys).toContain('endpoint');
   });
 
-  test('composition contains base resource and patches', () => {
+  test('composition delegates to the orchestrator function', () => {
     const app = Testing.app();
     const composition = new ${vars.productKind}Composition(app, 'composition');
-    const snapshot = JSON.stringify(Testing.synth(composition));
-    expect(snapshot).toContain('${vars.productKind}');
-    expect(snapshot).toContain('${vars.productNameLower}-composition');
+    const [manifest] = Testing.synth(composition);
+    expect(manifest.spec.mode).toBe('Pipeline');
+    expect(manifest.spec.pipeline).toHaveLength(1);
+    expect(manifest.spec.pipeline[0].functionRef.name).toBe('function-platform');
   });
 });
 `;
 }
 
 function fixtureXrTemplate(vars: ProductTemplateVars): string {
-  const featureLines = vars.features.map((feature) => `    ${feature.toLowerCase()}:\n      enabled: true`).join('\n');
-
-  return `apiVersion: platform.7kgroup.org/v1
+  return `apiVersion: platform.7kgroup.org/v1alpha1
 kind: ${vars.productKind}
 metadata:
   name: test-${vars.productNameLower}
+  namespace: team-${vars.productNameLower}
 spec:
   profile: production
   team: team-${vars.productNameLower}
   costCenter: cc-12345
   region: us-east-1
-  deletionPolicy: Orphan
-  features:
-${featureLines}
 `;
 }
 
@@ -346,9 +242,9 @@ function fixtureFunctionsTemplate(): string {
   return `apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
-  name: function-patch-and-transform
+  name: function-platform
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.2.0
+  package: harbor.7kgroup.org/7khiroba/function-platform:1.0.0
 `;
 }
 
@@ -367,7 +263,7 @@ spec:
   crossplane:
     version: ">=v2.0.0"
   dependsOn:
-    - function: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform
-      version: ">=v0.2.0"
+    - function: harbor.7kgroup.org/7khiroba/function-platform
+      version: ">=v1.0.0"
 `;
 }

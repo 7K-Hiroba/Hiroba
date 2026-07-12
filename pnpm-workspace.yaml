@@ -1,5 +1,0 @@
-packages:
-  - 'packages/*'
-  - 'stacks/*'
-  - 'consumer-sdk/typescript'
-  - 'examples/*'

@@ -5,7 +5,6 @@ export interface ProductDocEntry {
   readonly name: string;
   readonly apiVersion: string;
   readonly kind: string;
-  readonly claimKind: string;
   readonly category: string;
   readonly description: string;
   readonly version: string;
@@ -37,13 +36,13 @@ export function generateProductCatalogDocs(entries: ProductDocEntry[]): string {
   const lines = [
     '# Platform Product Catalog',
     '',
-    '| Product | API Version | Claim Kind | Category | Version | Features | Maintainers |',
-    '|---------|-------------|------------|----------|---------|----------|-------------|',
+    '| Product | API Version | Category | Version | Features | Maintainers |',
+    '|---------|-------------|----------|---------|----------|-------------|',
   ];
 
   for (const e of entries) {
     lines.push(
-      `| ${e.name} | ${e.apiVersion} | ${e.claimKind} | ${e.category} | ${e.version} | ${e.features.join(', ')} | ${e.maintainers.join(', ')} |`,
+      `| ${e.name} | ${e.apiVersion} | ${e.category} | ${e.version} | ${e.features.join(', ')} | ${e.maintainers.join(', ')} |`,
     );
   }
 
@@ -60,7 +59,7 @@ export function generateApiReferenceDoc(manifests: any[]): string {
     lines.push('');
     lines.push(`- Group: ${xrd.spec.group}`);
     lines.push(`- Kind: ${xrd.spec.names.kind}`);
-    lines.push(`- Claim Kind: ${xrd.spec.claimNames?.kind ?? 'N/A'}`);
+    lines.push(`- Scope: ${xrd.spec.scope ?? 'Namespaced'}`);
     lines.push(`- Versions: ${xrd.spec.versions.map((v: any) => v.name).join(', ')}`);
     lines.push('');
   }

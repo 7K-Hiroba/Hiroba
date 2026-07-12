@@ -8,7 +8,6 @@
   },
   "workspaces": [
     "packages/*",
-    "stacks/*",
     "consumer-sdk/typescript",
     "examples/*",
     "tools/*"

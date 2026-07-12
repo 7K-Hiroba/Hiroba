@@ -38,16 +38,8 @@ helm upgrade --install external-secrets external-secrets/external-secrets \
 kubectl wait --for=condition=Established crd clustersecretstores.external-secrets.io --timeout=120s || true
 kubectl apply -f test/fixtures/mock-secret-store.yaml
 
-# Install function-patch-and-transform
-kubectl apply -f - <<EOF
-apiVersion: pkg.crossplane.io/v1beta1
-kind: Function
-metadata:
-  name: function-patch-and-transform
-spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.2.0
-EOF
+# Install the platform orchestrator function (ADR 007).
+# TODO(phase-5): install function-platform from Harbor once the image is published;
+# until then the function must be installed separately for e2e runs.
 
 echo "=== E2E setup complete ==="
-echo "Wait for Function to be Healthy before running tests:"
-echo "  kubectl wait --for=condition=Healthy function.pkg.crossplane.io/function-patch-and-transform --timeout=300s"

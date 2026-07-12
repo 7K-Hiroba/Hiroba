@@ -1,6 +1,6 @@
 {
   "name": "@7k-hiroba/primitives",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Aggregate Crossplane Configuration bundling all platform primitives (PostgresInstance, ObjectBucket).",
   "license": "Apache-2.0",
