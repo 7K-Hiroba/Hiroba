@@ -1,9 +1,9 @@
 {
   "functions/platform": "1.0.1",
-  "packages/primitives": "1.0.0",
+  "packages/primitives": "2.0.0",
   "packages/shared": "2.0.0",
-  "packages/postgres": "2.0.0",
+  "packages/postgres": "3.0.0",
   "packages/object-storage": "3.0.0",
   "tools/create-product": "2.0.0",
-  "consumer-sdk/typescript": "2.0.0"
+  "consumer-sdk/typescript": "3.0.0"
 }
