@@ -27,7 +27,7 @@
     "package": "cp dist/*.yaml package/ && crossplane build configuration package/"
   },
   "dependencies": {
-    "@7k-hiroba/shared": "^2.0.0",
+    "@7k-hiroba/shared": "*",
     "cdk8s": "^2.68.0",
     "constructs": "^10.3.0"
   },
