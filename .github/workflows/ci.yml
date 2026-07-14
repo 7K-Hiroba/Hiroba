@@ -62,7 +62,6 @@ jobs:
     uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@v1
     with:
       path: functions/platform
-      go-version: '1.25.12'
 
   # Build (no push) the function runtime image so Dockerfile drift — e.g. a base
   # image Go version older than go.mod requires — fails on the PR, not at release.
