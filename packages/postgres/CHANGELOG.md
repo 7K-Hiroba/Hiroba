@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/7K-Hiroba/Hiroba/compare/postgres-v3.0.0...postgres-v3.0.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* prevent issues due to release please bumping version but not lockfiiles ([#33](https://github.com/7K-Hiroba/Hiroba/issues/33)) ([53fd922](https://github.com/7K-Hiroba/Hiroba/commit/53fd9221e148aaa77da87200d214ce58d4c67b6d))
+
 ## [3.0.0](https://github.com/7K-Hiroba/Hiroba/compare/postgres-v2.0.0...postgres-v3.0.0) (2026-07-14)
 
 
