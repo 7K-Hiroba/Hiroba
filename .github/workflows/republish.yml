@@ -16,7 +16,6 @@ jobs:
       version: '1.0.1'
       image-name: function-platform
       function-name: function-platform
-      go-version: '1.25'
     secrets:
       HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
       HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
