@@ -1,5 +1,5 @@
 {
-  "functions/platform": "1.0.0",
+  "functions/platform": "1.0.1",
   "packages/primitives": "1.0.0",
   "packages/shared": "2.0.0",
   "packages/postgres": "2.0.0",
