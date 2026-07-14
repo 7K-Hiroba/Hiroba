@@ -172,7 +172,10 @@ echo "=== Building and publishing function-platform (xpkg) ==="
 # packaged as an xpkg and pushed to the local registry.
 docker build -q -t xpkg.crossplane.io/local/function-platform:dev "$REPO/functions/platform" >/dev/null
 docker save xpkg.crossplane.io/local/function-platform:dev -o /tmp/function-platform.tar >/dev/null
+# -e points at a nonexistent dir: the CLI would otherwise default --examples-root
+# to ./examples and fail parsing the cdk8s.yaml configs there.
 crossplane xpkg build -f "$REPO/functions/platform/package" \
+  -e "$REPO/.xpkg-no-examples" \
   --embed-runtime-image-tarball=/tmp/function-platform.tar \
   -o /tmp/function-platform.xpkg >/dev/null
 XPKG_ID=$(docker load -i /tmp/function-platform.xpkg | grep -o 'sha256:[a-f0-9]*' | head -1)
