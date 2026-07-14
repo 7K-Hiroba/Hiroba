@@ -79,6 +79,22 @@ jobs:
           push: false
           load: true
 
+  # Dry-run the full function release (runtime image + xpkg build with embedded
+  # runtime, no push/sign/attest) so packaging drift — e.g. crossplane xpkg build
+  # choking on a non-manifest YAML — fails on the PR, not at release.
+  function-xpkg:
+    needs: detect
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.function == 'true' }}
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    with:
+      path: functions/platform
+      package-path: functions/platform/package
+      version: 0.0.0-ci
+      image-name: function-platform
+      function-name: function-platform
+      go-version: '1.25'
+      dry-run: true
+
   xpkg:
     needs: [detect, cdk8s]
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.primitives == 'true' }}
