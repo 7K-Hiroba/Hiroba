@@ -13,7 +13,7 @@ jobs:
     with:
       path: functions/platform
       package-path: functions/platform/package
-      version: '1.0.0'
+      version: '1.0.1'
       image-name: function-platform
       function-name: function-platform
       go-version: '1.25'
