@@ -10,7 +10,7 @@ The Hiroba catalog needs to support multiple infrastructure backends for the sam
 
 The Inari architecture defines the catalog layout as:
 
-```
+```text
 hiroba-catalog/
 ├── xrd/
 ├── compositions/
@@ -42,5 +42,5 @@ Use provider-per-composition (option 3). Each product XRD remains cloud-agnostic
 
 ## Related
 
-- [ADR 003: Hiroba Framework](../7k-inari/docs/architecture/decisions/ADR-003-hiroba.md)
+- [ADR 003: Hiroba Framework](https://docs.7kgroup.io/inari/architecture/decisions/ADR-003-hiroba/) (Inari docs)
 - [ADR 001: Why Crossplane](./001-why-crossplane.md)

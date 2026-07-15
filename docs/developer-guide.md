@@ -33,7 +33,7 @@ kubectl apply -f dist/obs.k8s.yaml
 
 ## Adding a New Primitive Product
 
-For a step-by-step walkthrough, see the [Usage Guide](usage-guide.md#creating-a-new-primitive-product). In short:
+For a step-by-step walkthrough, see the [Usage Guide](usage-guide.md#creating-a-new-product-package). In short:
 
 1. Use `npx create-platform-product` or create a new package under `packages/<product>/`.
 2. Add `cdk8s.yaml` with required CRD imports.
