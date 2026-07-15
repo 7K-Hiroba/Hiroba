@@ -17,7 +17,7 @@ ships:
 Provider branching, profile defaults, hierarchical composition, and readiness live
 in the Go handlers (`functions/platform/handlers/`), not in Composition files.
 
-```
+```text
 packages/<product>/src/xrd.ts   -> XRD + thin Composition (cdk8s synth)
 functions/platform/handlers/    -> one handler per kind, registered in cmd/main.go
 contract/contract.json          -> single source of truth (ADR 009), codegen to TS + Go
@@ -69,7 +69,7 @@ instance class, HA, backups, and deletion policy per the contract.
 
 ## Repository Layout
 
-```
+```text
 hiroba/
 ├── contract/          # contract.json + codegen
 ├── functions/platform/# Go orchestrator (handlers, registry, provider config)

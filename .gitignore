@@ -11,3 +11,4 @@ coverage/
 *.swo
 *~
 functions/platform/coverage.out
+site/

@@ -1,0 +1,1903 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Hiroba, the 7KGroup platform engineering framework built on Crossplane v2 and CDK8s.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.7kgroup.io/hiroba/usage-guide/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../developer-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Platform Engineering Usage Guide - Hiroba — 7KGroup Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#platform-engineering-usage-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Hiroba — 7KGroup Docs" class="md-header__button md-logo" aria-label="Hiroba — 7KGroup Docs" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Hiroba — 7KGroup Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Platform Engineering Usage Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/7K-Hiroba/Hiroba" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Hiroba — 7KGroup Docs" class="md-nav__button md-logo" aria-label="Hiroba — 7KGroup Docs" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    Hiroba — 7KGroup Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/7K-Hiroba/Hiroba" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform Engineering Usage Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform Engineering Usage Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bootstrap-a-local-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Bootstrap a local cluster
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-product-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install product APIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-develop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Develop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-existing-platform-products" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Existing Platform Products
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Existing Platform Products">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-kubectl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With kubectl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-the-typescript-consumer-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With the TypeScript Consumer SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-new-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-new-product-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Product Package
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a New Product Package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-scaffold-the-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Scaffold the package
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-define-the-xrd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Define the XRD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-emit-the-thin-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Emit the thin Composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-implement-the-go-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Implement the Go handler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-update-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Update the contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation and Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation and Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-render-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local render validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-to-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy to Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#live-e2e-on-kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live e2e on kind
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions (ADRs)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/001-why-crossplane/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 001: Why Crossplane
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/002-why-cdk8s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 002: Why CDK8s
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/003-secret-management-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 003: Secret Management Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/004-claims-vs-xrs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 004: Claims vs XRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/005-feature-toggle-pattern/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 005: Feature Toggle Pattern
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/006-multi-provider-compositions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 006: Multi-Provider Compositions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/007-orchestrator-function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 007: Central Orchestrator Function &amp; Crossplane v2-Only
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/008-stack-composition-in-orchestrator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 008: Product Stacks Compose Inside the Orchestrator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/009-contract-codegen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 009: Contract Codegen From a Single JSON Source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbooks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Runbooks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/adding-a-new-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding a New Provider to a Hiroba Product
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/debugging-stuck-xr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging a Stuck XR
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/manual-resource-cleanup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual Resource Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/rotating-provider-credentials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotating Provider Credentials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/upgrading-composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading a Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://7kgroup.org" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7KGroup ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bootstrap-a-local-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Bootstrap a local cluster
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-product-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install product APIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-develop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Develop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-existing-platform-products" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Existing Platform Products
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Existing Platform Products">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-kubectl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With kubectl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-the-typescript-consumer-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With the TypeScript Consumer SDK
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-new-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-new-product-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Product Package
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a New Product Package">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-scaffold-the-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Scaffold the package
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-define-the-xrd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Define the XRD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-emit-the-thin-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Emit the thin Composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-implement-the-go-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Implement the Go handler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-update-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Update the contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation and Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation and Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-render-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local render validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-to-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy to Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#live-e2e-on-kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live e2e on kind
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="platform-engineering-usage-guide">Platform Engineering Usage Guide<a class="headerlink" href="#platform-engineering-usage-guide" title="Permanent link">&para;</a></h1>
+<p>This guide explains how to consume platform products, create new applications, and
+build new products on the orchestrator architecture (ADR 007).</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#concepts">Concepts</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#using-existing-platform-products">Using Existing Platform Products</a></li>
+<li><a href="#creating-a-new-application">Creating a New Application</a></li>
+<li><a href="#creating-a-new-product-package">Creating a New Product Package</a></li>
+<li><a href="#validation-and-deployment">Validation and Deployment</a></li>
+<li><a href="#testing-patterns">Testing Patterns</a></li>
+</ol>
+<h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
+<p>Infrastructure is modeled as <strong>platform products</strong> that teams request as namespaced
+Kubernetes resources (Crossplane v2 XRs — there is no separate Claim model).</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Primitive Product</strong></td>
+<td>A single reusable infrastructure abstraction (<code>PostgresInstance</code>, <code>ObjectBucket</code>).</td>
+</tr>
+<tr>
+<td><strong>Stack</strong></td>
+<td>A composite product orchestrating multiple children (<code>ObservabilityStack</code>).</td>
+</tr>
+<tr>
+<td><strong>XR</strong></td>
+<td>The namespaced composite resource a developer creates to request a product.</td>
+</tr>
+<tr>
+<td><strong>XRD</strong></td>
+<td>CompositeResourceDefinition (<code>apiextensions.crossplane.io/v2</code>). Defines the XR schema.</td>
+</tr>
+<tr>
+<td><strong>Composition</strong></td>
+<td>Thin Pipeline composition delegating to the orchestrator function.</td>
+</tr>
+<tr>
+<td><strong>Orchestrator</strong></td>
+<td><code>function-platform</code>: the Go composition function that reconciles every kind.</td>
+</tr>
+<tr>
+<td><strong>Profile</strong></td>
+<td>Environment tier: <code>development</code>, <code>staging</code>, or <code>production</code>. Drives contract defaults.</td>
+</tr>
+<tr>
+<td><strong>Feature Toggle</strong></td>
+<td>Optional capability under <code>spec.features.&lt;name&gt;.enabled</code> (e.g. HA, backups).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="1-bootstrap-a-local-cluster">1. Bootstrap a local cluster<a class="headerlink" href="#1-bootstrap-a-local-cluster" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>scripts/e2e-setup.sh<span class="w"> </span>platform-e2e<span class="w">        </span><span class="c1"># Crossplane, providers, ESO, CNPG, provider-helm, function-platform</span>
+scripts/team-setup.sh<span class="w"> </span>team-api<span class="w">           </span><span class="c1"># per-team namespace + helm ProviderConfig + RoleBinding</span>
+</code></pre></div>
+<h3 id="2-install-product-apis">2. Install product APIs<a class="headerlink" href="#2-install-product-apis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>--context<span class="w"> </span>kind-platform-e2e<span class="w"> </span>apply<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-f<span class="w"> </span>packages/postgres/dist/xrd.k8s.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-f<span class="w"> </span>packages/postgres/dist/composition.k8s.yaml
+</code></pre></div>
+<h3 id="3-develop">3. Develop<a class="headerlink" href="#3-develop" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/pre-push-checks.sh<span class="w">   </span><span class="c1"># contract check, lint, build, tests, synth, validate, go vet/test -race</span>
+npm<span class="w"> </span>run<span class="w"> </span>gen:contract<span class="w">              </span><span class="c1"># regenerate TS + Go after editing contract/contract.json</span>
+</code></pre></div>
+<h2 id="using-existing-platform-products">Using Existing Platform Products<a class="headerlink" href="#using-existing-platform-products" title="Permanent link">&para;</a></h2>
+<h3 id="with-kubectl">With kubectl<a class="headerlink" href="#with-kubectl" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform.7kgroup.org/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PostgresInstance</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">team-api-db</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">team-api</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">team</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">team-api</span>
+<span class="w">  </span><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">development</span>
+<span class="w">  </span><span class="nt">costCenter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cc-12345</span>
+<span class="w">  </span><span class="nt">features</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ha</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>Status is the contract (Crossplane v2 has no XR connection secrets):</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>team-api<span class="w"> </span>get<span class="w"> </span>postgresinstance<span class="w"> </span>team-api-db<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.endpoint}{&quot;\n&quot;}{.status.phase}{&quot;\n&quot;}{.status.connectionSecretRef.name}{&quot;\n&quot;}&#39;</span>
+<span class="c1"># team-api-db-pg-rw.team-api.svc:5432</span>
+<span class="c1"># Ready</span>
+<span class="c1"># team-api-db-pg-app          &lt;- CNPG operator secret (keys: username, password, dbname, host, port, uri)</span>
+</code></pre></div>
+<h3 id="with-the-typescript-consumer-sdk">With the TypeScript Consumer SDK<a class="headerlink" href="#with-the-typescript-consumer-sdk" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;cdk8s&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">TeamObservability</span><span class="p">,</span><span class="w"> </span><span class="nx">PostgresInstance</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@7k-hiroba/platform-consumer&#39;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">App</span><span class="p">({</span><span class="w"> </span><span class="nx">outdir</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;dist&#39;</span><span class="w"> </span><span class="p">});</span>
+
+<span class="ow">new</span><span class="w"> </span><span class="nx">PostgresInstance</span><span class="p">(</span><span class="nx">app</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;db&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api-db&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">namespace</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">team</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">profile</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;development&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">costCenter</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;cc-12345&#39;</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="ow">new</span><span class="w"> </span><span class="nx">TeamObservability</span><span class="p">(</span><span class="nx">app</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;obs&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api-obs&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">namespace</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">team</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;team-api&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">profile</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;development&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="kr">module</span><span class="nx">s</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">grafana</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">enabled</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span><span class="w"> </span><span class="nx">domain</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;grafana.team-api.example.com&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">loki</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">enabled</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">metrics</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">enabled</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span><span class="w"> </span><span class="nx">backend</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;prometheus&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">alloy</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">enabled</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">synth</span><span class="p">();</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>ts-node<span class="w"> </span>src/main.ts<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>dist/
+</code></pre></div>
+<p>For products without a dedicated construct, use the generic <code>PlatformXr</code> construct
+from the SDK.</p>
+<h2 id="creating-a-new-application">Creating a New Application<a class="headerlink" href="#creating-a-new-application" title="Permanent link">&para;</a></h2>
+<p>An application repository consumes products through the SDK:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>examples/my-service<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>examples/my-service
+npm<span class="w"> </span>init<span class="w"> </span>-y
+npm<span class="w"> </span>install<span class="w"> </span>cdk8s<span class="w"> </span>@7k-hiroba/platform-consumer<span class="w"> </span>ts-node<span class="w"> </span>typescript
+</code></pre></div>
+<p>Write <code>src/main.ts</code> (see the SDK example above), then:</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>ts-node<span class="w"> </span>src/main.ts
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>dist/
+</code></pre></div>
+<h2 id="creating-a-new-product-package">Creating a New Product Package<a class="headerlink" href="#creating-a-new-product-package" title="Permanent link">&para;</a></h2>
+<p>Products ship an XRD + thin Composition from a cdk8s package, plus a Go handler in
+the orchestrator.</p>
+<h3 id="1-scaffold-the-package">1. Scaffold the package<a class="headerlink" href="#1-scaffold-the-package" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>create-platform-product<span class="w"> </span>--name<span class="w"> </span>redis<span class="w"> </span>--category<span class="w"> </span>database
+</code></pre></div>
+<h3 id="2-define-the-xrd">2. Define the XRD<a class="headerlink" href="#2-define-the-xrd" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Chart</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;cdk8s&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Construct</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;constructs&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createPlatformXrd</span><span class="p">,</span><span class="w"> </span><span class="nx">createBaseSchema</span><span class="p">,</span><span class="w"> </span><span class="nx">API_GROUP</span><span class="p">,</span><span class="w"> </span><span class="nx">API_VERSION</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@7k-hiroba/shared&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">RedisInstanceXrd</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Chart</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">scope</span><span class="o">:</span><span class="w"> </span><span class="kt">Construct</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">super</span><span class="p">(</span><span class="nx">scope</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">createPlatformXrd</span><span class="p">(</span>
+<span class="w">      </span><span class="k">this</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;xrd&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">group</span><span class="o">:</span><span class="w"> </span><span class="kt">API_GROUP</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="kt">API_VERSION</span><span class="p">,</span><span class="w"> </span><span class="c1">// v1alpha1</span>
+<span class="w">        </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;RedisInstance&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">plural</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;redisinstances&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">singular</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;redisinstance&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">scope</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Namespaced&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span><span class="nx">createBaseSchema</span><span class="p">(),</span>
+<span class="w">        </span><span class="nx">provider</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="p">,</span><span class="w"> </span><span class="kd">enum</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;aws&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;incluster&#39;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;team&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;costCenter&#39;</span><span class="p">],</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Schema rules imposed by the v2 XRD -&gt; CRD converter:</p>
+<ul>
+<li>no <code>connectionSecretKeys</code> (XR connection secrets do not exist in v2);</li>
+<li>no <code>additionalProperties</code> combined with <code>properties</code> on nested object fields —
+  keep nested objects either structural (<code>properties</code> only) or free-form.</li>
+</ul>
+<h3 id="3-emit-the-thin-composition">3. Emit the thin Composition<a class="headerlink" href="#3-emit-the-thin-composition" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createOrchestratedComposition</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@7k-hiroba/shared&#39;</span><span class="p">;</span>
+<span class="c1">// one Pipeline step invoking function-platform; no composition logic in TS</span>
+</code></pre></div>
+<h3 id="4-implement-the-go-handler">4. Implement the Go handler<a class="headerlink" href="#4-implement-the-go-handler" title="Permanent link">&para;</a></h3>
+<p>Add <code>functions/platform/handlers/redis.go</code>:</p>
+<ul>
+<li>read the observed XR (<code>hc.OXR</code>), resolve provider
+  (<code>spec.provider</code> &gt; <code>PLATFORM_DEFAULT_*</code> env &gt; contract default);</li>
+<li>emit desired composed resources with deterministic names;</li>
+<li>set explicit readiness: <code>platform.MarkReady(res, hc, name)</code>;</li>
+<li>publish <code>status.phase</code> / <code>status.endpoint</code> / <code>status.connectionSecretRef</code>;</li>
+<li>for Helm workloads use the namespaced <code>helm.m.crossplane.io/v1beta1</code> Release API
+  and <code>platform.ResolveProviderConfig(oxr, "helm")</code> (<code>&lt;team&gt;-helm</code>);</li>
+<li>wire children from <strong>observed child <code>status</code></strong> — never from connection details
+  (v2 drops XR-level connection secrets).</li>
+</ul>
+<p>Register the handler in <code>cmd/main.go</code> and add tests in <code>handlers/handlers_test.go</code>.</p>
+<h3 id="5-update-the-contract">5. Update the contract<a class="headerlink" href="#5-update-the-contract" title="Permanent link">&para;</a></h3>
+<p>Add the product to <code>contract/contract.json</code> (kind, plural, providers, profiles,
+connection keys) and declare its operator dependencies so missing operators fail
+fast with an actionable error:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;RedisInstance&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;*&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nt">&quot;crd&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;releases.helm.m.crossplane.io&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;hint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;install provider-helm&quot;</span><span class="w"> </span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">&quot;aws&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nt">&quot;crd&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;instances.elasticache.aws.m.upbound.io&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;hint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;install provider-aws-elasticache&quot;</span><span class="w"> </span><span class="p">}]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Run <code>npm run gen:contract</code>. The <code>--check</code> gate in <code>scripts/pre-push-checks.sh</code>
+enforces freshness.</p>
+<h2 id="validation-and-deployment">Validation and Deployment<a class="headerlink" href="#validation-and-deployment" title="Permanent link">&para;</a></h2>
+<h3 id="local-render-validation">Local render validation<a class="headerlink" href="#local-render-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nv">HIROBA_ROOT</span><span class="o">=</span><span class="nv">$PWD</span><span class="w"> </span>bash<span class="w"> </span>scripts/render-validate.sh<span class="w"> </span>packages/postgres
+</code></pre></div>
+<h3 id="deploy-to-kubernetes">Deploy to Kubernetes<a class="headerlink" href="#deploy-to-kubernetes" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>packages/postgres/dist/xrd.k8s.yaml
+kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>packages/postgres/dist/composition.k8s.yaml
+</code></pre></div>
+<p>For Helm-backed products, each team namespace needs (created by
+<code>scripts/team-setup.sh</code>): a namespaced <code>ProviderConfig</code> <code>&lt;team&gt;-helm</code>
+(<code>helm.m.crossplane.io/v1beta1</code>) and a RoleBinding granting the provider-helm
+service account <code>admin</code> in the namespace.</p>
+<h3 id="live-e2e-on-kind">Live e2e on kind<a class="headerlink" href="#live-e2e-on-kind" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>scripts/e2e-setup.sh<span class="w"> </span>platform-e2e
+scripts/team-setup.sh<span class="w"> </span>team-api
+<span class="c1"># apply XRDs/Compositions, create an XR, assert Ready + status.endpoint</span>
+</code></pre></div>
+<h2 id="testing-patterns">Testing Patterns<a class="headerlink" href="#testing-patterns" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>TS packages</strong>: synthesize the chart and assert the XRD/Composition shape
+  (<code>Testing.synth</code>). See <code>packages/postgres/test/unit/snapshot.test.ts</code>.</li>
+<li><strong>Go handlers</strong>: table tests building a <code>HandlerContext</code> with observed composed
+  resources; assert desired resources, readiness, and status. See
+  <code>functions/platform/handlers/handlers_test.go</code>.</li>
+<li><strong>Render</strong>: <code>scripts/render-validate.sh</code> runs <code>crossplane composition render</code>
+  against fixtures.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>test:unit<span class="w"> </span>--workspace<span class="o">=</span>@7k-hiroba/postgres
+<span class="o">(</span><span class="nb">cd</span><span class="w"> </span>functions/platform<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./...<span class="o">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "navigation.indexes", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

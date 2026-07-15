@@ -8,16 +8,19 @@
 ## Steps
 
 1. **Describe the claim**:
+
    ```bash
    kubectl describe <claim-kind> <name> -n <namespace>
    ```
 
 2. **Describe the XR**:
+
    ```bash
    kubectl describe <xr-kind> <name>
    ```
 
 3. **Check events**:
+
    ```bash
    kubectl get events --field-selector involvedObject.name=<xr-name>
    ```
@@ -29,6 +32,7 @@
    - Missing secrets referenced by ExternalSecret
 
 5. **Render locally**:
+
    ```bash
    cd packages/<product>
    npm run validate
