@@ -74,6 +74,7 @@ spec:
           deletionPolicy: ${schema.spec.deletionPolicy}
           provider: ${schema.spec.storage.provider}
           region: ${schema.spec.storage.region}
+          bucket: ${schema.metadata.name}-loki
           clusterRef:
             name: ${schema.spec.storage.clusterName}
             namespace: ${schema.spec.storage.clusterNamespace}
@@ -153,6 +154,7 @@ spec:
           deletionPolicy: ${schema.spec.deletionPolicy}
           provider: ${schema.spec.storage.provider}
           region: ${schema.spec.storage.region}
+          bucket: ${schema.metadata.name}-mimir
           clusterRef:
             name: ${schema.spec.storage.clusterName}
             namespace: ${schema.spec.storage.clusterNamespace}

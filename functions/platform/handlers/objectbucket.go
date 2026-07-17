@@ -98,6 +98,7 @@ func bucketGarage(hc *platform.HandlerContext) (*platform.Result, error) {
 	bucketObj.SetName(bucketResourceName)
 	bucketObj.SetNamespace(ns)
 	o := bucketObj.Object
+	_ = unstructured.SetNestedField(o, bucket, "spec", "globalAlias")
 	_ = unstructured.SetNestedField(o, map[string]any{"name": clusterRef, "namespace": clusterNs}, "spec", "clusterRef")
 	platform.LabelOwnership(o, oxr)
 
