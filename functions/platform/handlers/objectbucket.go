@@ -119,7 +119,7 @@ func bucketGarage(hc *platform.HandlerContext) (*platform.Result, error) {
 	}, "spec", "bucketPermissions")
 	_ = unstructured.SetNestedField(ko, map[string]any{
 		"name":               credsSecret,
-		"accessKeyIDKey":     "accessKeyId",
+		"accessKeyIdKey":     "accessKeyId",
 		"secretAccessKeyKey": "secretAccessKey",
 		"endpointKey":        "endpoint",
 		"regionKey":          "region",
