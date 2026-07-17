@@ -44,7 +44,7 @@ var ObjectStorageProviders = []string{"s3", "garage"}
 const ObjectStorageDefaultProvider = "garage"
 const ObjectStorageDefaultRegion = "us-east-1"
 
-var ObjectStorageConnectionKeys = []string{"endpoint", "bucket", "region", "accessKeyId", "secretAccessKey", "uri"}
+var ObjectStorageConnectionKeys = []string{"endpoint", "bucket", "region", "uri"}
 
 // ProductByKind maps an XR kind to its contract product key.
 var ProductByKind = map[string]string{
@@ -72,23 +72,8 @@ var Dependencies = map[string]map[string][]Dependency{
 		"aws":  {{CRD: "instances.rds.aws.m.upbound.io", Hint: "install provider-aws-rds: kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml"}},
 	},
 	"ObjectBucket": {
-		"garage": {{CRD: "garagebuckets.garage.rajsingh.info", Hint: "install the Garage operator (garage.rajsingh.info)"}},
+		"garage": {{CRD: "garagebuckets.garage.rajsingh.info", Hint: "install the Garage operator (garage.rajsingh.info)"}, {CRD: "garagekeys.garage.rajsingh.info", Hint: "install the Garage operator (garage.rajsingh.info)"}},
 		"s3":     {{CRD: "buckets.s3.aws.m.upbound.io", Hint: "install provider-aws-s3: kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml"}},
-	},
-	"GrafanaInstance": {
-		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh) and a namespaced <team>-helm ProviderConfig (scripts/team-setup.sh)"}},
-	},
-	"LokiInstance": {
-		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
-	},
-	"PrometheusInstance": {
-		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
-	},
-	"MimirInstance": {
-		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
-	},
-	"AlloyInstance": {
-		"*": {{CRD: "releases.helm.m.crossplane.io", Hint: "install provider-helm (Hiroba scripts/e2e-setup.sh)"}},
 	},
 }
 

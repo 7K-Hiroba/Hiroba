@@ -1,3 +1,48 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Group platform control-plane Helm charts",
+      "groupName": "platform control-plane charts",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["crossplane", "external-secrets", "cloudnative-pg"]
+    },
+    {
+      "description": "Group observability Helm charts",
+      "groupName": "observability charts",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["grafana", "loki-distributed", "mimir-distributed", "prometheus", "alloy"]
+    },
+    {
+      "description": "Group KRO and ArgoCD",
+      "groupName": "KRO and ArgoCD",
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["registry.k8s.io/kro/charts/kro", "argo-cd"]
+    },
+    {
+      "description": "Auto-merge patch updates for GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Update KRO version in e2e script",
+      "customType": "regex",
+      "fileMatch": ["^scripts/e2e-observability-stacks\\.sh$"],
+      "matchStrings": ["KRO_VERSION=\"\\$\\{KRO_VERSION:-(?<currentValue>[^}]+)\\}\""],
+      "depNameTemplate": "kro",
+      "datasourceTemplate": "helm",
+      "packageNameTemplate": "registry.k8s.io/kro/charts/kro"
+    },
+    {
+      "description": "Update ArgoCD version in e2e script",
+      "customType": "regex",
+      "fileMatch": ["^scripts/e2e-observability-stacks\\.sh$"],
+      "matchStrings": ["ARGOCD_VERSION=\"\\$\\{ARGOCD_VERSION:-(?<currentValue>[^}]+)\\}\""],
+      "depNameTemplate": "argo-cd",
+      "datasourceTemplate": "helm"
+    }
+  ]
 }

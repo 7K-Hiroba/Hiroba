@@ -1,4 +1,4 @@
-.PHONY: install lint test build synth validate package publish clean e2e-setup test-e2e
+.PHONY: install lint test build synth validate package publish clean e2e-setup test-e2e test-e2e-observability
 
 install:
 	npm install
@@ -33,3 +33,7 @@ e2e-setup:
 
 test-e2e: e2e-setup
 	npm run test:e2e
+
+test-e2e-observability: e2e-setup
+	./scripts/e2e-observability-stacks.sh
+

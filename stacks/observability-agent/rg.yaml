@@ -1,0 +1,118 @@
+# ObservabilityAgent — KRO ResourceGraphDefinition
+#
+# Deploys a pre-configured Grafana Alloy agent in a client cluster that pushes
+# logs/metrics to a remote observability stack (e.g. the management-plane
+# ObservabilityStack running in a different Kubernetes cluster).
+#
+# Requirements:
+#   - KRO >= 0.9 installed in the client cluster
+#   - ArgoCD >= 2.6 with application.namespaces enabled
+#   - A reachable logs/metrics endpoint on the remote stack
+#   - mTLS secret mounted at /etc/alloy/certs (platform-provided)
+#
+# Fast lane: per-client overrides live in the overrides git repo at
+#   clients/<team>/observability/alloy-agent.yaml
+#
+# Config pattern: the River config is generated into a dedicated ConfigMap owned
+# by this RGD. The Alloy Helm chart references that ConfigMap instead of
+# carrying the config as an inline Helm value.
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: observabilityagent.platform.7kgroup.org
+  labels:
+    platform.7kgroup.org/managed-by: kro
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: ObservabilityAgent
+    group: platform.7kgroup.org
+    scope: Namespaced
+    spec:
+      profile: string | required=true enum="development,staging,production"
+      team: string | required=true
+      costCenter: string | required=true
+      logsEndpoint: string | required=true
+      metricsEndpoint: string | required=true
+      tenantId: string | default=""
+      mtls:
+        certSecretName: string | default="alloy-mtls"
+      modules:
+        logs: boolean | default=true
+        metrics: boolean | default=true
+      overrides:
+        repoURL: string | default="https://github.com/7kgroup/7k-inari.git"
+        path: string | default=""
+        revision: string | default="HEAD"
+      chartVersion: string | default="0.6.1"
+
+  resources:
+    # ---------------------------------------------------------------------------
+    # Alloy River config — generated into a ConfigMap so the Helm chart can
+    # reference it instead of inlining a large CEL string in valuesObject.
+    # ---------------------------------------------------------------------------
+    - id: riverConfig
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${schema.metadata.name}-river-config
+          namespace: ${schema.metadata.namespace}
+        data:
+          config.alloy: |-
+            ${[
+              schema.spec.modules.metrics ?
+                "prometheus.scrape \"kubernetes\" {\n  kubernetes_sd_configs {\n    role = \"pod\"\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}\n\nprometheus.remote_write \"mgmt\" {\n  endpoint {\n    name = \"metrics\"\n    url = \"" + schema.spec.metricsEndpoint + "\"\n    headers = {\n      \"X-Scope-OrgID\" = \"" + (schema.spec.tenantId != "" ? schema.spec.tenantId : schema.spec.team) + "\"\n    }\n    tls_config {\n      cert_file = \"/etc/alloy/certs/tls.crt\"\n      key_file = \"/etc/alloy/certs/tls.key\"\n    }\n  }\n}" : "",
+              schema.spec.modules.logs ?
+                "loki.source.kubernetes \"pods\" {\n  forward_to = [loki.write.mgmt.receiver]\n}\n\nloki.source.kubernetes_events \"events\" {\n  forward_to = [loki.write.mgmt.receiver]\n}\n\nloki.write \"mgmt\" {\n  endpoint {\n    name = \"logs\"\n    url = \"" + schema.spec.logsEndpoint + "\"\n    headers = {\n      \"X-Scope-OrgID\" = \"" + (schema.spec.tenantId != "" ? schema.spec.tenantId : schema.spec.team) + "\"\n    }\n    tls_config {\n      cert_file = \"/etc/alloy/certs/tls.crt\"\n      key_file = \"/etc/alloy/certs/tls.key\"\n    }\n  }\n}" : ""
+            ].join("\n\n")}
+
+    # ---------------------------------------------------------------------------
+    # Alloy ArgoCD Application
+    # ---------------------------------------------------------------------------
+    - id: alloyAgentApp
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: alloy
+              targetRevision: ${schema.spec.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/alloy-agent.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}
+                  volumes:
+                    - name: mtls-certs
+                      secret:
+                        secretName: ${schema.spec.mtls.certSecretName}
+                  volumeMounts:
+                    - name: mtls-certs
+                      mountPath: /etc/alloy/certs
+                      readOnly: true
+                  alloy:
+                    configMap:
+                      create: false
+                      name: ${riverConfig.metadata.name}
+                    mounts:
+                      varlog: ${schema.spec.modules.logs}
+                      dockercontainers: ${schema.spec.modules.logs}
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true

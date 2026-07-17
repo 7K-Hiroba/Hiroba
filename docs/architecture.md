@@ -30,13 +30,18 @@ Primitives (this repo):
 - **PostgresInstance**: `spec.provider`: `cnpg` (CloudNativePG, default) or `aws` (RDS).
 - **ObjectBucket**: `spec.provider`: `garage` (default) or `aws` (S3).
 
-Observability (consumer repo, ADR 008):
+Observability (consumer repo, ADR 010):
 
-- **GrafanaInstance**, **LokiInstance**, **PrometheusInstance**, **MimirInstance**,
-  **AlloyInstance**: thin XRDs reconciled by orchestrator handlers that emit
-  provider-helm Releases (namespaced `helm.m.crossplane.io` API).
-- **ObservabilityStack**: emits child XRs per enabled module, wires Grafana
-  datasources from observed child status, and is Ready when all children are Ready.
+- **ObservabilityStack**: KRO `ResourceGraphDefinition` that consumes
+  `PostgresInstance` and `ObjectBucket` primitives and emits ArgoCD Applications
+  for Grafana, Loki, Mimir/Prometheus, and in-cluster Alloy.
+- **ObservabilityAgent**: KRO `ResourceGraphDefinition` that deploys a remote
+  Grafana Alloy agent in a client cluster, pushing logs/metrics to a
+  management-plane stack over mTLS with `X-Scope-OrgID` tenancy.
+
+Stacks are GitOps-managed: ArgoCD syncs the Helm charts, and per-client value
+overrides live in the consumer repo. Primitives remain reconciled by the
+orchestrator.
 
 ## Crossplane v2 Contract Notes
 
@@ -74,6 +79,7 @@ hiroba/
 ├── contract/          # contract.json + codegen
 ├── functions/platform/# Go orchestrator (handlers, registry, provider config)
 ├── packages/          # shared lib + primitives (XRDs via cdk8s)
+├── stacks/            # KRO ResourceGraphDefinitions for product stacks
 ├── consumer-sdk/      # Developer-facing typed constructs
 ├── infrastructure/    # Control-plane manifests (providers)
 ├── scripts/           # e2e-setup.sh, team-setup.sh, render-validate.sh

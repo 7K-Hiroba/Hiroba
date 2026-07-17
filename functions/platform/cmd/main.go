@@ -40,12 +40,6 @@ func main() {
 	reg := platform.NewRegistry()
 	reg.Register(contract.APIGroupVersion, "PostgresInstance", handlers.Postgres)
 	reg.Register(contract.APIGroupVersion, "ObjectBucket", handlers.ObjectBucket)
-	reg.Register(contract.APIGroupVersion, "GrafanaInstance", handlers.Grafana)
-	reg.Register(contract.APIGroupVersion, "LokiInstance", handlers.Loki)
-	reg.Register(contract.APIGroupVersion, "PrometheusInstance", handlers.Prometheus)
-	reg.Register(contract.APIGroupVersion, "MimirInstance", handlers.Mimir)
-	reg.Register(contract.APIGroupVersion, "AlloyInstance", handlers.Alloy)
-	reg.Register(contract.APIGroupVersion, "ObservabilityStack", handlers.ObservabilityStack)
 
 	cfg := platform.Config{
 		DefaultProviders: map[string]string{

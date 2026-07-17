@@ -20,6 +20,9 @@ npm run synth --if-present
 echo "== cdk8s: validate =="
 npm run validate --if-present
 
+echo "== stacks: validate RGDs =="
+bash scripts/validate-stacks.sh
+
 echo "== go function: build =="
 (cd functions/platform && go build ./...)
 

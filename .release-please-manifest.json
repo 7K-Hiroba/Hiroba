@@ -1,6 +1,7 @@
 {
   "functions/platform": "1.0.1",
   "packages/primitives": "2.0.0",
+  "stacks": "1.0.0",
   "packages/shared": "3.0.0",
   "packages/postgres": "3.0.1",
   "packages/object-storage": "3.0.1",
