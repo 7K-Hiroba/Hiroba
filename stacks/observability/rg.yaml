@@ -32,6 +32,8 @@ spec:
       storage:
         provider: string | default="garage" enum="s3,garage"
         region: string | default="us-east-1"
+        clusterName: string | default="garage"
+        clusterNamespace: string | default="garage"
       overrides:
         repoURL: string | default="https://github.com/7kgroup/7k-inari.git"
         path: string | default=""
@@ -72,6 +74,9 @@ spec:
           deletionPolicy: ${schema.spec.deletionPolicy}
           provider: ${schema.spec.storage.provider}
           region: ${schema.spec.storage.region}
+          clusterRef:
+            name: ${schema.spec.storage.clusterName}
+            namespace: ${schema.spec.storage.clusterNamespace}
 
     - id: lokiApp
       includeWhen:
@@ -148,6 +153,9 @@ spec:
           deletionPolicy: ${schema.spec.deletionPolicy}
           provider: ${schema.spec.storage.provider}
           region: ${schema.spec.storage.region}
+          clusterRef:
+            name: ${schema.spec.storage.clusterName}
+            namespace: ${schema.spec.storage.clusterNamespace}
 
     - id: mimirApp
       includeWhen:
