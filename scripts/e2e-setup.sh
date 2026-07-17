@@ -5,7 +5,8 @@
 # the CNPG operator, provider-helm, and the function-platform orchestrator
 # built from source and served from a local OCI registry on the kind network.
 #
-# Prerequisites: kind, kubectl, helm, docker, go, crossplane CLI.
+# Prerequisites: kind, kubectl, helm, docker, go.
+# The crossplane CLI (crank) is installed automatically if missing.
 # Usage: scripts/e2e-setup.sh [kind-cluster-name]
 set -euo pipefail
 
@@ -166,6 +167,15 @@ server = \"http://${REG_IP}:5000\"
   capabilities = [\"pull\", \"resolve\", \"push\"]
   skip_verify = true
 EOF"
+
+if ! command -v crossplane >/dev/null 2>&1; then
+  echo "=== Installing crossplane CLI (crank) ==="
+  CROSSPLANE_CLI_VERSION="v2.3.3"
+  curl -sL "https://releases.crossplane.io/stable/${CROSSPLANE_CLI_VERSION}/bin/linux_amd64/crank" -o /tmp/crossplane
+  chmod +x /tmp/crossplane
+  sudo mv /tmp/crossplane /usr/local/bin/crossplane 2>/dev/null || mv /tmp/crossplane "${HOME}/.local/bin/crossplane"
+  command -v crossplane >/dev/null 2>&1 || export PATH="${HOME}/.local/bin:${PATH}"
+fi
 
 echo "=== Building and publishing function-platform (xpkg) ==="
 # Crossplane's package cache cannot use kind-loaded images, so the function is
