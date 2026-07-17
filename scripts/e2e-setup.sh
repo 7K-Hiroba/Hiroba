@@ -190,7 +190,10 @@ crossplane xpkg build -f "$REPO/functions/platform/package" \
   -o /tmp/function-platform.xpkg >/dev/null
 XPKG_ID=$(docker load -i /tmp/function-platform.xpkg | grep -o 'sha256:[a-f0-9]*' | head -1)
 docker tag "${XPKG_ID}" localhost:5000/function-platform:dev
-docker push -q localhost:5000/function-platform:dev >/dev/null
+# Resolve the registry manifest digest from the push output. With the classic
+# docker image store the image ID is the *config* digest, which the registry
+# cannot serve as a manifest (the function pod then ImagePullBackOffs).
+XPKG_DIGEST=$(docker push localhost:5000/function-platform:dev | grep -oE 'sha256:[a-f0-9]{64}' | tail -1)
 rm -f /tmp/function-platform.tar /tmp/function-platform.xpkg
 
 kubectl --context "${CTX}" apply -f - <<EOF
@@ -199,9 +202,15 @@ kind: Function
 metadata:
   name: function-platform
 spec:
-  package: ${REG_IP}:5000/function-platform@${XPKG_ID}
+  package: ${REG_IP}:5000/function-platform@${XPKG_DIGEST}
 EOF
-kubectl --context "${CTX}" wait --for=condition=Healthy function.pkg.crossplane.io/function-platform --timeout=300s
+if ! kubectl --context "${CTX}" wait --for=condition=Healthy function.pkg.crossplane.io/function-platform --timeout=300s; then
+  echo "!!! function-platform did not become Healthy; diagnostics:" >&2
+  kubectl --context "${CTX}" describe function.pkg.crossplane.io/function-platform >&2 || true
+  kubectl --context "${CTX}" get pods -n crossplane-system >&2 || true
+  kubectl --context "${CTX}" describe pods -n crossplane-system -l pkg.crossplane.io/function=function-platform >&2 || true
+  exit 1
+fi
 
 
 echo "=== Granting function-platform CRD read access (dependency gate) ==="
