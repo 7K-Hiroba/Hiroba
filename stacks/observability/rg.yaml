@@ -35,7 +35,7 @@ spec:
         clusterName: string | default="garage"
         clusterNamespace: string | default="garage"
       overrides:
-        repoURL: string | default="https://github.com/7kgroup/7k-inari.git"
+        repoURL: string | default="https://github.com/7k-group/7k-app-of-apps.git"
         path: string | default=""
         revision: string | default="HEAD"
       modules:
