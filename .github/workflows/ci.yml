@@ -140,6 +140,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - run: npm ci
       - uses: actions/setup-go@v5
         with:
           go-version-file: functions/platform/go.mod
