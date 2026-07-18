@@ -11,6 +11,11 @@ import (
 	"github.com/7k-hiroba/hiroba/functions/platform/internal/contract"
 )
 
+const (
+	garageAPIVersion = "garage.rajsingh.info/v1beta1"
+	garageS3Port     = 3900
+)
+
 // ObjectBucket handles kind=ObjectBucket, switching on spec.provider.
 // Precedence for provider selection: spec.provider > platform config default >
 // contract default (garage).
@@ -54,13 +59,15 @@ func bucketS3(hc *platform.HandlerContext) (*platform.Result, error) {
 	platform.TagOwnership(o, oxr)
 
 	endpoint := fmt.Sprintf("https://s3.%s.amazonaws.com", region)
+	credsSecret := platform.Team(oxr) + "-s3-credentials"
 	return &platform.Result{
 		Desired: platform.Desired{
 			resource.Name("bucket"): {Resource: cd},
 		},
 		Status: map[string]any{
-			"phase":    "Ready",
-			"endpoint": endpoint,
+			"phase":                "Ready",
+			"endpoint":             endpoint,
+			"credentialsSecretRef": map[string]any{"name": credsSecret},
 		},
 		ConnectionDetails: resource.ConnectionDetails{
 			"endpoint": []byte(endpoint),
@@ -69,7 +76,7 @@ func bucketS3(hc *platform.HandlerContext) (*platform.Result, error) {
 			"uri":      []byte(fmt.Sprintf("s3://%s", bucket)),
 		},
 		Warnings: []string{
-			"accessKeyId/secretAccessKey are sourced from the team's provider credentials (ESO), not the bucket itself",
+			fmt.Sprintf("accessKeyId/secretAccessKey must be supplied by ESO in the %q secret (keys: accessKeyId, secretAccessKey)", credsSecret),
 		},
 	}, nil
 }
@@ -80,30 +87,69 @@ func bucketGarage(hc *platform.HandlerContext) (*platform.Result, error) {
 	ns := oxr.Resource.GetNamespace()
 
 	clusterRef := platform.SpecStringDefault(oxr, "default", "clusterRef", "name")
+	clusterNs := platform.SpecStringDefault(oxr, "garage", "clusterRef", "namespace")
 	bucket := platform.SpecStringDefault(oxr, name, "bucket")
+	bucketResourceName := name + "-bucket"
+	credsSecret := name + "-creds"
 
-	cd := composed.New()
-	cd.SetAPIVersion("garage.rajsingh.info/v1alpha1")
-	cd.SetKind("GarageBucket")
-	cd.SetName(name + "-bucket")
-	cd.SetNamespace(ns)
-	o := cd.Object
-	_ = unstructured.SetNestedField(o, clusterRef, "spec", "clusterRef", "name")
+	bucketObj := composed.New()
+	bucketObj.SetAPIVersion(garageAPIVersion)
+	bucketObj.SetKind("GarageBucket")
+	bucketObj.SetName(bucketResourceName)
+	bucketObj.SetNamespace(ns)
+	o := bucketObj.Object
+	_ = unstructured.SetNestedField(o, bucket, "spec", "globalAlias")
+	_ = unstructured.SetNestedField(o, map[string]any{"name": clusterRef, "namespace": clusterNs}, "spec", "clusterRef")
 	platform.LabelOwnership(o, oxr)
 
+	keyObj := composed.New()
+	keyObj.SetAPIVersion(garageAPIVersion)
+	keyObj.SetKind("GarageKey")
+	keyObj.SetName(name + "-key")
+	keyObj.SetNamespace(ns)
+	ko := keyObj.Object
+	_ = unstructured.SetNestedField(ko, map[string]any{"name": clusterRef, "namespace": clusterNs}, "spec", "clusterRef")
+	_ = unstructured.SetNestedField(ko, true, "spec", "neverExpires")
+	_ = unstructured.SetNestedField(ko, []any{
+		map[string]any{
+			"bucketRef": map[string]any{"name": bucketResourceName, "namespace": ns},
+			"read":      true,
+			"write":     true,
+			"owner":     true,
+		},
+	}, "spec", "bucketPermissions")
+	_ = unstructured.SetNestedField(ko, map[string]any{
+		"name":               credsSecret,
+		"accessKeyIdKey":     "accessKeyId",
+		"secretAccessKeyKey": "secretAccessKey",
+		"endpointKey":        "endpoint",
+		"regionKey":          "region",
+		"bucketNameKey":      "bucket",
+		"includeEndpoint":    true,
+		"includeRegion":      true,
+		"includeBucketName":  true,
+	}, "spec", "secretTemplate")
+	platform.LabelOwnership(ko, oxr)
+
+	endpoint := fmt.Sprintf("http://%s.%s.svc:%d", clusterRef, clusterNs, garageS3Port)
 	return &platform.Result{
 		Desired: platform.Desired{
-			resource.Name("bucket"): {Resource: cd},
+			resource.Name("bucket"): {Resource: bucketObj},
+			resource.Name("key"):    {Resource: keyObj},
 		},
 		Status: map[string]any{
-			"phase": "Provisioning",
+			"phase":                "Provisioning",
+			"endpoint":             endpoint,
+			"credentialsSecretRef": map[string]any{"name": credsSecret},
 		},
 		ConnectionDetails: resource.ConnectionDetails{
-			"bucket": []byte(bucket),
-			"uri":    []byte(fmt.Sprintf("s3://%s", bucket)),
+			"endpoint": []byte(endpoint),
+			"bucket":   []byte(bucket),
+			"region":   []byte("garage"),
+			"uri":      []byte(fmt.Sprintf("s3://%s", bucket)),
 		},
 		Warnings: []string{
-			"endpoint and credentials are issued by the Garage operator; see the GarageCluster connection secret",
+			fmt.Sprintf("endpoint and credentials are issued by the Garage operator in the %q secret", credsSecret),
 		},
 	}, nil
 }

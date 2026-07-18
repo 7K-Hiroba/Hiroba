@@ -94,8 +94,6 @@ export const PRODUCT_CONTRACTS = {
       "endpoint",
       "bucket",
       "region",
-      "accessKeyId",
-      "secretAccessKey",
       "uri"
     ]
   }
@@ -105,7 +103,7 @@ export const POSTGRES_PROVIDERS = ["aws","cnpg"] as const;
 export const POSTGRES_CONNECTION_KEYS = ["host","port","username","password","database","uri"] as const;
 
 export const OBJECT_STORAGE_PROVIDERS = ["s3","garage"] as const;
-export const OBJECT_STORAGE_CONNECTION_KEYS = ["endpoint","bucket","region","accessKeyId","secretAccessKey","uri"] as const;
+export const OBJECT_STORAGE_CONNECTION_KEYS = ["endpoint","bucket","region","uri"] as const;
 
 export interface Dependency {
   readonly crd: string;
@@ -133,52 +131,16 @@ export const DEPENDENCIES = {
       {
         "crd": "garagebuckets.garage.rajsingh.info",
         "hint": "install the Garage operator (garage.rajsingh.info)"
+      },
+      {
+        "crd": "garagekeys.garage.rajsingh.info",
+        "hint": "install the Garage operator (garage.rajsingh.info)"
       }
     ],
     "s3": [
       {
         "crd": "buckets.s3.aws.m.upbound.io",
         "hint": "install provider-aws-s3: kubectl apply -f infrastructure/crossplane-control-plane/providers.yaml"
-      }
-    ]
-  },
-  "GrafanaInstance": {
-    "*": [
-      {
-        "crd": "releases.helm.m.crossplane.io",
-        "hint": "install provider-helm (Hiroba scripts/e2e-setup.sh) and a namespaced <team>-helm ProviderConfig (scripts/team-setup.sh)"
-      }
-    ]
-  },
-  "LokiInstance": {
-    "*": [
-      {
-        "crd": "releases.helm.m.crossplane.io",
-        "hint": "install provider-helm (Hiroba scripts/e2e-setup.sh)"
-      }
-    ]
-  },
-  "PrometheusInstance": {
-    "*": [
-      {
-        "crd": "releases.helm.m.crossplane.io",
-        "hint": "install provider-helm (Hiroba scripts/e2e-setup.sh)"
-      }
-    ]
-  },
-  "MimirInstance": {
-    "*": [
-      {
-        "crd": "releases.helm.m.crossplane.io",
-        "hint": "install provider-helm (Hiroba scripts/e2e-setup.sh)"
-      }
-    ]
-  },
-  "AlloyInstance": {
-    "*": [
-      {
-        "crd": "releases.helm.m.crossplane.io",
-        "hint": "install provider-helm (Hiroba scripts/e2e-setup.sh)"
       }
     ]
   }

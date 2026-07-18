@@ -7,25 +7,25 @@ export interface TeamObservabilityProps {
   readonly profile: Profile;
   readonly team: string;
   readonly costCenter: string;
+  readonly storage?: {
+    readonly provider?: 's3' | 'garage';
+    readonly region?: string;
+  };
   readonly modules?: {
     readonly grafana?: {
       readonly enabled?: boolean;
       readonly domain?: string;
-      readonly values?: Record<string, unknown>;
     };
     readonly loki?: {
       readonly enabled?: boolean;
-      readonly values?: Record<string, unknown>;
     };
     readonly metrics?: {
       readonly enabled?: boolean;
       readonly backend?: 'prometheus' | 'mimir';
       readonly retentionDays?: number;
-      readonly values?: Record<string, unknown>;
     };
     readonly alloy?: {
       readonly enabled?: boolean;
-      readonly values?: Record<string, unknown>;
     };
   };
 }
@@ -42,7 +42,7 @@ function moduleSpec(
 
 /**
  * TeamObservability emits a namespaced ObservabilityStack XR: Grafana + Loki + a
- * metrics backend (Prometheus or Mimir) + Alloy, wired by the platform orchestrator.
+ * metrics backend (Prometheus or Mimir) + Alloy, wired by KRO and deployed by ArgoCD.
  */
 export class TeamObservability extends PlatformXr {
   constructor(scope: Construct, id: string, props: TeamObservabilityProps) {
@@ -61,6 +61,10 @@ export class TeamObservability extends PlatformXr {
         profile: props.profile,
         team: props.team,
         costCenter: props.costCenter,
+        storage: {
+          provider: props.storage?.provider ?? 'garage',
+          region: props.storage?.region ?? 'us-east-1',
+        },
         modules: {
           grafana: moduleSpec(props.modules?.grafana, { enabled: true }),
           loki: moduleSpec(props.modules?.loki, { enabled: true }),

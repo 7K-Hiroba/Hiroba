@@ -1,0 +1,420 @@
+# ObservabilityStack — KRO ResourceGraphDefinition
+#
+# Replaces the Crossplane orchestrator stack handlers with CEL-based wiring.
+# Hiroba primitives (ObjectBucket, PostgresInstance) provide the backends;
+# ArgoCD Applications (multi-source, valuesObject) execute the Helm charts.
+#
+# Requirements:
+#   - KRO >= 0.9 installed in the cluster
+#   - ArgoCD >= 2.6 with application.namespaces enabled (Applications live in the XR namespace)
+#   - Crossplane + function-platform for ObjectBucket and PostgresInstance
+#
+# Fast lane: per-module values files live in the overrides git repo at
+#   clients/<team>/observability/<module>.yaml
+# Platform wiring in valuesObject always wins over those value files.
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: observabilitystack.platform.7kgroup.org
+  labels:
+    platform.7kgroup.org/managed-by: kro
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: ObservabilityStack
+    group: platform.7kgroup.org
+    scope: Namespaced
+    spec:
+      profile: string | required=true enum="development,staging,production"
+      team: string | required=true
+      costCenter: string | required=true
+      deletionPolicy: string | default="Delete" enum="Delete,Orphan"
+      storage:
+        provider: string | default="garage" enum="s3,garage"
+        region: string | default="us-east-1"
+        clusterName: string | default="garage"
+        clusterNamespace: string | default="garage"
+      overrides:
+        repoURL: string | default="https://github.com/7k-group/7k-app-of-apps.git"
+        path: string | default=""
+        revision: string | default="HEAD"
+      modules:
+        grafana:
+          enabled: boolean | default=true
+          domain: string | default=""
+          chartVersion: string | default="8.5.0"
+        loki:
+          enabled: boolean | default=true
+          chartVersion: string | default="0.79.0"
+        metrics:
+          enabled: boolean | default=true
+          backend: string | default="prometheus" enum="prometheus,mimir"
+          mimirChartVersion: string | default="5.6.0"
+          prometheusChartVersion: string | default="25.0.0"
+        alloy:
+          enabled: boolean | default=true
+          chartVersion: string | default="0.6.1"
+
+  resources:
+    # ---------------------------------------------------------------------------
+    # Loki
+    # ---------------------------------------------------------------------------
+    - id: lokiBucket
+      template:
+        apiVersion: platform.7kgroup.org/v1alpha1
+        kind: ObjectBucket
+        metadata:
+          name: ${schema.metadata.name}-loki-bucket
+          namespace: ${schema.metadata.namespace}
+        spec:
+          profile: ${schema.spec.profile}
+          team: ${schema.spec.team}
+          costCenter: ${schema.spec.costCenter}
+          deletionPolicy: ${schema.spec.deletionPolicy}
+          provider: ${schema.spec.storage.provider}
+          region: ${schema.spec.storage.region}
+          bucket: ${schema.metadata.name}-loki
+          clusterRef:
+            name: ${schema.spec.storage.clusterName}
+            namespace: ${schema.spec.storage.clusterNamespace}
+
+    - id: lokiApp
+      includeWhen:
+        - ${schema.spec.modules.loki.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-loki
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: loki-distributed
+              targetRevision: ${schema.spec.modules.loki.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/loki.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-loki
+                  loki:
+                    storage:
+                      type: s3
+                      s3:
+                        s3forcepathstyle: true
+                        bucketnames: ${lokiBucket.spec.bucket}
+                        endpoint: ${lokiBucket.status.endpoint}
+                        region: ${lokiBucket.spec.region}
+                  extraEnv:
+                    - name: AWS_ACCESS_KEY_ID
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${lokiBucket.status.credentialsSecretRef.name}
+                          key: accessKeyId
+                          optional: true
+                    - name: AWS_SECRET_ACCESS_KEY
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${lokiBucket.status.credentialsSecretRef.name}
+                          key: secretAccessKey
+                          optional: true
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Metrics backend (Mimir or Prometheus)
+    # ---------------------------------------------------------------------------
+    - id: mimirBucket
+      includeWhen:
+        - ${schema.spec.modules.metrics.enabled}
+        - ${schema.spec.modules.metrics.backend == "mimir"}
+      template:
+        apiVersion: platform.7kgroup.org/v1alpha1
+        kind: ObjectBucket
+        metadata:
+          name: ${schema.metadata.name}-mimir-bucket
+          namespace: ${schema.metadata.namespace}
+        spec:
+          profile: ${schema.spec.profile}
+          team: ${schema.spec.team}
+          costCenter: ${schema.spec.costCenter}
+          deletionPolicy: ${schema.spec.deletionPolicy}
+          provider: ${schema.spec.storage.provider}
+          region: ${schema.spec.storage.region}
+          bucket: ${schema.metadata.name}-mimir
+          clusterRef:
+            name: ${schema.spec.storage.clusterName}
+            namespace: ${schema.spec.storage.clusterNamespace}
+
+    - id: mimirApp
+      includeWhen:
+        - ${schema.spec.modules.metrics.enabled}
+        - ${schema.spec.modules.metrics.backend == "mimir"}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-mimir
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: mimir-distributed
+              targetRevision: ${schema.spec.modules.metrics.mimirChartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/mimir.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-mimir
+                  mimir:
+                    structuredConfig:
+                      blocks_storage:
+                        backend: s3
+                        s3:
+                          bucket_name: ${mimirBucket.spec.bucket}
+                          endpoint: ${mimirBucket.status.endpoint}
+                          region: ${mimirBucket.spec.region}
+                  extraEnv:
+                    - name: AWS_ACCESS_KEY_ID
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${mimirBucket.status.credentialsSecretRef.name}
+                          key: accessKeyId
+                          optional: true
+                    - name: AWS_SECRET_ACCESS_KEY
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${mimirBucket.status.credentialsSecretRef.name}
+                          key: secretAccessKey
+                          optional: true
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    - id: prometheusApp
+      includeWhen:
+        - ${schema.spec.modules.metrics.enabled}
+        - ${schema.spec.modules.metrics.backend == "prometheus"}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-prometheus
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://prometheus-community.github.io/helm-charts
+              chart: prometheus
+              targetRevision: ${schema.spec.modules.metrics.prometheusChartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/prometheus.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-prometheus
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Alloy (log/metrics agent)
+    # ---------------------------------------------------------------------------
+    - id: alloyApp
+      includeWhen:
+        - ${schema.spec.modules.alloy.enabled}
+        - ${schema.spec.modules.loki.enabled}
+        - ${schema.spec.modules.metrics.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-alloy
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: alloy
+              targetRevision: ${schema.spec.modules.alloy.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/alloy.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-alloy
+                  alloy:
+                    extraEnv:
+                      - name: KUBE_NODE_NAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: spec.nodeName
+                      - name: PROMETHEUS_URL
+                        value: "${schema.spec.modules.metrics.backend == \"mimir\" ? \"http://\" + schema.metadata.name + \"-mimir-nginx.\" + schema.metadata.namespace + \".svc:80/api/v1/push\" : \"http://\" + schema.metadata.name + \"-prometheus-server.\" + schema.metadata.namespace + \".svc:80/api/v1/write\"}"
+                      - name: LOKI_URL
+                        value: "http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80/loki/api/v1/push"
+                      - name: ORG_ID
+                        value: "${schema.spec.team}"
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Grafana
+    # ---------------------------------------------------------------------------
+    - id: grafanaDb
+      includeWhen:
+        - ${schema.spec.modules.grafana.enabled}
+      template:
+        apiVersion: platform.7kgroup.org/v1alpha1
+        kind: PostgresInstance
+        metadata:
+          name: ${schema.metadata.name}-grafana-db
+          namespace: ${schema.metadata.namespace}
+        spec:
+          profile: ${schema.spec.profile}
+          team: ${schema.spec.team}
+          costCenter: ${schema.spec.costCenter}
+          deletionPolicy: ${schema.spec.deletionPolicy}
+          database: grafana
+
+    - id: grafanaApp
+      includeWhen:
+        - ${schema.spec.modules.grafana.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-grafana
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: grafana
+              targetRevision: ${schema.spec.modules.grafana.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/grafana.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-grafana
+                  envValueFrom:
+                    GF_DATABASE_PASSWORD:
+                      secretKeyRef:
+                        name: ${grafanaDb.status.connectionSecretRef.name}
+                        key: password
+                    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+                      secretKeyRef:
+                        name: grafana-sso
+                        key: client-secret
+                        optional: true
+                  grafana.ini:
+                    server:
+                      root_url: https://${schema.spec.modules.grafana.domain}/
+                    database:
+                      type: postgres
+                      host: ${grafanaDb.status.endpoint}
+                      name: grafana
+                      user: app
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    - id: grafanaRoute
+      includeWhen:
+        - ${has(schema.spec.modules.grafana.domain) && schema.spec.modules.grafana.domain != ""}
+      template:
+        apiVersion: gateway.networking.k8s.io/v1beta1
+        kind: HTTPRoute
+        metadata:
+          name: ${schema.metadata.name}-grafana
+          namespace: ${schema.metadata.namespace}
+        spec:
+          parentRefs:
+            - name: internal-gateway
+              namespace: istio
+              sectionName: https-int-7kgroup
+          hostnames:
+            - ${schema.spec.modules.grafana.domain}
+          rules:
+            - backendRefs:
+                - name: ${schema.metadata.name}-grafana
+                  port: 80
+
+    # ---------------------------------------------------------------------------
+    # Grafana datasource provisioning
+    # ---------------------------------------------------------------------------
+    - id: datasources
+      includeWhen:
+        - ${schema.spec.modules.grafana.enabled}
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${schema.metadata.name}-datasources
+          namespace: ${schema.metadata.namespace}
+          labels:
+            grafana_datasource: '1'
+        data:
+          stack-datasources.yaml: |
+            apiVersion: 1
+            datasources:
+              - name: Loki
+                type: loki
+                url: http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80
+                editable: false
+              - name: ${schema.spec.modules.metrics.backend == "mimir" ? "Mimir" : "Prometheus"}
+                type: prometheus
+                url: ${schema.spec.modules.metrics.backend == "mimir" ? "http://" + schema.metadata.name + "-mimir-nginx." + schema.metadata.namespace + ".svc:80" : "http://" + schema.metadata.name + "-prometheus-server." + schema.metadata.namespace + ".svc:80"}
+                editable: false

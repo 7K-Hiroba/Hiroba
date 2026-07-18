@@ -26,6 +26,7 @@ jobs:
       cdk8s: ${{ steps.filter.outputs.cdk8s }}
       function: ${{ steps.filter.outputs.function }}
       primitives: ${{ steps.filter.outputs.primitives }}
+      stacks: ${{ steps.filter.outputs.stacks }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
@@ -44,6 +45,11 @@ jobs:
               - 'packages/postgres/**'
               - 'packages/object-storage/**'
               - 'packages/primitives/**'
+            stacks:
+              - 'stacks/**'
+              - 'scripts/validate-stacks.sh'
+              - 'scripts/e2e-observability-stacks.sh'
+              - '.github/workflows/ci.yml'
 
   pr-title:
     if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
@@ -102,6 +108,19 @@ jobs:
       path: packages/primitives
       prebuild: npm run build -w @7k-hiroba/shared && npm run synth -w @7k-hiroba/primitives
 
+  validate-stacks:
+    needs: detect
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.stacks == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyyaml
+      - run: bash scripts/validate-stacks.sh
+
   e2e:
     needs: [detect, cdk8s, function]
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' || needs.detect.outputs.function == 'true' }}
@@ -109,6 +128,41 @@ jobs:
     with:
       path: .
       setup-script: scripts/e2e-setup.sh
+
+  e2e-observability-stacks:
+    needs: [detect, validate-stacks]
+    if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.stacks == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: functions/platform/go.mod
+      - uses: azure/setup-helm@v4
+        with:
+          version: 'v3.15.0'
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y jq openssl
+          # Crossplane CLI (crank) used by e2e-setup.sh for xpkg build.
+          curl -sL "https://releases.crossplane.io/stable/v2.3.3/bin/linux_amd64/crank" -o /tmp/crossplane
+          chmod +x /tmp/crossplane
+          sudo mv /tmp/crossplane /usr/local/bin/crossplane
+      - name: Bootstrap kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: platform-e2e
+      - name: Run platform e2e setup
+        run: bash scripts/e2e-setup.sh platform-e2e
+      - name: Run observability stacks e2e
+        run: bash scripts/e2e-observability-stacks.sh platform-e2e
 
   # Integration gate: builds the primitives xpkg and installs it into kind. Promote to a
   # required check after the first successful run in CI.

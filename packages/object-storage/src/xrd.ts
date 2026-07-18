@@ -43,6 +43,22 @@ export class ObjectBucketXrd extends Chart {
           pattern: '^[a-z0-9][a-z0-9.-]*$',
           description: 'Bucket name override. Defaults to the XR name when unset.',
         },
+        clusterRef: {
+          type: 'object',
+          description: 'Reference to the GarageCluster (garage provider only).',
+          properties: {
+            name: {
+              type: 'string',
+              default: 'default',
+              description: 'GarageCluster resource name.',
+            },
+            namespace: {
+              type: 'string',
+              default: 'garage',
+              description: 'Namespace of the GarageCluster.',
+            },
+          },
+        },
         features: {
           type: 'object',
           properties: {
