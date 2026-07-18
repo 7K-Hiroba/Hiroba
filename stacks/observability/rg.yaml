@@ -43,25 +43,12 @@ spec:
           enabled: boolean | default=true
           domain: string | default=""
           chartVersion: string | default="8.5.0"
-          adminPassword: string | default="admin"
-          disableBasicAuth: boolean | default=false
-          sso:
-            enabled: boolean | default=false
-            clientId: string | default="grafana"
-            issuer: string | default="https://auth.7kgroup.org/realms/7kgroup"
-            clientSecretRef:
-              name: string | default="grafana-sso"
-              key: string | default="client-secret"
-            adminGroup: string | default="platform-admin"
-            editorGroup: string | default=""
-            allowGrafanaAdmin: boolean | default=false
         loki:
           enabled: boolean | default=true
           chartVersion: string | default="0.79.0"
         metrics:
           enabled: boolean | default=true
           backend: string | default="prometheus" enum="prometheus,mimir"
-          retentionDays: integer | default=15 minimum=1 maximum=365
           mimirChartVersion: string | default="5.6.0"
           prometheusChartVersion: string | default="25.0.0"
         alloy:
@@ -138,9 +125,6 @@ spec:
                           name: ${lokiBucket.status.credentialsSecretRef.name}
                           key: secretAccessKey
                           optional: true
-                  gateway:
-                    nginxConfig:
-                      resolver: "10.43.0.10"
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -257,10 +241,6 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-prometheus
-                  server:
-                    retention: ${string(schema.spec.modules.metrics.retentionDays) + "d"}
-                    extraFlags:
-                      - web.enable-remote-write-receiver
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -306,44 +286,12 @@ spec:
                         valueFrom:
                           fieldRef:
                             fieldPath: spec.nodeName
-                    configMap:
-                      content: |
-                        discovery.kubernetes "pods" {
-                          role = "pod"
-                          selectors {
-                            role = "pod"
-                            field = "spec.nodeName=" + env("KUBE_NODE_NAME")
-                          }
-                        }
-                        prometheus.scrape "kubernetes" {
-                          targets = discovery.kubernetes.pods.targets
-                          forward_to = [prometheus.remote_write.mgmt.receiver]
-                        }
-                        loki.source.kubernetes "pods" {
-                          targets = discovery.kubernetes.pods.targets
-                          forward_to = [loki.write.mgmt.receiver]
-                        }
-                        loki.source.kubernetes_events "events" {
-                          forward_to = [loki.write.mgmt.receiver]
-                        }
-                        prometheus.remote_write "mgmt" {
-                          endpoint {
-                            name = "metrics"
-                            url = "${schema.spec.modules.metrics.backend == "mimir" ? "http://" + schema.metadata.name + "-mimir-nginx." + schema.metadata.namespace + ".svc:80/api/v1/push" : "http://" + schema.metadata.name + "-prometheus-server." + schema.metadata.namespace + ".svc:80/api/v1/write"}"
-                            headers = {
-                              "X-Scope-OrgID" = "${schema.spec.team}",
-                            }
-                          }
-                        }
-                        loki.write "mgmt" {
-                          endpoint {
-                            name = "logs"
-                            url = "http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80/loki/api/v1/push"
-                            headers = {
-                              "X-Scope-OrgID" = "${schema.spec.team}",
-                            }
-                          }
-                        }
+                      - name: PROMETHEUS_URL
+                        value: "${schema.spec.modules.metrics.backend == \"mimir\" ? \"http://\" + schema.metadata.name + \"-mimir-nginx.\" + schema.metadata.namespace + \".svc:80/api/v1/push\" : \"http://\" + schema.metadata.name + \"-prometheus-server.\" + schema.metadata.namespace + \".svc:80/api/v1/write\"}"
+                      - name: LOKI_URL
+                        value: "http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80/loki/api/v1/push"
+                      - name: ORG_ID
+                        value: "${schema.spec.team}"
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -404,11 +352,9 @@ spec:
                         key: password
                     GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
                       secretKeyRef:
-                        name: ${schema.spec.modules.grafana.sso.clientSecretRef.name}
-                        key: ${schema.spec.modules.grafana.sso.clientSecretRef.key}
+                        name: grafana-sso
+                        key: client-secret
                         optional: true
-                  adminUser: admin
-                  adminPassword: ${schema.spec.modules.grafana.adminPassword}
                   grafana.ini:
                     server:
                       root_url: https://${schema.spec.modules.grafana.domain}/
@@ -417,23 +363,6 @@ spec:
                       host: ${grafanaDb.status.endpoint}
                       name: grafana
                       user: app
-                    auth.basic:
-                      enabled: ${!schema.spec.modules.grafana.disableBasicAuth}
-                    auth.generic_oauth:
-                      enabled: ${schema.spec.modules.grafana.sso.enabled}
-                      name: Keycloak
-                      allow_sign_up: true
-                      client_id: ${schema.spec.modules.grafana.sso.clientId}
-                      scopes: openid email profile
-                      auth_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/auth
-                      token_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/token
-                      api_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/userinfo
-                      allow_assign_grafana_admin: ${schema.spec.modules.grafana.sso.allowGrafanaAdmin}
-                      role_attribute_path: ${"contains(groups[*], '" + schema.spec.modules.grafana.sso.adminGroup + "') && '" + (schema.spec.modules.grafana.sso.allowGrafanaAdmin ? "GrafanaAdmin" : "Admin") + "'" + (schema.spec.modules.grafana.sso.editorGroup != "" ? " || contains(groups[*], '" + schema.spec.modules.grafana.sso.editorGroup + "') && 'Editor'" : "") + " || 'Viewer'"}
-                  sidecar:
-                    datasources:
-                      enabled: true
-                      label: grafana_datasource
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
