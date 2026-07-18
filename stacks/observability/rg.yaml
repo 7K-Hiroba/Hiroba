@@ -44,6 +44,7 @@ spec:
           domain: string | default=""
           chartVersion: string | default="8.5.0"
           adminPassword: string | default="admin"
+          disableBasicAuth: boolean | default=false
           sso:
             enabled: boolean | default=false
             clientId: string | default="grafana"
@@ -413,6 +414,8 @@ spec:
                       host: ${grafanaDb.status.endpoint}
                       name: grafana
                       user: app
+                    auth.basic:
+                      enabled: ${!schema.spec.modules.grafana.disableBasicAuth}
                     auth.generic_oauth:
                       enabled: ${schema.spec.modules.grafana.sso.enabled}
                       name: Keycloak
