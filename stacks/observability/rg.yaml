@@ -289,10 +289,19 @@ spec:
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-alloy
                   alloy:
+                    extraEnv:
+                      - name: KUBE_NODE_NAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: spec.nodeName
                     configMap:
                       content: |
                         discovery.kubernetes "pods" {
                           role = "pod"
+                          selectors {
+                            role = "pod"
+                            field = "spec.nodeName=" + env("KUBE_NODE_NAME")
+                          }
                         }
                         prometheus.scrape "kubernetes" {
                           targets = discovery.kubernetes.pods.targets
