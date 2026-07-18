@@ -247,6 +247,8 @@ spec:
                   fullnameOverride: ${schema.metadata.name}-prometheus
                   server:
                     retention: ${string(schema.spec.modules.metrics.retentionDays) + "d"}
+                    extraFlags:
+                      - web.enable-remote-write-receiver
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
