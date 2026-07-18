@@ -126,6 +126,9 @@ spec:
                           name: ${lokiBucket.status.credentialsSecretRef.name}
                           key: secretAccessKey
                           optional: true
+                  gateway:
+                    nginxConfig:
+                      resolver: "10.43.0.10"
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -286,10 +289,11 @@ spec:
                   alloy:
                     configMap:
                       content: |
+                        discovery.kubernetes "pods" {
+                          role = "pod"
+                        }
                         prometheus.scrape "kubernetes" {
-                          kubernetes_sd_configs {
-                            role = "pod"
-                          }
+                          targets = discovery.kubernetes.pods.targets
                           forward_to = [prometheus.remote_write.mgmt.receiver]
                         }
                         loki.source.kubernetes "pods" {
