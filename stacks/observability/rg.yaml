@@ -43,6 +43,7 @@ spec:
           enabled: boolean | default=true
           domain: string | default=""
           chartVersion: string | default="8.5.0"
+          adminPassword: string | default="admin"
         loki:
           enabled: boolean | default=true
           chartVersion: string | default="0.79.0"
@@ -390,6 +391,10 @@ spec:
                       secretKeyRef:
                         name: ${grafanaDb.status.connectionSecretRef.name}
                         key: password
+                  grafana:
+                    admin:
+                      user: admin
+                      password: ${schema.spec.modules.grafana.adminPassword}
                   grafana.ini:
                     database:
                       type: postgres
