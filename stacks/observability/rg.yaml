@@ -52,6 +52,9 @@ spec:
             clientSecretRef:
               name: string | default="grafana-sso"
               key: string | default="client-secret"
+            adminGroup: string | default="platform-admin"
+            editorGroup: string | default=""
+            allowGrafanaAdmin: boolean | default=false
         loki:
           enabled: boolean | default=true
           chartVersion: string | default="0.79.0"
@@ -425,7 +428,8 @@ spec:
                       auth_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/auth
                       token_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/token
                       api_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/userinfo
-                      role_attribute_path: contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+                      allow_assign_grafana_admin: ${schema.spec.modules.grafana.sso.allowGrafanaAdmin}
+                      role_attribute_path: ${"contains(groups[*], '" + schema.spec.modules.grafana.sso.adminGroup + "') && '" + (schema.spec.modules.grafana.sso.allowGrafanaAdmin ? "GrafanaAdmin" : "Admin") + "'" + (schema.spec.modules.grafana.sso.editorGroup != "" ? " || contains(groups[*], '" + schema.spec.modules.grafana.sso.editorGroup + "') && 'Editor'" : "") + " || 'Viewer'"}
                   sidecar:
                     datasources:
                       enabled: true
