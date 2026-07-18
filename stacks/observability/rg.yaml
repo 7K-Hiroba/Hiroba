@@ -88,7 +88,7 @@ spec:
         kind: Application
         metadata:
           name: ${schema.metadata.name}-loki
-          namespace: argocd
+          namespace: ${schema.metadata.namespace}
           finalizers:
             - resources-finalizer.argocd.argoproj.io
         spec:
@@ -172,7 +172,7 @@ spec:
         kind: Application
         metadata:
           name: ${schema.metadata.name}-mimir
-          namespace: argocd
+          namespace: ${schema.metadata.namespace}
           finalizers:
             - resources-finalizer.argocd.argoproj.io
         spec:
@@ -228,7 +228,7 @@ spec:
         kind: Application
         metadata:
           name: ${schema.metadata.name}-prometheus
-          namespace: argocd
+          namespace: ${schema.metadata.namespace}
           finalizers:
             - resources-finalizer.argocd.argoproj.io
         spec:
@@ -271,7 +271,7 @@ spec:
         kind: Application
         metadata:
           name: ${schema.metadata.name}-alloy
-          namespace: argocd
+          namespace: ${schema.metadata.namespace}
           finalizers:
             - resources-finalizer.argocd.argoproj.io
         spec:
@@ -368,7 +368,7 @@ spec:
         kind: Application
         metadata:
           name: ${schema.metadata.name}-grafana
-          namespace: argocd
+          namespace: ${schema.metadata.namespace}
           finalizers:
             - resources-finalizer.argocd.argoproj.io
         spec:
