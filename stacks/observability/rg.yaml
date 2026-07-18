@@ -391,10 +391,9 @@ spec:
                       secretKeyRef:
                         name: ${grafanaDb.status.connectionSecretRef.name}
                         key: password
-                  grafana:
-                    admin:
-                      user: admin
-                      password: ${schema.spec.modules.grafana.adminPassword}
+                  admin:
+                    user: admin
+                    password: ${schema.spec.modules.grafana.adminPassword}
                   grafana.ini:
                     database:
                       type: postgres
