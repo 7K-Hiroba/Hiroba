@@ -297,6 +297,7 @@ spec:
                           forward_to = [prometheus.remote_write.mgmt.receiver]
                         }
                         loki.source.kubernetes "pods" {
+                          targets = discovery.kubernetes.pods.targets
                           forward_to = [loki.write.mgmt.receiver]
                         }
                         loki.source.kubernetes_events "events" {
