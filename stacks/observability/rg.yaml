@@ -44,6 +44,13 @@ spec:
           domain: string | default=""
           chartVersion: string | default="8.5.0"
           adminPassword: string | default="admin"
+          sso:
+            enabled: boolean | default=false
+            clientId: string | default="grafana"
+            issuer: string | default="https://auth.7kgroup.org/realms/7kgroup"
+            clientSecretRef:
+              name: string | default="grafana-sso"
+              key: string | default="client-secret"
         loki:
           enabled: boolean | default=true
           chartVersion: string | default="0.79.0"
@@ -391,22 +398,35 @@ spec:
                       secretKeyRef:
                         name: ${grafanaDb.status.connectionSecretRef.name}
                         key: password
+                    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+                      secretKeyRef:
+                        name: ${schema.spec.modules.grafana.sso.clientSecretRef.name}
+                        key: ${schema.spec.modules.grafana.sso.clientSecretRef.key}
+                        optional: true
                   adminUser: admin
                   adminPassword: ${schema.spec.modules.grafana.adminPassword}
                   grafana.ini:
+                    server:
+                      root_url: https://${schema.spec.modules.grafana.domain}/
                     database:
                       type: postgres
                       host: ${grafanaDb.status.endpoint}
                       name: grafana
                       user: app
+                    auth.generic_oauth:
+                      enabled: ${schema.spec.modules.grafana.sso.enabled}
+                      name: Keycloak
+                      allow_sign_up: true
+                      client_id: ${schema.spec.modules.grafana.sso.clientId}
+                      scopes: openid email profile
+                      auth_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/auth
+                      token_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/token
+                      api_url: ${schema.spec.modules.grafana.sso.issuer}/protocol/openid-connect/userinfo
+                      role_attribute_path: contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
                   sidecar:
                     datasources:
                       enabled: true
                       label: grafana_datasource
-                  ingress:
-                    enabled: ${has(schema.spec.modules.grafana.domain) && schema.spec.modules.grafana.domain != ""}
-                    hosts:
-                      - '${has(schema.spec.modules.grafana.domain) && schema.spec.modules.grafana.domain != "" ? schema.spec.modules.grafana.domain : "placeholder.example.com"}'
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -414,6 +434,27 @@ spec:
             automated:
               prune: true
               selfHeal: true
+
+    - id: grafanaRoute
+      includeWhen:
+        - ${has(schema.spec.modules.grafana.domain) && schema.spec.modules.grafana.domain != ""}
+      template:
+        apiVersion: gateway.networking.k8s.io/v1beta1
+        kind: HTTPRoute
+        metadata:
+          name: ${schema.metadata.name}-grafana
+          namespace: ${schema.metadata.namespace}
+        spec:
+          parentRefs:
+            - name: internal-gateway
+              namespace: istio
+              sectionName: https-int-7kgroup
+          hostnames:
+            - ${schema.spec.modules.grafana.domain}
+          rules:
+            - backendRefs:
+                - name: ${schema.metadata.name}-grafana
+                  port: 80
 
     # ---------------------------------------------------------------------------
     # Grafana datasource provisioning
