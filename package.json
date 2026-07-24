@@ -33,7 +33,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "cdk8s-cli": "^2.198.0",
-    "eslint": "^8.56.0",
+    "eslint": "^10.0.0",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
