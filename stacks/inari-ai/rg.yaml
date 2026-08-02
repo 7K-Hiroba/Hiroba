@@ -413,6 +413,9 @@ spec:
                           ui:
                             existingSecret:
                               name: ${schema.metadata.name}-agentgateway-config-bridge-token
+                  # Umbrella-level default the standalone subchart lacks.
+                  oktaSync:
+                    enabled: false
                   config:
                     NEXTAUTH_URL: https://${schema.spec.domain}
                     NODE_ENV: production
