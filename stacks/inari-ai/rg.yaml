@@ -1,0 +1,1037 @@
+# InariAIStack — KRO ResourceGraphDefinition
+#
+# Cloud-agnostic wiring for the CAIPE (cnoe-io ai-platform-engineering) AI
+# platform, deployed as per-component ArgoCD Applications sourced from the
+# upstream git repo at a single pinned tag (spec.version). The upstream
+# umbrella chart is NOT used: every subchart is self-contained under
+# charts/ai-platform-engineering/charts/<component> (rag-stack lives at
+# charts/rag-stack), so each module is an independent Application following
+# the same pattern as the observability stack.
+#
+# Hiroba primitives provide the cloud-specific backends:
+#   - PostgresInstance  -> OpenFGA datastore (cnpg in-cluster or AWS RDS)
+#   - ObjectBucket      -> Milvus vector storage (garage in-cluster or AWS S3)
+# MongoDB has no primitive yet; spec.database.provider selects the in-cluster
+# chart (local) or a managed Mongo-compatible service (atlas/documentdb)
+# whose connection string is supplied via the secret store.
+#
+# Requirements:
+#   - KRO >= 0.9 installed in the cluster
+#   - ArgoCD >= 2.12 with application.namespaces enabled (Applications live in the XR namespace)
+#   - Crossplane + function-platform for ObjectBucket and PostgresInstance
+#   - External Secrets Operator v1+ and a ClusterSecretStore (default: vault-internal)
+#
+# Fast lane: per-module values files live in the overrides git repo at
+#   clients/<team>/inari-ai/<module>.yaml
+# Platform wiring in valuesObject always wins over those value files.
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: inariaistack.platform.7kgroup.org
+  labels:
+    platform.7kgroup.org/managed-by: kro
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: InariAIStack
+    group: platform.7kgroup.org
+    scope: Namespaced
+    spec:
+      profile: string | required=true enum="development,staging,production"
+      team: string | required=true
+      costCenter: string | required=true
+      deletionPolicy: string | default="Delete" enum="Delete,Orphan"
+      # Single upstream cnoe-io/ai-platform-engineering git tag used as the
+      # targetRevision for every component Application.
+      version: string | default="0.5.66"
+      # Public hostname for the UI HTTPRoute. Empty = no route.
+      domain: string | default=""
+      argocd:
+        project: string | default="default"
+      storage:
+        provider: string | default="garage" enum="s3,garage"
+        region: string | default="us-east-1"
+        clusterName: string | default="garage"
+        clusterNamespace: string | default="garage"
+      database:
+        # local = in-cluster MongoDB chart; atlas/documentdb = managed service,
+        # connection string must exist in the secret store at <vaultPrefix>/mongodb.
+        provider: string | default="local" enum="local,atlas,documentdb"
+        mongodb:
+          storageClass: string | default=""
+          sizeGB: integer | default=5
+        postgres:
+          provider: string | default="cnpg" enum="cnpg,aws"
+          version: string | default="17"
+          storageGB: integer | default=10
+      secrets:
+        storeName: string | default="vault-internal"
+        storeKind: string | default="ClusterSecretStore"
+        # Prefix for all remote keys, e.g. <vaultPrefix>/llm, <vaultPrefix>/mongodb.
+        vaultPrefix: string | default="caipe"
+      identity:
+        # In-cluster Keycloak base URL (server-side JWKS fetch + admin API).
+        keycloakURL: string | required=true
+        keycloakRealm: string | default="7kgroup"
+        keycloakAudience: string | default="caipe,caipe-platform,agentgateway"
+        # Public OIDC issuer (browser-facing).
+        oidcIssuer: string | required=true
+        oidcClientID: string | default="caipe"
+        platformClientID: string | default="caipe-platform"
+      llm:
+        provider: string | default="openai"
+        endpoint: string | default="https://api.moonshot.ai/v1"
+      ui:
+        appName: string | default="Inari AI"
+        tagline: string | default="AI Platform Engineering"
+        description: string | default="Multi-agent AI automation."
+        envBadge: string | default="Dev"
+        # Break-glass bootstrap admin — remove after configuring OpenFGA grants.
+        bootstrapAdminEmails: string | default=""
+      ingress:
+        gatewayName: string | default="internet-gateway"
+        gatewayNamespace: string | default="istio"
+        sectionName: string | default="https-7kgroup"
+      overrides:
+        repoURL: string | default="https://github.com/7k-group/7k-app-of-apps.git"
+        path: string | default=""
+        revision: string | default="HEAD"
+      modules:
+        ui:
+          enabled: boolean | default=true
+        dynamicAgents:
+          enabled: boolean | default=true
+        auditService:
+          enabled: boolean | default=true
+        skillScanner:
+          enabled: boolean | default=true
+        agentGateway:
+          enabled: boolean | default=true
+        openfga:
+          enabled: boolean | default=true
+        mcpArgocd:
+          enabled: boolean | default=true
+        mcpBackstage:
+          enabled: boolean | default=true
+        # stdio mode: no Deployment, only the AgentGateway static route and the
+        # per-user OAuth/PAT secrets.
+        mcpGithub:
+          enabled: boolean | default=true
+        ragStack:
+          enabled: boolean | default=false
+
+  resources:
+    # ---------------------------------------------------------------------------
+    # OpenFGA Postgres backend (cloud-agnostic via PostgresInstance)
+    # ---------------------------------------------------------------------------
+    - id: openfgaDb
+      includeWhen:
+        - ${schema.spec.modules.openfga.enabled}
+      readyWhen:
+        - ${openfgaDb.status.phase == "Ready"}
+      template:
+        apiVersion: platform.7kgroup.org/v1alpha1
+        kind: PostgresInstance
+        metadata:
+          name: ${schema.metadata.name}-openfga-db
+          namespace: ${schema.metadata.namespace}
+        spec:
+          profile: ${schema.spec.profile}
+          team: ${schema.spec.team}
+          costCenter: ${schema.spec.costCenter}
+          deletionPolicy: ${schema.spec.deletionPolicy}
+          provider: ${schema.spec.database.postgres.provider}
+          version: ${schema.spec.database.postgres.version}
+          storageGB: ${schema.spec.database.postgres.storageGB}
+          database: openfga
+
+    # ---------------------------------------------------------------------------
+    # Milvus object storage backend (cloud-agnostic via ObjectBucket)
+    # ---------------------------------------------------------------------------
+    - id: milvusBucket
+      includeWhen:
+        - ${schema.spec.modules.ragStack.enabled}
+      readyWhen:
+        - ${milvusBucket.status.phase == "Ready"}
+      template:
+        apiVersion: platform.7kgroup.org/v1alpha1
+        kind: ObjectBucket
+        metadata:
+          name: ${schema.metadata.name}-milvus-bucket
+          namespace: ${schema.metadata.namespace}
+        spec:
+          profile: ${schema.spec.profile}
+          team: ${schema.spec.team}
+          costCenter: ${schema.spec.costCenter}
+          deletionPolicy: ${schema.spec.deletionPolicy}
+          provider: ${schema.spec.storage.provider}
+          region: ${schema.spec.storage.region}
+          bucket: ${schema.metadata.name}-milvus
+          clusterRef:
+            name: ${schema.spec.storage.clusterName}
+            namespace: ${schema.spec.storage.clusterNamespace}
+
+    # ---------------------------------------------------------------------------
+    # Shared secrets (RGD-managed because the mcp-server subchart hardcodes
+    # external-secrets.io/v1beta1, which ESO v1+ does not serve)
+    # ---------------------------------------------------------------------------
+    - id: llmSecret
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-llm-secret
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-llm-secret
+            creationPolicy: Owner
+          data:
+            - secretKey: OPENAI_API_KEY
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/llm
+                property: openai-api-key
+            - secretKey: OPENAI_ENDPOINT
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/llm
+                property: openai-endpoint
+            - secretKey: OPENAI_MODEL_NAME
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/llm
+                property: openai-model-name
+            - secretKey: LLM_PROVIDER
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/llm
+                property: provider
+
+    - id: githubPatSecret
+      includeWhen:
+        - ${schema.spec.modules.mcpGithub.enabled}
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-github-pat-secret
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-github-pat-secret
+            creationPolicy: Owner
+          data:
+            - secretKey: GITHUB_PERSONAL_ACCESS_TOKEN
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/github
+                property: token
+
+    - id: githubSecret
+      includeWhen:
+        - ${schema.spec.modules.mcpGithub.enabled}
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-github-secret
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-github-secret
+            creationPolicy: Owner
+          data:
+            - secretKey: GITHUB_PERSONAL_ACCESS_TOKEN
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/github
+                property: token
+
+    - id: argocdSecret
+      includeWhen:
+        - ${schema.spec.modules.mcpArgocd.enabled}
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-argocd-secret
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-argocd-secret
+            creationPolicy: Owner
+          data:
+            - secretKey: ARGOCD_TOKEN
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/argocd
+                property: token
+            - secretKey: ARGOCD_API_URL
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/argocd
+                property: url
+            - secretKey: ARGOCD_VERIFY_SSL
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/argocd
+                property: verify-ssl
+
+    - id: backstageSecret
+      includeWhen:
+        - ${schema.spec.modules.mcpBackstage.enabled}
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-backstage-secret
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-backstage-secret
+            creationPolicy: Owner
+          data:
+            - secretKey: BACKSTAGE_API_TOKEN
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/backstage
+                property: token
+            - secretKey: BACKSTAGE_URL
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/backstage
+                property: url
+
+    - id: bridgeTokenSecret
+      includeWhen:
+        - ${schema.spec.modules.agentGateway.enabled}
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${schema.metadata.name}-agentgateway-config-bridge-token
+          namespace: ${schema.metadata.namespace}
+        spec:
+          refreshInterval: 1h
+          secretStoreRef:
+            name: ${schema.spec.secrets.storeName}
+            kind: ${schema.spec.secrets.storeKind}
+          target:
+            name: ${schema.metadata.name}-agentgateway-config-bridge-token
+            creationPolicy: Owner
+          data:
+            - secretKey: AGENTGATEWAY_TARGETS_TOKEN
+              remoteRef:
+                key: ${schema.spec.secrets.vaultPrefix}/agentgateway-bridge
+                property: token
+
+    # ---------------------------------------------------------------------------
+    # AgentGateway static config (CRD-free routing).
+    # Replicates the umbrella chart's agentgateway-static-config template: one
+    # /mcp/<id> route + MCP backend per enabled module. The config-bridge
+    # sidecar seeds from this ConfigMap and hot-reloads runtime-added servers.
+    # Name must be <helm-release>-agentgateway-static-config; the agentgateway
+    # Application below uses the XR name as its Helm release name.
+    # ---------------------------------------------------------------------------
+    - id: agentgatewayStaticConfig
+      includeWhen:
+        - ${schema.spec.modules.agentGateway.enabled}
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${schema.metadata.name}-agentgateway-static-config
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/component: agentgateway
+        data:
+          config.yaml: |
+            binds:
+              - port: 4000
+                listeners:
+                  - protocol: HTTP
+                    routes:${schema.spec.modules.mcpArgocd.enabled ? "\n              - matches:\n                  - path:\n                      pathPrefix: \"/mcp/argocd\"\n                backends:\n                  - mcp:\n                      targets:\n                        - name: \"argocd\"\n                          mcp:\n                            host: \"http://" + schema.metadata.name + "-mcp-argocd-mcp." + schema.metadata.namespace + ".svc.cluster.local:8000/mcp\"" : ""}${schema.spec.modules.mcpBackstage.enabled ? "\n              - matches:\n                  - path:\n                      pathPrefix: \"/mcp/backstage\"\n                backends:\n                  - mcp:\n                      targets:\n                        - name: \"backstage\"\n                          mcp:\n                            host: \"http://" + schema.metadata.name + "-mcp-backstage-mcp." + schema.metadata.namespace + ".svc.cluster.local:8000/mcp\"" : ""}${schema.spec.modules.mcpGithub.enabled ? "\n              - matches:\n                  - path:\n                      pathPrefix: \"/mcp/github\"\n                policies:\n                  transformations:\n                    request:\n                      set:\n                        authorization: '\"Bearer \" + default(request.headers[\"x-caipe-provider-token\"], \"\")'\n                backends:\n                  - mcp:\n                      targets:\n                        - name: \"github\"\n                          mcp:\n                            host: \"http://" + schema.metadata.name + "-mcp-github-mcp." + schema.metadata.namespace + ".svc.cluster.local:8000/mcp\"" : ""}${schema.spec.modules.ragStack.enabled ? "\n              - matches:\n                  - path:\n                      pathPrefix: \"/mcp/knowledge-base\"\n                policies:\n                  transformations:\n                    request:\n                      set:\n                        authorization: '\"Bearer \" + default(request.headers[\"x-caipe-provider-token\"], \"\")'\n                backends:\n                  - mcp:\n                      targets:\n                        - name: \"knowledge-base\"\n                          mcp:\n                            host: \"http://" + schema.metadata.name + "-rag-server." + schema.metadata.namespace + ".svc.cluster.local:9446/mcp\"" : ""}${!schema.spec.modules.mcpArgocd.enabled && !schema.spec.modules.mcpBackstage.enabled && !schema.spec.modules.mcpGithub.enabled && !schema.spec.modules.ragStack.enabled ? " []" : ""}
+            config:
+              adminAddr: "0.0.0.0:15000"
+              logging:
+                level: info
+                format: json
+
+    # ---------------------------------------------------------------------------
+    # CAIPE UI
+    # ---------------------------------------------------------------------------
+    - id: uiApp
+      includeWhen:
+        - ${schema.spec.modules.ui.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-ui
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/caipe-ui
+              helm:
+                releaseName: ${schema.metadata.name}-ui
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/ui.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-caipe-ui
+                  global:
+                    agentgateway:
+                      enabled: ${schema.spec.modules.agentGateway.enabled}
+                      routingMode: static
+                      static:
+                        configBridge:
+                          enabled: true
+                          ui:
+                            existingSecret:
+                              name: ${schema.metadata.name}-agentgateway-config-bridge-token
+                  config:
+                    NEXTAUTH_URL: https://${schema.spec.domain}
+                    NODE_ENV: production
+                    APP_NAME: ${schema.spec.ui.appName}
+                    TAGLINE: ${schema.spec.ui.tagline}
+                    DESCRIPTION: ${schema.spec.ui.description}
+                    SSO_ENABLED: 'true'
+                    KEYCLOAK_URL: ${schema.spec.identity.keycloakURL}
+                    KEYCLOAK_REALM: ${schema.spec.identity.keycloakRealm}
+                    KEYCLOAK_RESOURCE_SERVER_ID: ${schema.spec.identity.platformClientID}
+                    KEYCLOAK_ADMIN_CLIENT_ID: ${schema.spec.identity.platformClientID}
+                    OIDC_ISSUER: ${schema.spec.identity.oidcIssuer}
+                    OIDC_CLIENT_ID: ${schema.spec.identity.oidcClientID}
+                    OIDC_DISCOVERY_URL: ${schema.spec.identity.oidcIssuer}
+                    MONGODB_DATABASE: caipe
+                    ENV_BADGE: ${schema.spec.ui.envBadge}
+                    SHOW_POWERED_BY: 'false'
+                    WORKFLOW_RUNNER_ENABLED: 'true'
+                    WORKFLOWS_ENABLED: 'true'
+                    CAIPE_CREDENTIALS_ENABLED: 'true'
+                    CREDENTIAL_STORE_BACKEND: mongodb-envelope
+                    CREDENTIAL_KEY_PROVIDER: local-cmk
+                    # Bare-metal clusters have no AWS KMS; the insecure local key
+                    # wrap is a dev-only escape hatch and is never enabled for
+                    # the production profile.
+                    CREDENTIAL_ALLOW_INSECURE_LOCAL_KEY_WRAP: '${schema.spec.profile == "production" ? "false" : "true"}'
+                    CREDENTIAL_BOOTSTRAP_OAUTH_CONNECTORS: 'true'
+                    OPENFGA_HTTP: http://${schema.metadata.name}-openfga:8080
+                    IDENTITY_SYNC_LOGIN_CLAIMS_ENABLED: 'true'
+                    IDENTITY_SYNC_LOGIN_AUTO_CREATE_TEAMS: 'true'
+                    BOOTSTRAP_ADMIN_EMAILS: ${schema.spec.ui.bootstrapAdminEmails}
+                  keycloakAdminClient:
+                    secretName: ${schema.metadata.name}-caipe-ui-secret
+                    secretKey: KEYCLOAK_ADMIN_CLIENT_SECRET
+                    clientId: ${schema.spec.identity.platformClientID}
+                  externalSecrets:
+                    enabled: true
+                    apiVersion: 'v1'
+                    secretStoreRef:
+                      name: ${schema.spec.secrets.storeName}
+                      kind: ${schema.spec.secrets.storeKind}
+                    data:
+                      - secretKey: OIDC_CLIENT_SECRET
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/keycloak
+                          property: client-secret
+                      - secretKey: KEYCLOAK_ADMIN_CLIENT_SECRET
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/keycloak
+                          property: platform-client-secret
+                      - secretKey: NEXTAUTH_SECRET
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/ui
+                          property: nextauth-secret
+                      - secretKey: GITHUB_OAUTH_CLIENT_ID
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/github-oauth
+                          property: client-id
+                      - secretKey: GITHUB_OAUTH_CLIENT_SECRET
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/github-oauth
+                          property: client-secret
+                      - secretKey: MONGODB_URI
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: uri
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Dynamic Agents
+    # ---------------------------------------------------------------------------
+    - id: dynamicAgentsApp
+      includeWhen:
+        - ${schema.spec.modules.dynamicAgents.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-dynamic-agents
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/dynamic-agents
+              helm:
+                releaseName: ${schema.metadata.name}-dynamic-agents
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/dynamic-agents.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-dynamic-agents
+                  llmSecret: ${schema.metadata.name}-llm-secret
+                  config:
+                    KEYCLOAK_URL: ${schema.spec.identity.keycloakURL}
+                    KEYCLOAK_REALM: ${schema.spec.identity.keycloakRealm}
+                    KEYCLOAK_AUDIENCE: ${schema.spec.identity.keycloakAudience}
+                    OIDC_ISSUER: ${schema.spec.identity.oidcIssuer}
+                    MONGODB_DATABASE: caipe
+                    OPENAI_ENDPOINT: ${schema.spec.llm.endpoint}
+                    AUTHZ_SERVICE_URL: http://${schema.metadata.name}-caipe-ui:3000
+                    OPENFGA_HTTP: http://${schema.metadata.name}-openfga:8080
+                    CAIPE_CREDENTIALS_ENABLED: 'true'
+                    CREDENTIAL_API_URL: http://${schema.metadata.name}-caipe-ui:3000/api/credentials
+                    CAIPE_API_URL: http://${schema.metadata.name}-caipe-ui:3000
+                    AUDIT_SERVICE_URL: http://${schema.metadata.name}-audit-service:8010
+                  externalSecrets:
+                    enabled: true
+                    apiVersion: 'v1'
+                    secretStoreRef:
+                      name: ${schema.spec.secrets.storeName}
+                      kind: ${schema.spec.secrets.storeKind}
+                    data:
+                      - secretKey: MONGODB_URI
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: uri
+                      - secretKey: OPENAI_API_KEY
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/llm
+                          property: openai-api-key
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Audit service (local disk backend)
+    # ---------------------------------------------------------------------------
+    - id: auditServiceApp
+      includeWhen:
+        - ${schema.spec.modules.auditService.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-audit-service
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/audit-service
+              helm:
+                releaseName: ${schema.metadata.name}-audit-service
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/audit-service.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-audit-service
+                  storage:
+                    backend: local
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Skill scanner
+    # ---------------------------------------------------------------------------
+    - id: skillScannerApp
+      includeWhen:
+        - ${schema.spec.modules.skillScanner.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-skill-scanner
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/skill-scanner
+              helm:
+                releaseName: ${schema.metadata.name}-skill-scanner
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/skill-scanner.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-skill-scanner
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # MCP servers (HTTP mode). mcp-github runs in stdio mode inside
+    # dynamic-agents and has no Deployment, so it has no Application here.
+    # ---------------------------------------------------------------------------
+    - id: mcpArgocdApp
+      includeWhen:
+        - ${schema.spec.modules.mcpArgocd.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-mcp-argocd
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/mcp-server
+              helm:
+                releaseName: ${schema.metadata.name}-mcp-argocd
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/mcp-argocd.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-mcp-argocd
+                  image:
+                    repository: ghcr.io/cnoe-io/mcp-argocd
+                    pullPolicy: IfNotPresent
+                  mcp:
+                    image:
+                      repository: ghcr.io/cnoe-io/mcp-argocd
+                      pullPolicy: IfNotPresent
+                    mode: http
+                    port: 8000
+                  llmSecrets:
+                    create: false
+                    secretName: ${schema.metadata.name}-llm-secret
+                  agentSecrets:
+                    requiresSecret: true
+                    create: false
+                    secretName: ${schema.metadata.name}-argocd-secret
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    - id: mcpBackstageApp
+      includeWhen:
+        - ${schema.spec.modules.mcpBackstage.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-mcp-backstage
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/mcp-server
+              helm:
+                releaseName: ${schema.metadata.name}-mcp-backstage
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/mcp-backstage.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-mcp-backstage
+                  image:
+                    repository: ghcr.io/cnoe-io/mcp-backstage
+                    pullPolicy: IfNotPresent
+                  mcp:
+                    image:
+                      repository: ghcr.io/cnoe-io/mcp-backstage
+                      pullPolicy: IfNotPresent
+                    mode: http
+                    port: 8000
+                  llmSecrets:
+                    create: false
+                    secretName: ${schema.metadata.name}-llm-secret
+                  agentSecrets:
+                    requiresSecret: true
+                    create: false
+                    secretName: ${schema.metadata.name}-backstage-secret
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Standalone AgentGateway proxy (static routing mode + config-bridge).
+    # NOTE: the Helm release name is the XR name (not <xr>-agentgateway) because
+    # the subchart derives the static-config ConfigMap name from .Release.Name.
+    # ---------------------------------------------------------------------------
+    - id: agentgatewayApp
+      includeWhen:
+        - ${schema.spec.modules.agentGateway.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-agentgateway
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/agentgateway
+              helm:
+                releaseName: ${schema.metadata.name}
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/agentgateway.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-agentgateway
+                  global:
+                    agentgateway:
+                      enabled: true
+                      routingMode: static
+                      static:
+                        configBridge:
+                          enabled: true
+                          ui:
+                            url: http://${schema.metadata.name}-caipe-ui:3000/api/internal/agentgateway/mcp-targets
+                            existingSecret:
+                              name: ${schema.metadata.name}-agentgateway-config-bridge-token
+                  extraEnv:
+                    - name: GITHUB_PERSONAL_ACCESS_TOKEN
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${schema.metadata.name}-github-pat-secret
+                          key: GITHUB_PERSONAL_ACCESS_TOKEN
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # OpenFGA (postgres datastore via PostgresInstance connection secret)
+    # ---------------------------------------------------------------------------
+    - id: openfgaApp
+      includeWhen:
+        - ${schema.spec.modules.openfga.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-openfga
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/openfga
+              helm:
+                releaseName: ${schema.metadata.name}-openfga
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/openfga.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-openfga
+                  datastore:
+                    engine: postgres
+                    uriSecretRef:
+                      name: ${openfgaDb.status.connectionSecretRef.name}
+                      key: uri
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # MongoDB (in-cluster). Skipped when database.provider is a managed service;
+    # the MONGODB_URI in the secret store then points at atlas/documentdb.
+    # ---------------------------------------------------------------------------
+    - id: mongoApp
+      includeWhen:
+        - ${schema.spec.database.provider == "local"}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-mongodb
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/ai-platform-engineering/charts/caipe-ui-mongodb
+              helm:
+                releaseName: ${schema.metadata.name}-mongodb
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/mongodb.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-mongodb
+                  persistence:
+                    enabled: true
+                    storageClass: ${schema.spec.database.mongodb.storageClass}
+                    size: '${string(schema.spec.database.mongodb.sizeGB) + "Gi"}'
+                  auth:
+                    database: caipe
+                  externalSecrets:
+                    enabled: true
+                    apiVersion: 'v1'
+                    secretStoreRef:
+                      name: ${schema.spec.secrets.storeName}
+                      kind: ${schema.spec.secrets.storeKind}
+                    data:
+                      - secretKey: MONGO_INITDB_ROOT_USERNAME
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: username
+                      - secretKey: MONGO_INITDB_ROOT_PASSWORD
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: password
+                      - secretKey: MONGO_INITDB_DATABASE
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: database
+                      - secretKey: MONGODB_URI
+                        remoteRef:
+                          key: ${schema.spec.secrets.vaultPrefix}/mongodb
+                          property: uri
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # RAG stack (standalone chart at charts/rag-stack). Milvus is wired to the
+    # ObjectBucket primitive; chart-level tuning (storage classes, resources)
+    # lives in the fast-lane values file.
+    # ---------------------------------------------------------------------------
+    - id: ragStackApp
+      includeWhen:
+        - ${schema.spec.modules.ragStack.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-rag-stack
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: ${schema.spec.argocd.project}
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://github.com/cnoe-io/ai-platform-engineering.git
+              targetRevision: ${schema.spec.version}
+              path: charts/rag-stack
+              helm:
+                releaseName: ${schema.metadata.name}-rag-stack
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/inari-ai"}/rag-stack.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  global:
+                    rag:
+                      enableGraphRag: false
+                  rag-server:
+                    enabled: true
+                    enableGraphRag: false
+                    fullnameOverride: ${schema.metadata.name}-rag-server
+                    llmSecrets:
+                      secretName: ${schema.metadata.name}-llm-secret
+                    env:
+                      EMBEDDINGS_PROVIDER: openai
+                      EMBEDDINGS_MODEL: text-embedding-3-small
+                  rag-webui:
+                    enabled: true
+                    ingress:
+                      enabled: false
+                  agent-rag:
+                    enabled: true
+                    config:
+                      RAG_AGENT_PORT: '8099'
+                  neo4j:
+                    enabled: false
+                  neo4j-ontology:
+                    enabled: false
+                  agent-ontology:
+                    enabled: false
+                  rag-redis:
+                    enabled: true
+                  milvus:
+                    cluster:
+                      enabled: false
+                    # rocksmq instead of Woodpecker: not all S3 backends support
+                    # the If-None-Match conditional writes Woodpecker requires.
+                    messageQueue: rocksmq
+                    extraConfigFiles:
+                      user.yaml: |
+                        messageQueue: rocksmq
+                        mq:
+                          type: rocksmq
+                    standalone:
+                      persistence:
+                        enabled: true
+                      extraEnv:
+                        - name: MINIO_ACCESSKEYID
+                          valueFrom:
+                            secretKeyRef:
+                              name: ${milvusBucket.status.credentialsSecretRef.name}
+                              key: accessKeyId
+                        - name: MINIO_SECRETACCESSKEY
+                          valueFrom:
+                            secretKeyRef:
+                              name: ${milvusBucket.status.credentialsSecretRef.name}
+                              key: secretAccessKey
+                    minio:
+                      enabled: false
+                    externalS3:
+                      enabled: true
+                      host: '${schema.spec.storage.provider == "garage" ? schema.spec.storage.clusterName + "." + schema.spec.storage.clusterNamespace + ".svc.cluster.local" : "s3." + schema.spec.storage.region + ".amazonaws.com"}'
+                      port: '${schema.spec.storage.provider == "garage" ? 3900 : 443}'
+                      useSSL: '${schema.spec.storage.provider != "garage"}'
+                      useVirtualHost: false
+                      bucketName: ${milvusBucket.spec.bucket}
+                      rootPath: milvus
+                      useIAM: false
+                      cloudProvider: aws
+                      region: '${schema.spec.storage.provider == "garage" ? "garage" : schema.spec.storage.region}'
+                    etcd:
+                      replicaCount: 1
+                    woodpecker:
+                      enabled: false
+                    pulsarv3:
+                      enabled: false
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # UI HTTPRoute
+    # ---------------------------------------------------------------------------
+    - id: uiRoute
+      includeWhen:
+        - ${schema.spec.modules.ui.enabled}
+        - ${schema.spec.domain != ""}
+      template:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+        spec:
+          parentRefs:
+            - name: ${schema.spec.ingress.gatewayName}
+              namespace: ${schema.spec.ingress.gatewayNamespace}
+              sectionName: ${schema.spec.ingress.sectionName}
+          hostnames:
+            - ${schema.spec.domain}
+          rules:
+            - backendRefs:
+                - name: ${schema.metadata.name}-caipe-ui
+                  port: 3000
