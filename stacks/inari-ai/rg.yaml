@@ -397,7 +397,13 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-caipe-ui
+                  # Subcharts expect the umbrella's global block; provide the
+                  # keys they dereference (image.tag, vpa) when standalone.
                   global:
+                    image:
+                      tag: ''
+                    vpa:
+                      enabled: false
                     agentgateway:
                       enabled: ${schema.spec.modules.agentGateway.enabled}
                       routingMode: static
@@ -511,6 +517,11 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-dynamic-agents
+                  global:
+                    image:
+                      tag: ''
+                    vpa:
+                      enabled: false
                   llmSecret: ${schema.metadata.name}-llm-secret
                   config:
                     KEYCLOAK_URL: ${schema.spec.identity.keycloakURL}
@@ -578,6 +589,9 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-audit-service
+                  global:
+                    image:
+                      tag: ''
                   storage:
                     backend: local
             - repoURL: ${schema.spec.overrides.repoURL}
@@ -618,6 +632,9 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-skill-scanner
+                  global:
+                    image:
+                      tag: ''
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -657,6 +674,11 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-mcp-argocd
+                  global:
+                    image:
+                      tag: ''
+                    vpa:
+                      enabled: false
                   image:
                     repository: ghcr.io/cnoe-io/mcp-argocd
                     pullPolicy: IfNotPresent
@@ -708,6 +730,11 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-mcp-backstage
+                  global:
+                    image:
+                      tag: ''
+                    vpa:
+                      enabled: false
                   image:
                     repository: ghcr.io/cnoe-io/mcp-backstage
                     pullPolicy: IfNotPresent
@@ -863,6 +890,11 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-mongodb
+                  global:
+                    image:
+                      tag: ''
+                    vpa:
+                      enabled: false
                   persistence:
                     enabled: true
                     storageClass: ${schema.spec.database.mongodb.storageClass}
