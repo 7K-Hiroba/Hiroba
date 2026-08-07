@@ -23,6 +23,7 @@ CTX="kind-${CLUSTER_NAME}"
 REPO="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 KRO_VERSION="${KRO_VERSION:-0.9.1}"
 ARGOCD_VERSION="${ARGOCD_VERSION:-v2.12.3}"
+GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-v1.3.0}"
 
 log() { echo "=== $* ==="; }
 
@@ -84,6 +85,14 @@ kubectl --context "${CTX}" -n argocd rollout restart deployment argocd-server
 kubectl --context "${CTX}" -n argocd rollout restart statefulset argocd-application-controller
 kubectl --context "${CTX}" -n argocd rollout status deployment argocd-server --timeout=300s
 kubectl --context "${CTX}" -n argocd rollout status statefulset argocd-application-controller --timeout=300s
+
+# -----------------------------------------------------------------------------
+# Install Gateway API CRDs (required by the stack's Grafana HTTPRoute; KRO
+# refuses to activate an RGD whose resource GVKs are not resolvable).
+# -----------------------------------------------------------------------------
+log "Installing Gateway API CRDs ${GATEWAY_API_VERSION}"
+kubectl --context "${CTX}" apply -f \
+  "https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml"
 
 # -----------------------------------------------------------------------------
 # Install the PrometheusRule CRD so modules.rules can be exercised.
