@@ -43,10 +43,13 @@ nav:
       - adr/007-orchestrator-function.md
       - adr/008-stack-composition-in-orchestrator.md
       - adr/009-contract-codegen.md
+      - adr/010-kro-managed-stacks.md
   - Runbooks:
       - runbooks/adding-a-new-provider.md
       - runbooks/debugging-stuck-xr.md
       - runbooks/manual-resource-cleanup.md
+      - runbooks/migrating-stacks-to-kro.md
+      - runbooks/onboarding-observability-agent.md
       - runbooks/rotating-provider-credentials.md
       - runbooks/upgrading-composition.md
   - 7KGroup ↗: https://7kgroup.org

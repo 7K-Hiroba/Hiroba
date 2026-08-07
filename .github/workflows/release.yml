@@ -33,7 +33,7 @@ jobs:
         id: versions
         run: |
           git fetch --tags --force
-          declare -A map=( ["functions/platform"]="function-platform" ["packages/primitives"]="platform-primitives" )
+          declare -A map=( ["functions/platform"]="function-platform" ["packages/primitives"]="platform-primitives" ["stacks"]="stacks" )
           json=$(jq -nc '{}')
           for path in "${!map[@]}"; do
             prefix="${map[$path]}"
@@ -78,6 +78,29 @@ jobs:
       HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
       HARBOR_ROBOT_NAME: ${{ secrets.HARBOR_ROBOT_NAME }}
       HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
+
+  stacks:
+    needs: [release-please, resolve]
+    if: ${{ contains(needs.release-please.outputs.paths_released, 'stacks') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build stacks artifact
+        env:
+          VERSION: ${{ fromJson(needs.resolve.outputs.versions)['stacks'] }}
+        run: |
+          tar czf "stacks-${VERSION}.tar.gz" stacks/
+          echo "artifact=stacks-${VERSION}.tar.gz" >> "$GITHUB_ENV"
+      - name: Upload stacks artifact to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ fromJson(needs.resolve.outputs.versions)['stacks'] }}
+        run: |
+          tag="stacks-v${VERSION}"
+          gh release upload "${tag}" "${artifact}" --clobber
 
   npm:
     needs: release-please

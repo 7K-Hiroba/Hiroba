@@ -11,8 +11,9 @@ XRDs and thin Pipeline Compositions only.
 ```
 hiroba/
 ├── contract/           # contract.json: single source of truth (ADR 009)
-├── functions/platform/ # Go orchestrator composition function
+├── functions/platform/ # Go orchestrator composition function (ADR 007)
 ├── packages/           # shared lib + primitives (PostgresInstance, ObjectBucket)
+├── stacks/             # KRO ResourceGraphDefinitions for product stacks (ADR 010)
 ├── consumer-sdk/       # developer-facing typed constructs
 ├── infrastructure/     # control-plane manifests
 ├── scripts/            # e2e-setup.sh, team-setup.sh, render-validate.sh
@@ -22,9 +23,9 @@ hiroba/
 
 ## Product Repositories
 
-- **Observability Stack**: `/mnt/local-nas/Projects/7K-Hiroba/Observability Stack/`
-  - GrafanaInstance, LokiInstance, PrometheusInstance, MimirInstance,
-    AlloyInstance, ObservabilityStack (ADR 008)
+- **Observability Stack**: [github.com/7KGroup/7k-inari](https://github.com/7KGroup/7k-inari)
+  - Consumer-side examples, fast-lane value overrides, and `ObservabilityStack` /
+    `ObservabilityAgent` CR instances (RGDs live in this repo under `stacks/`).
 
 ## Quick Start (local e2e)
 

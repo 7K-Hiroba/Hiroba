@@ -18,6 +18,12 @@
       "bump-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md"
     },
+    "stacks": {
+      "package-name": "stacks",
+      "release-type": "simple",
+      "bump-minor-pre-major": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "packages/shared": {
       "package-name": "shared",
       "release-type": "node",

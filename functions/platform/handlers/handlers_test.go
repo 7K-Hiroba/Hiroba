@@ -81,7 +81,6 @@ func TestPostgresAWSProviderConfigConvention(t *testing.T) {
 	assertField(t, obj, "team-api-aws", "spec", "providerConfigRef", "name")
 	assertField(t, obj, "postgres", "spec", "forProvider", "engine")
 	assertField(t, obj, "eu-west-1", "spec", "forProvider", "region")
-	// Contract profile defaults: production = db.r6g.xlarge, multiAZ, 30-day backups, Orphan.
 	assertField(t, obj, "db.r6g.xlarge", "spec", "forProvider", "instanceClass")
 	assertField(t, obj, "Orphan", "spec", "deletionPolicy")
 }
@@ -106,7 +105,6 @@ func TestPostgresHonorsSpecOverrides(t *testing.T) {
 	assertField(t, obj, "16", "spec", "forProvider", "engineVersion")
 	assertField(t, obj, "shop", "spec", "forProvider", "dbName")
 	assertField(t, obj, "db.t3.large", "spec", "forProvider", "instanceClass")
-	// development profile -> Delete
 	assertField(t, obj, "Delete", "spec", "deletionPolicy")
 }
 
@@ -141,7 +139,6 @@ func TestPostgresConnectionDetailsMappedFromObserved(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	cd := res.ConnectionDetails
-	// Contract keys normalized from provider-native keys.
 	for _, key := range contract.PostgresConnectionKeys {
 		if _, ok := cd[key]; !ok {
 			t.Errorf("connection details missing contract key %q", key)
@@ -167,7 +164,7 @@ func TestPostgresConnectionDetailsMappedFromObserved(t *testing.T) {
 
 func TestPostgresConfigDefaultProviderOverridesContract(t *testing.T) {
 	xr := newXR("PostgresInstance", "db", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x"}) // no spec.provider
+	setSpec(xr, map[string]any{"team": "team-x"})
 
 	hc := newHandlerContext(xr, nil)
 	hc.Config = platform.Config{DefaultProviders: map[string]string{"postgres": "aws"}}
@@ -183,7 +180,7 @@ func TestPostgresConfigDefaultProviderOverridesContract(t *testing.T) {
 
 func TestPostgresDefaultProviderIsCNPG(t *testing.T) {
 	xr := newXR("PostgresInstance", "db", "ns", "team-x")
-	setSpec(xr, map[string]any{"profile": "development", "team": "team-x"}) // no provider
+	setSpec(xr, map[string]any{"profile": "development", "team": "team-x"})
 
 	res, err := Postgres(newHandlerContext(xr, nil))
 	if err != nil {
@@ -193,7 +190,6 @@ func TestPostgresDefaultProviderIsCNPG(t *testing.T) {
 	if got := dc.Resource.GetKind(); got != "Cluster" {
 		t.Fatalf("default provider want CNPG Cluster, got %s", got)
 	}
-	// Static contract keys available immediately.
 	for _, key := range []string{"host", "port", "username", "database"} {
 		if _, ok := res.ConnectionDetails[key]; !ok {
 			t.Errorf("CNPG connection details missing %q", key)
@@ -202,7 +198,6 @@ func TestPostgresDefaultProviderIsCNPG(t *testing.T) {
 	if got := string(res.ConnectionDetails["host"]); got != "db-pg-rw.ns.svc" {
 		t.Errorf("host = %q, want db-pg-rw.ns.svc", got)
 	}
-	// Storage honored: default 20Gi.
 	assertField(t, dc.Resource.Object, "20Gi", "spec", "storage", "size")
 }
 
@@ -232,17 +227,48 @@ func TestPostgresUnknownProviderErrors(t *testing.T) {
 }
 
 func TestObjectBucketDefaultIsGarage(t *testing.T) {
-	xr := newXR("ObjectBucket", "logs", "ns", "team-x") // no provider
+	xr := newXR("ObjectBucket", "logs", "ns", "team-x")
 	setSpec(xr, map[string]any{"team": "team-x"})
 	res, err := ObjectBucket(newHandlerContext(xr, nil))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got := res.Desired[resource.Name("bucket")].Resource.GetKind(); got != "GarageBucket" {
-		t.Fatalf("default provider want GarageBucket, got %s", got)
+	byKind := composedByKind(res)
+	if _, ok := byKind["GarageBucket"]; !ok {
+		t.Fatal("expected a GarageBucket")
+	}
+	if _, ok := byKind["GarageKey"]; !ok {
+		t.Fatal("expected a GarageKey")
 	}
 	if got := string(res.ConnectionDetails["bucket"]); got != "logs" {
 		t.Errorf("bucket = %q, want logs (XR name)", got)
+	}
+	assertField(t, byKind["GarageBucket"], "default", "spec", "clusterRef", "name")
+	assertField(t, byKind["GarageBucket"], "garage", "spec", "clusterRef", "namespace")
+	if got := res.Status["endpoint"]; got != "http://default.garage.svc:3900" {
+		t.Errorf("status.endpoint = %v", got)
+	}
+	creds, _, _ := unstructured.NestedString(byKind["GarageKey"], "spec", "secretTemplate", "name")
+	if creds != "logs-creds" {
+		t.Errorf("garage key secretTemplate.name = %q, want logs-creds", creds)
+	}
+}
+
+func TestObjectBucketGarageClusterRef(t *testing.T) {
+	xr := newXR("ObjectBucket", "logs", "ns", "team-x")
+	setSpec(xr, map[string]any{
+		"team":       "team-x",
+		"clusterRef": map[string]any{"name": "storage", "namespace": "platform"},
+	})
+	res, err := ObjectBucket(newHandlerContext(xr, nil))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	byKind := composedByKind(res)
+	assertField(t, byKind["GarageBucket"], "storage", "spec", "clusterRef", "name")
+	assertField(t, byKind["GarageBucket"], "platform", "spec", "clusterRef", "namespace")
+	if got := res.Status["endpoint"]; got != "http://storage.platform.svc:3900" {
+		t.Errorf("status.endpoint = %v", got)
 	}
 }
 
@@ -264,7 +290,6 @@ func TestObjectBucketS3(t *testing.T) {
 	if got := dc.Resource.GetKind(); got != "Bucket" {
 		t.Fatalf("want S3 Bucket, got %s", got)
 	}
-	// Static contract keys.
 	cd := res.ConnectionDetails
 	if got := string(cd["bucket"]); got != "my-assets" {
 		t.Errorf("bucket = %q, want my-assets", got)
@@ -275,195 +300,9 @@ func TestObjectBucketS3(t *testing.T) {
 	if got := string(cd["endpoint"]); got != "https://s3.us-east-1.amazonaws.com" {
 		t.Errorf("endpoint = %q", got)
 	}
-}
-
-func TestGrafanaEmitsPostgresAndRelease(t *testing.T) {
-	xr := newXR("GrafanaInstance", "obs", "team-api", "team-api")
-	setSpec(xr, map[string]any{"profile": "production", "team": "team-api", "domain": "grafana.example.com"})
-
-	res, err := Grafana(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(res.Desired) != 2 {
-		t.Fatalf("want 2 composed resources (PostgresInstance + Release), got %d", len(res.Desired))
-	}
-	byKind := composedByKind(res)
-	pg, ok := byKind["PostgresInstance"]
-	if !ok {
-		t.Fatal("expected a child PostgresInstance")
-	}
-	if got, _, _ := unstructured.NestedString(pg, "apiVersion"); got != "" {
-		_ = got
-	}
-	rel, ok := byKind["Release"]
-	if !ok {
-		t.Fatal("expected a helm Release")
-	}
-	if got, _, _ := unstructured.NestedString(rel, "spec", "forProvider", "chart", "name"); got != "grafana" {
-		t.Errorf("chart = %q, want grafana", got)
-	}
-	// Password wired from the child connection secret.
-	secretName, _, _ := unstructured.NestedString(rel,
-		"spec", "forProvider", "values", "envValueFrom", "GF_DATABASE_PASSWORD", "secretKeyRef", "name")
-	if secretName != "obs-db-pg-app" {
-		t.Errorf("GF_DATABASE_PASSWORD secretRef = %q, want obs-db-pg-app (CNPG operator secret fallback)", secretName)
-	}
-}
-
-func TestGrafanaInjectsObservedDBDetails(t *testing.T) {
-	xr := newXR("GrafanaInstance", "obs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x"})
-	child := composed.New()
-	child.SetAPIVersion(contract.APIGroupVersion)
-	child.SetKind("PostgresInstance")
-	_ = unstructured.SetNestedField(child.Object, "obs-pg-rw.ns.svc:5432", "status", "endpoint")
-	_ = unstructured.SetNestedField(child.Object, "grafana", "spec", "database")
-	observed := map[resource.Name]resource.ObservedComposed{
-		resource.Name("db"): {Resource: child},
-	}
-	res, err := Grafana(newHandlerContext(xr, observed))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	rel := composedByKind(res)["Release"]
-	// v2: DB settings derive from the child XR's status.endpoint, not connection secrets.
-	assertField(t, rel, "obs-pg-rw.ns.svc:5432", "spec", "forProvider", "values", "grafana.ini", "database", "host")
-	assertField(t, rel, "grafana", "spec", "forProvider", "values", "grafana.ini", "database", "name")
-	assertField(t, rel, "app", "spec", "forProvider", "values", "grafana.ini", "database", "user")
-}
-
-func TestGrafanaDBProviderOverride(t *testing.T) {
-	xr := newXR("GrafanaInstance", "obs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x", "dbProvider": "aws"})
-	res, err := Grafana(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	pg := composedByKind(res)["PostgresInstance"]
-	assertField(t, pg, "aws", "spec", "provider")
-}
-
-func TestLokiEmitsBucketAndRelease(t *testing.T) {
-	xr := newXR("LokiInstance", "logs", "team-api", "team-api")
-	setSpec(xr, map[string]any{"profile": "production", "team": "team-api"})
-
-	res, err := Loki(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(res.Desired) != 2 {
-		t.Fatalf("want 2 composed resources (ObjectBucket + Release), got %d", len(res.Desired))
-	}
-	byKind := composedByKind(res)
-	if _, ok := byKind["ObjectBucket"]; !ok {
-		t.Fatal("expected a child ObjectBucket")
-	}
-	rel, ok := byKind["Release"]
-	if !ok {
-		t.Fatal("expected a helm Release")
-	}
-	if got, _, _ := unstructured.NestedString(rel, "spec", "forProvider", "chart", "name"); got != "loki-distributed" {
-		t.Errorf("chart = %q, want loki-distributed", got)
-	}
-	// Credentials env wired from the child connection secret with contract keys.
-	keyID, _, _ := unstructured.NestedString(rel,
-		"spec", "forProvider", "values", "extraEnv", "0", "valueFrom", "secretKeyRef", "key")
-	_ = keyID
-	env, _, _ := unstructured.NestedSlice(rel, "spec", "forProvider", "values", "extraEnv")
-	if len(env) != 2 {
-		t.Fatalf("want 2 extraEnv entries, got %d", len(env))
-	}
-	first, _ := env[0].(map[string]any)
-	key, _, _ := unstructured.NestedString(first, "valueFrom", "secretKeyRef", "key")
-	if key != "accessKeyId" {
-		t.Errorf("first extraEnv key = %q, want accessKeyId (contract key)", key)
-	}
-	secretName, _, _ := unstructured.NestedString(first, "valueFrom", "secretKeyRef", "name")
-	if secretName != "logs-bucket-conn" {
-		t.Errorf("secretRef name = %q, want logs-bucket-conn", secretName)
-	}
-}
-
-func TestLokiInjectsObservedBucketDetails(t *testing.T) {
-	xr := newXR("LokiInstance", "logs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x"})
-	bucket := composed.New()
-	bucket.SetAPIVersion(contract.APIGroupVersion)
-	bucket.SetKind("ObjectBucket")
-	_ = unstructured.SetNestedField(bucket.Object, "https://s3.us-east-1.amazonaws.com", "status", "endpoint")
-	_ = unstructured.SetNestedField(bucket.Object, "logs-bucket", "spec", "bucket")
-	_ = unstructured.SetNestedField(bucket.Object, "us-east-1", "spec", "region")
-	observed := map[resource.Name]resource.ObservedComposed{
-		resource.Name("bucket"): {Resource: bucket},
-	}
-	res, err := Loki(newHandlerContext(xr, observed))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	rel := composedByKind(res)["Release"]
-	assertField(t, rel, "logs-bucket", "spec", "forProvider", "values", "loki", "storage", "s3", "bucketnames")
-	assertField(t, rel, "https://s3.us-east-1.amazonaws.com", "spec", "forProvider", "values", "loki", "storage", "s3", "endpoint")
-	assertField(t, rel, "us-east-1", "spec", "forProvider", "values", "loki", "storage", "s3", "region")
-}
-
-func TestLokiBucketProviderOverride(t *testing.T) {
-	xr := newXR("LokiInstance", "logs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x", "bucketProvider": "s3"})
-	res, err := Loki(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	ob := composedByKind(res)["ObjectBucket"]
-	assertField(t, ob, "s3", "spec", "provider")
-}
-
-func releaseChartVersion(t *testing.T, res *platform.Result) string {
-	t.Helper()
-	rel, ok := composedByKind(res)["Release"]
-	if !ok {
-		t.Fatal("no Release composed")
-	}
-	v, _, _ := unstructured.NestedString(rel, "spec", "forProvider", "chart", "version")
-	return v
-}
-
-func TestGrafanaChartVersionSpecOverridesEnv(t *testing.T) {
-	t.Setenv("GRAFANA_CHART_VERSION", "8.4.0")
-	xr := newXR("GrafanaInstance", "obs", "ns", "team-x")
-	setSpec(xr, map[string]any{"chartVersion": "9.1.0", "team": "team-x"})
-	res, err := Grafana(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if got := releaseChartVersion(t, res); got != "9.1.0" {
-		t.Errorf("chart version = %q, want spec override 9.1.0", got)
-	}
-}
-
-func TestGrafanaChartVersionEnvOverridesDefault(t *testing.T) {
-	t.Setenv("GRAFANA_CHART_VERSION", "8.4.7")
-	xr := newXR("GrafanaInstance", "obs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x"}) // no spec.chartVersion
-	res, err := Grafana(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if got := releaseChartVersion(t, res); got != "8.4.7" {
-		t.Errorf("chart version = %q, want env override 8.4.7", got)
-	}
-}
-
-func TestLokiChartVersionDefault(t *testing.T) {
-	t.Setenv("LOKI_CHART_VERSION", "")
-	xr := newXR("LokiInstance", "logs", "ns", "team-x")
-	setSpec(xr, map[string]any{"team": "team-x"}) // no spec.chartVersion, no env
-	res, err := Loki(newHandlerContext(xr, nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if got := releaseChartVersion(t, res); got != "0.79.0" {
-		t.Errorf("chart version = %q, want default 0.79.0", got)
+	creds, _, _ := unstructured.NestedString(res.Status["credentialsSecretRef"].(map[string]any), "name")
+	if creds != "team-api-s3-credentials" {
+		t.Errorf("credentialsSecretRef.name = %q, want team-api-s3-credentials", creds)
 	}
 }
 

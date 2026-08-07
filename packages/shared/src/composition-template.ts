@@ -36,6 +36,12 @@ export function createPlatformXrd(
                     name: { type: 'string' },
                   },
                 },
+                credentialsSecretRef: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                  },
+                },
               },
             },
           },

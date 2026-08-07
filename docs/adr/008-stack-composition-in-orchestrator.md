@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted.
+Superseded by ADR 010.
+
+The observability stack is now implemented as KRO `ResourceGraphDefinition`s
+managed by ArgoCD. Primitives remain in the orchestrator.
 
 ## Context
 

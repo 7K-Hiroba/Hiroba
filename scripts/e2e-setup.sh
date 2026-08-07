@@ -5,7 +5,8 @@
 # the CNPG operator, provider-helm, and the function-platform orchestrator
 # built from source and served from a local OCI registry on the kind network.
 #
-# Prerequisites: kind, kubectl, helm, docker, go, crossplane CLI.
+# Prerequisites: kind, kubectl, helm, docker, go.
+# The crossplane CLI (crank) is installed automatically if missing.
 # Usage: scripts/e2e-setup.sh [kind-cluster-name]
 set -euo pipefail
 
@@ -167,6 +168,15 @@ server = \"http://${REG_IP}:5000\"
   skip_verify = true
 EOF"
 
+if ! command -v crossplane >/dev/null 2>&1; then
+  echo "=== Installing crossplane CLI (crank) ==="
+  CROSSPLANE_CLI_VERSION="v2.3.3"
+  curl -sL "https://releases.crossplane.io/stable/${CROSSPLANE_CLI_VERSION}/bin/linux_amd64/crank" -o /tmp/crossplane
+  chmod +x /tmp/crossplane
+  sudo mv /tmp/crossplane /usr/local/bin/crossplane 2>/dev/null || mv /tmp/crossplane "${HOME}/.local/bin/crossplane"
+  command -v crossplane >/dev/null 2>&1 || export PATH="${HOME}/.local/bin:${PATH}"
+fi
+
 echo "=== Building and publishing function-platform (xpkg) ==="
 # Crossplane's package cache cannot use kind-loaded images, so the function is
 # packaged as an xpkg and pushed to the local registry.
@@ -180,7 +190,10 @@ crossplane xpkg build -f "$REPO/functions/platform/package" \
   -o /tmp/function-platform.xpkg >/dev/null
 XPKG_ID=$(docker load -i /tmp/function-platform.xpkg | grep -o 'sha256:[a-f0-9]*' | head -1)
 docker tag "${XPKG_ID}" localhost:5000/function-platform:dev
-docker push -q localhost:5000/function-platform:dev >/dev/null
+# Resolve the registry manifest digest from the push output. With the classic
+# docker image store the image ID is the *config* digest, which the registry
+# cannot serve as a manifest (the function pod then ImagePullBackOffs).
+XPKG_DIGEST=$(docker push localhost:5000/function-platform:dev | grep -oE 'sha256:[a-f0-9]{64}' | tail -1)
 rm -f /tmp/function-platform.tar /tmp/function-platform.xpkg
 
 kubectl --context "${CTX}" apply -f - <<EOF
@@ -189,9 +202,15 @@ kind: Function
 metadata:
   name: function-platform
 spec:
-  package: ${REG_IP}:5000/function-platform@${XPKG_ID}
+  package: ${REG_IP}:5000/function-platform@${XPKG_DIGEST}
 EOF
-kubectl --context "${CTX}" wait --for=condition=Healthy function.pkg.crossplane.io/function-platform --timeout=300s
+if ! kubectl --context "${CTX}" wait --for=condition=Healthy function.pkg.crossplane.io/function-platform --timeout=300s; then
+  echo "!!! function-platform did not become Healthy; diagnostics:" >&2
+  kubectl --context "${CTX}" describe function.pkg.crossplane.io/function-platform >&2 || true
+  kubectl --context "${CTX}" get pods -n crossplane-system >&2 || true
+  kubectl --context "${CTX}" describe pods -n crossplane-system -l pkg.crossplane.io/function=function-platform >&2 || true
+  exit 1
+fi
 
 
 echo "=== Granting function-platform CRD read access (dependency gate) ==="

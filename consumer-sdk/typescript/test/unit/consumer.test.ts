@@ -53,16 +53,30 @@ describe('TeamObservability', () => {
     ).toThrow(/retentionDays/);
   });
 
-  test('forwards module values escape hatch', () => {
+  test('defaults storage to garage/us-east-1', () => {
+    const app = Testing.app();
+    const chart = new TeamObservability(app, 'obs', {
+      namespace: 'ns',
+      profile: 'development',
+      team: 't',
+      costCenter: 'c',
+    });
+    const [xr] = Testing.synth(chart) as any[];
+    expect(xr.spec.storage.provider).toBe('garage');
+    expect(xr.spec.storage.region).toBe('us-east-1');
+  });
+
+  test('forwards storage overrides', () => {
     const app = Testing.app();
     const chart = new TeamObservability(app, 'obs', {
       namespace: 'ns',
       profile: 'production',
       team: 't',
       costCenter: 'c',
-      modules: { grafana: { values: { persistence: { enabled: true } } } },
+      storage: { provider: 's3', region: 'eu-west-1' },
     });
     const [xr] = Testing.synth(chart) as any[];
-    expect(xr.spec.modules.grafana.values.persistence.enabled).toBe(true);
+    expect(xr.spec.storage.provider).toBe('s3');
+    expect(xr.spec.storage.region).toBe('eu-west-1');
   });
 });

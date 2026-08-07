@@ -52,18 +52,18 @@ func TestDependencyErrorIsActionable(t *testing.T) {
 }
 
 func TestContractRequiredDependencies(t *testing.T) {
-	// Wildcard applies to any provider.
-	deps := contract.RequiredDependencies("GrafanaInstance", "anything")
-	if len(deps) != 1 || deps[0].CRD != "releases.helm.m.crossplane.io" {
-		t.Errorf("GrafanaInstance deps = %+v, want helm release CRD", deps)
-	}
 	// Provider-specific.
-	deps = contract.RequiredDependencies("PostgresInstance", "cnpg")
+	deps := contract.RequiredDependencies("PostgresInstance", "cnpg")
 	if len(deps) != 1 || deps[0].CRD != "clusters.postgresql.cnpg.io" {
 		t.Errorf("PostgresInstance/cnpg deps = %+v, want cnpg cluster CRD", deps)
 	}
+	// Garage object storage needs bucket and key CRDs.
+	deps = contract.RequiredDependencies("ObjectBucket", "garage")
+	if len(deps) != 2 {
+		t.Errorf("ObjectBucket/garage deps = %+v, want 2 CRDs", deps)
+	}
 	// Unknown kind: no deps.
-	if deps := contract.RequiredDependencies("ObservabilityStack", ""); len(deps) != 0 {
-		t.Errorf("ObservabilityStack deps = %+v, want none (children are checked individually)", deps)
+	if deps := contract.RequiredDependencies("SomeOtherKind", ""); len(deps) != 0 {
+		t.Errorf("SomeOtherKind deps = %+v, want none", deps)
 	}
 }
