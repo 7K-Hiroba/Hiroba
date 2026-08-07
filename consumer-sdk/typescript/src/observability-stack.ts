@@ -15,6 +15,7 @@ export interface TeamObservabilityProps {
     readonly grafana?: {
       readonly enabled?: boolean;
       readonly domain?: string;
+      readonly dashboards?: boolean;
     };
     readonly loki?: {
       readonly enabled?: boolean;

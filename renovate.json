@@ -11,7 +11,15 @@
       "description": "Group observability Helm charts",
       "groupName": "observability charts",
       "matchDatasources": ["helm"],
-      "matchPackageNames": ["grafana", "loki-distributed", "mimir-distributed", "prometheus", "alloy"]
+      "matchPackageNames": [
+        "grafana",
+        "loki-distributed",
+        "mimir-distributed",
+        "prometheus",
+        "alloy",
+        "kube-state-metrics",
+        "prometheus-node-exporter"
+      ]
     },
     {
       "description": "Group KRO and ArgoCD",

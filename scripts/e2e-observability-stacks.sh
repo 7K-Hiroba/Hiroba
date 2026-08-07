@@ -86,6 +86,14 @@ kubectl --context "${CTX}" -n argocd rollout status deployment argocd-server --t
 kubectl --context "${CTX}" -n argocd rollout status statefulset argocd-application-controller --timeout=300s
 
 # -----------------------------------------------------------------------------
+# Install the PrometheusRule CRD so modules.rules can be exercised.
+# -----------------------------------------------------------------------------
+PROM_OPERATOR_CRD_VERSION="${PROM_OPERATOR_CRD_VERSION:-v0.80.0}"
+log "Installing prometheus-operator PrometheusRule CRD ${PROM_OPERATOR_CRD_VERSION}"
+kubectl --context "${CTX}" apply -f \
+  "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${PROM_OPERATOR_CRD_VERSION}/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml"
+
+# -----------------------------------------------------------------------------
 # Apply RGDs.
 # -----------------------------------------------------------------------------
 log "Applying observability RGDs"
@@ -129,19 +137,34 @@ spec:
   tenantId: e2e-tenant
   mtls:
     certSecretName: example-agent-mtls
+  modules:
+    rules:
+      enabled: true
 EOF
 
 log "Waiting for agent resources"
 for _ in $(seq 1 60); do
   if kubectl --context "${CTX}" -n team-obs get configmap/example-agent-river-config >/dev/null 2>&1 \
-     && kubectl --context "${CTX}" -n team-obs get application.argoproj.io/example-agent >/dev/null 2>&1; then
+     && kubectl --context "${CTX}" -n team-obs get configmap/example-agent-dashboards >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" -n team-obs get application.argoproj.io/example-agent >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" -n team-obs get application.argoproj.io/example-agent-kube-state-metrics >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" -n team-obs get application.argoproj.io/example-agent-node-exporter >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" -n team-obs get prometheusrule.monitoring.coreos.com/example-agent-kubernetes-rules >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" get clusterrole/example-agent-node-scrape >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" get clusterrolebinding/example-agent-node-scrape >/dev/null 2>&1; then
     break
   fi
   sleep 2
 done
 
 kubectl --context "${CTX}" -n team-obs get configmap example-agent-river-config
+kubectl --context "${CTX}" -n team-obs get configmap example-agent-dashboards
 kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent
+kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent-kube-state-metrics
+kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent-node-exporter
+kubectl --context "${CTX}" -n team-obs get prometheusrule.monitoring.coreos.com example-agent-kubernetes-rules
+kubectl --context "${CTX}" get clusterrole example-agent-node-scrape
+kubectl --context "${CTX}" get clusterrolebinding example-agent-node-scrape
 
 RIVER_CONFIG="$(mktemp)"
 kubectl --context "${CTX}" -n team-obs get configmap example-agent-river-config \
@@ -153,6 +176,14 @@ grep -q 'url = "https://logs.example.com/loki/api/v1/push"' "${RIVER_CONFIG}"
 grep -q '"X-Scope-OrgID" = "e2e-tenant"' "${RIVER_CONFIG}"
 grep -q 'cert_file = "/etc/alloy/certs/tls.crt"' "${RIVER_CONFIG}"
 grep -q 'key_file = "/etc/alloy/certs/tls.key"' "${RIVER_CONFIG}"
+grep -q 'prometheus.scrape "kube_state_metrics"' "${RIVER_CONFIG}"
+grep -q 'prometheus.scrape "node_exporter"' "${RIVER_CONFIG}"
+grep -q 'prometheus.scrape "kubelet"' "${RIVER_CONFIG}"
+grep -q 'prometheus.scrape "cadvisor"' "${RIVER_CONFIG}"
+grep -q 'prometheus.scrape "apiserver"' "${RIVER_CONFIG}"
+grep -q 'regex = "kube-state-metrics;http"' "${RIVER_CONFIG}"
+grep -q 'regex = "prometheus-node-exporter;metrics"' "${RIVER_CONFIG}"
+grep -q 'regex = "default;kubernetes;https"' "${RIVER_CONFIG}"
 rm -f "${RIVER_CONFIG}"
 
 APP_JSON="$(kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent -o json)"
@@ -160,6 +191,21 @@ log "Asserting ArgoCD Application wiring"
 echo "${APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.alloy.configMap.create == false' >/dev/null
 echo "${APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.alloy.configMap.name == "example-agent-river-config"' >/dev/null
 echo "${APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.volumes[0].secret.secretName == "example-agent-mtls"' >/dev/null
+
+log "Asserting metrics-source Applications"
+KSM_APP_JSON="$(kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent-kube-state-metrics -o json)"
+echo "${KSM_APP_JSON}" | jq -e '.spec.sources[0].chart == "kube-state-metrics"' >/dev/null
+echo "${KSM_APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.fullnameOverride == "example-agent-kube-state-metrics"' >/dev/null
+NE_APP_JSON="$(kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-agent-node-exporter -o json)"
+echo "${NE_APP_JSON}" | jq -e '.spec.sources[0].chart == "prometheus-node-exporter"' >/dev/null
+echo "${NE_APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.fullnameOverride == "example-agent-node-exporter"' >/dev/null
+
+log "Asserting dashboards ConfigMap and PrometheusRule"
+DASHBOARDS_JSON="$(kubectl --context "${CTX}" -n team-obs get configmap example-agent-dashboards -o json)"
+echo "${DASHBOARDS_JSON}" | jq -e '.metadata.labels.grafana_dashboard == "1"' >/dev/null
+echo "${DASHBOARDS_JSON}" | jq -e 'has("data") and (.data | has("kubernetes-cluster-overview.json") and has("kubernetes-nodes.json") and has("kubernetes-pods.json"))' >/dev/null
+kubectl --context "${CTX}" -n team-obs get prometheusrule.monitoring.coreos.com example-agent-kubernetes-rules \
+  -o jsonpath='{.spec.groups[0].name}' | grep -q 'kubernetes-agent'
 
 # -----------------------------------------------------------------------------
 # Test ObservabilityStack wiring (partial: child XRs are created).
@@ -198,5 +244,22 @@ for res in objectbucket.platform.7kgroup.org/example-stack-loki-bucket \
   done
   kubectl --context "${CTX}" -n team-obs get "${res}"
 done
+
+log "Waiting for stack Grafana Application and dashboards ConfigMap"
+for _ in $(seq 1 60); do
+  if kubectl --context "${CTX}" -n team-obs get application.argoproj.io/example-stack-grafana >/dev/null 2>&1 \
+     && kubectl --context "${CTX}" -n team-obs get configmap/example-stack-dashboards >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+
+GRAFANA_APP_JSON="$(kubectl --context "${CTX}" -n team-obs get application.argoproj.io example-stack-grafana -o json)"
+echo "${GRAFANA_APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.sidecar.datasources.enabled == true' >/dev/null
+echo "${GRAFANA_APP_JSON}" | jq -e '.spec.sources[0].helm.valuesObject.sidecar.dashboards.enabled == true' >/dev/null
+
+STACK_DASHBOARDS_JSON="$(kubectl --context "${CTX}" -n team-obs get configmap example-stack-dashboards -o json)"
+echo "${STACK_DASHBOARDS_JSON}" | jq -e '.metadata.labels.grafana_dashboard == "1"' >/dev/null
+echo "${STACK_DASHBOARDS_JSON}" | jq -e 'has("data") and (.data | has("kubernetes-cluster-overview.json") and has("kubernetes-nodes.json") and has("kubernetes-pods.json"))' >/dev/null
 
 log "Observability stacks e2e passed"

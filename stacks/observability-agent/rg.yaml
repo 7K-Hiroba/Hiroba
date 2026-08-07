@@ -4,14 +4,20 @@
 # logs/metrics to a remote observability stack (e.g. the management-plane
 # ObservabilityStack running in a different Kubernetes cluster).
 #
+# Beyond the agent itself it can deploy common Kubernetes metrics sources
+# (kube-state-metrics, node-exporter) plus kubelet/cAdvisor and API server
+# scrapes, declarative Grafana dashboards, and PrometheusRule alert rules.
+# Each capability is gated by a spec.modules.* flag.
+#
 # Requirements:
 #   - KRO >= 0.9 installed in the client cluster
 #   - ArgoCD >= 2.6 with application.namespaces enabled
 #   - A reachable logs/metrics endpoint on the remote stack
 #   - mTLS secret mounted at /etc/alloy/certs (platform-provided)
+#   - prometheus-operator CRDs installed when modules.rules.enabled is true
 #
 # Fast lane: per-client overrides live in the overrides git repo at
-#   clients/<team>/observability/alloy-agent.yaml
+#   clients/<team>/observability/{alloy-agent,kube-state-metrics,node-exporter}.yaml
 #
 # Config pattern: the River config is generated into a dedicated ConfigMap owned
 # by this RGD. The Alloy Helm chart references that ConfigMap instead of
@@ -40,6 +46,18 @@ spec:
       modules:
         logs: boolean | default=true
         metrics: boolean | default=true
+        kubeStateMetrics:
+          enabled: boolean | default=true
+          chartVersion: string | default="8.2.0"
+        nodeExporter:
+          enabled: boolean | default=true
+          chartVersion: string | default="4.56.1"
+        kubelet: boolean | default=true
+        kubeApiServer: boolean | default=true
+        dashboards:
+          enabled: boolean | default=true
+        rules:
+          enabled: boolean | default=false
       overrides:
         repoURL: string | default="https://github.com/7kgroup/7k-inari.git"
         path: string | default=""
@@ -63,6 +81,14 @@ spec:
             ${[
               schema.spec.modules.metrics ?
                 "prometheus.scrape \"kubernetes\" {\n  kubernetes_sd_configs {\n    role = \"pod\"\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}\n\nprometheus.remote_write \"mgmt\" {\n  endpoint {\n    name = \"metrics\"\n    url = \"" + schema.spec.metricsEndpoint + "\"\n    headers = {\n      \"X-Scope-OrgID\" = \"" + (schema.spec.tenantId != "" ? schema.spec.tenantId : schema.spec.team) + "\"\n    }\n    tls_config {\n      cert_file = \"/etc/alloy/certs/tls.crt\"\n      key_file = \"/etc/alloy/certs/tls.key\"\n    }\n  }\n}" : "",
+              schema.spec.modules.metrics && schema.spec.modules.kubeStateMetrics.enabled ?
+                "prometheus.scrape \"kube_state_metrics\" {\n  kubernetes_sd_configs {\n    role = \"endpoints\"\n    namespaces {\n      names = [\"" + schema.metadata.namespace + "\"]\n    }\n  }\n  relabel_configs {\n    source_labels = [\"__meta_kubernetes_service_label_app_kubernetes_io_name\", \"__meta_kubernetes_endpoint_port_name\"]\n    action = \"keep\"\n    regex = \"kube-state-metrics;http\"\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}" : "",
+              schema.spec.modules.metrics && schema.spec.modules.nodeExporter.enabled ?
+                "prometheus.scrape \"node_exporter\" {\n  kubernetes_sd_configs {\n    role = \"endpoints\"\n    namespaces {\n      names = [\"" + schema.metadata.namespace + "\"]\n    }\n  }\n  relabel_configs {\n    source_labels = [\"__meta_kubernetes_service_label_app_kubernetes_io_name\", \"__meta_kubernetes_endpoint_port_name\"]\n    action = \"keep\"\n    regex = \"prometheus-node-exporter;metrics\"\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}" : "",
+              schema.spec.modules.metrics && schema.spec.modules.kubelet ?
+                "prometheus.scrape \"kubelet\" {\n  kubernetes_sd_configs {\n    role = \"node\"\n  }\n  scheme = \"https\"\n  bearer_token_file = \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\n  tls_config {\n    insecure_skip_verify = true\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}\n\nprometheus.scrape \"cadvisor\" {\n  kubernetes_sd_configs {\n    role = \"node\"\n  }\n  metrics_path = \"/metrics/cadvisor\"\n  scheme = \"https\"\n  bearer_token_file = \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\n  tls_config {\n    insecure_skip_verify = true\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}" : "",
+              schema.spec.modules.metrics && schema.spec.modules.kubeApiServer ?
+                "prometheus.scrape \"apiserver\" {\n  kubernetes_sd_configs {\n    role = \"endpoints\"\n  }\n  scheme = \"https\"\n  bearer_token_file = \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\n  tls_config {\n    insecure_skip_verify = true\n  }\n  relabel_configs {\n    source_labels = [\"__meta_kubernetes_namespace\", \"__meta_kubernetes_service_name\", \"__meta_kubernetes_endpoint_port_name\"]\n    action = \"keep\"\n    regex = \"default;kubernetes;https\"\n  }\n  forward_to = [prometheus.remote_write.mgmt.receiver]\n}" : "",
               schema.spec.modules.logs ?
                 "loki.source.kubernetes \"pods\" {\n  forward_to = [loki.write.mgmt.receiver]\n}\n\nloki.source.kubernetes_events \"events\" {\n  forward_to = [loki.write.mgmt.receiver]\n}\n\nloki.write \"mgmt\" {\n  endpoint {\n    name = \"logs\"\n    url = \"" + schema.spec.logsEndpoint + "\"\n    headers = {\n      \"X-Scope-OrgID\" = \"" + (schema.spec.tenantId != "" ? schema.spec.tenantId : schema.spec.team) + "\"\n    }\n    tls_config {\n      cert_file = \"/etc/alloy/certs/tls.crt\"\n      key_file = \"/etc/alloy/certs/tls.key\"\n    }\n  }\n}" : ""
             ].join("\n\n")}
@@ -116,3 +142,276 @@ spec:
             automated:
               prune: true
               selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Node-scrape RBAC — the Alloy chart ships no node permissions by default;
+    # kubelet/cAdvisor scraping requires node discovery and nodes/metrics.
+    # ---------------------------------------------------------------------------
+    - id: nodeScrapeRole
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.kubelet}
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          name: ${schema.metadata.name}-node-scrape
+        rules:
+          - apiGroups:
+              - ''
+            resources:
+              - nodes
+              - nodes/proxy
+              - nodes/metrics
+            verbs:
+              - get
+              - list
+              - watch
+
+    - id: nodeScrapeRoleBinding
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.kubelet}
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: ${schema.metadata.name}-node-scrape
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: ${nodeScrapeRole.metadata.name}
+        subjects:
+          - kind: ServiceAccount
+            name: ${schema.metadata.name}
+            namespace: ${schema.metadata.namespace}
+
+    # ---------------------------------------------------------------------------
+    # kube-state-metrics
+    # ---------------------------------------------------------------------------
+    - id: kubeStateMetricsApp
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.kubeStateMetrics.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-kube-state-metrics
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://prometheus-community.github.io/helm-charts
+              chart: kube-state-metrics
+              targetRevision: ${schema.spec.modules.kubeStateMetrics.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/kube-state-metrics.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-kube-state-metrics
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # node-exporter
+    # ---------------------------------------------------------------------------
+    - id: nodeExporterApp
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.nodeExporter.enabled}
+      template:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${schema.metadata.name}-node-exporter
+          namespace: ${schema.metadata.namespace}
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${schema.metadata.namespace}
+          sources:
+            - repoURL: https://prometheus-community.github.io/helm-charts
+              chart: prometheus-node-exporter
+              targetRevision: ${schema.spec.modules.nodeExporter.chartVersion}
+              helm:
+                valueFiles:
+                  - '$values/${schema.spec.overrides.path != "" ? schema.spec.overrides.path : "clients/" + schema.spec.team + "/observability"}/node-exporter.yaml'
+                ignoreMissingValueFiles: true
+                valuesObject:
+                  fullnameOverride: ${schema.metadata.name}-node-exporter
+            - repoURL: ${schema.spec.overrides.repoURL}
+              targetRevision: ${schema.spec.overrides.revision}
+              ref: values
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+
+    # ---------------------------------------------------------------------------
+    # Declarative dashboards — loaded by any Grafana in this cluster whose
+    # dashboards sidecar watches the grafana_dashboard label (kube-prometheus-
+    # stack convention). Panels use the default Prometheus datasource.
+    # ---------------------------------------------------------------------------
+    - id: dashboards
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.dashboards.enabled}
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${schema.metadata.name}-dashboards
+          namespace: ${schema.metadata.namespace}
+          labels:
+            grafana_dashboard: '1'
+        data:
+          kubernetes-cluster-overview.json: |
+            {
+              "title": "Kubernetes / Cluster Overview",
+              "tags": ["kubernetes", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "stat", "title": "Nodes Ready", "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+                 "targets": [{"expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})"}]},
+                {"id": 2, "type": "stat", "title": "Pods Running", "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+                 "targets": [{"expr": "count(kube_pod_status_phase{phase=\"Running\"} == 1)"}]},
+                {"id": 3, "type": "stat", "title": "Container Restarts (1h)", "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+                 "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total[1h]))"}]},
+                {"id": 4, "type": "stat", "title": "Deployments Available", "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+                 "targets": [{"expr": "sum(kube_deployment_status_replicas_available)"}]},
+                {"id": 5, "type": "timeseries", "title": "CPU Usage by Namespace (cores)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+                 "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])) by (namespace)", "legendFormat": "{{namespace}}"}]},
+                {"id": 6, "type": "timeseries", "title": "Memory Working Set by Namespace", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+                 "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+                 "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}) by (namespace)", "legendFormat": "{{namespace}}"}]}
+              ]
+            }
+          kubernetes-nodes.json: |
+            {
+              "title": "Kubernetes / Nodes",
+              "tags": ["kubernetes", "node-exporter", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "timeseries", "title": "CPU Usage %", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) by (instance) * 100)", "legendFormat": "{{instance}}"}]},
+                {"id": 2, "type": "timeseries", "title": "Memory Usage %", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "{{instance}}"}]},
+                {"id": 3, "type": "timeseries", "title": "Root Filesystem Usage %", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})) * 100", "legendFormat": "{{instance}}"}]},
+                {"id": 4, "type": "timeseries", "title": "Network Throughput", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []},
+                 "targets": [
+                   {"expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "{{instance}} {{device}} rx"},
+                   {"expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "{{instance}} {{device}} tx"}
+                 ]}
+              ]
+            }
+          kubernetes-pods.json: |
+            {
+              "title": "Kubernetes / Pods",
+              "tags": ["kubernetes", "kube-state-metrics", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "timeseries", "title": "Pods by Phase", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+                 "targets": [{"expr": "count(kube_pod_status_phase == 1) by (phase)", "legendFormat": "{{phase}}"}]},
+                {"id": 2, "type": "timeseries", "title": "Container Restarts by Namespace", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+                 "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total[1h])) by (namespace)", "legendFormat": "{{namespace}}"}]},
+                {"id": 3, "type": "timeseries", "title": "CPU Usage per Pod (cores)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+                 "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}"}]},
+                {"id": 4, "type": "timeseries", "title": "Memory Working Set per Pod", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+                 "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}"}]}
+              ]
+            }
+
+    # ---------------------------------------------------------------------------
+    # Declarative alert rules — PrometheusRule CRs (kube-prometheus-stack
+    # convention). Requires the prometheus-operator CRDs in the client cluster;
+    # evaluation happens wherever an operator/ruler consumes them.
+    # ---------------------------------------------------------------------------
+    - id: agentRules
+      includeWhen:
+        - ${schema.spec.modules.metrics}
+        - ${schema.spec.modules.rules.enabled}
+      template:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: ${schema.metadata.name}-kubernetes-rules
+          namespace: ${schema.metadata.namespace}
+        spec:
+          groups:
+            - name: kubernetes-agent
+              rules:
+                - alert: KubeNodeNotReady
+                  expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+                  for: 15m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Node {{ $labels.node }} has been NotReady for more than 15 minutes.
+                - alert: KubePodCrashLooping
+                  expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+                  for: 5m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Container {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} is crash-looping.
+                - alert: KubePodNotReady
+                  expr: kube_pod_status_phase{phase=~"Pending|Unknown"} == 1
+                  for: 15m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in phase {{ $labels.phase }} for more than 15 minutes.
+                - alert: KubeDeploymentReplicasMismatch
+                  expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+                  for: 15m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not matched the expected replica count for more than 15 minutes.
+                - alert: NodeHighMemoryUsage
+                  expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+                  for: 5m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Node {{ $labels.instance }} memory usage is above 90%.
+                - alert: NodeFilesystemAlmostFull
+                  expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 90
+                  for: 5m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: Filesystem {{ $labels.mountpoint }} on node {{ $labels.instance }} is above 90% full.

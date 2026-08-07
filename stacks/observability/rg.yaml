@@ -42,6 +42,7 @@ spec:
         grafana:
           enabled: boolean | default=true
           domain: string | default=""
+          dashboards: boolean | default=true
           chartVersion: string | default="8.5.0"
         loki:
           enabled: boolean | default=true
@@ -287,11 +288,11 @@ spec:
                           fieldRef:
                             fieldPath: spec.nodeName
                       - name: PROMETHEUS_URL
-                        value: "${schema.spec.modules.metrics.backend == \"mimir\" ? \"http://\" + schema.metadata.name + \"-mimir-nginx.\" + schema.metadata.namespace + \".svc:80/api/v1/push\" : \"http://\" + schema.metadata.name + \"-prometheus-server.\" + schema.metadata.namespace + \".svc:80/api/v1/write\"}"
+                        value: '${schema.spec.modules.metrics.backend == "mimir" ? "http://" + schema.metadata.name + "-mimir-nginx." + schema.metadata.namespace + ".svc:80/api/v1/push" : "http://" + schema.metadata.name + "-prometheus-server." + schema.metadata.namespace + ".svc:80/api/v1/write"}'
                       - name: LOKI_URL
-                        value: "http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80/loki/api/v1/push"
+                        value: 'http://${schema.metadata.name}-loki-gateway.${schema.metadata.namespace}.svc:80/loki/api/v1/push'
                       - name: ORG_ID
-                        value: "${schema.spec.team}"
+                        value: '${schema.spec.team}'
             - repoURL: ${schema.spec.overrides.repoURL}
               targetRevision: ${schema.spec.overrides.revision}
               ref: values
@@ -345,6 +346,13 @@ spec:
                 ignoreMissingValueFiles: true
                 valuesObject:
                   fullnameOverride: ${schema.metadata.name}-grafana
+                  sidecar:
+                    datasources:
+                      enabled: true
+                      searchNamespace: ${schema.metadata.namespace}
+                    dashboards:
+                      enabled: ${schema.spec.modules.grafana.dashboards}
+                      searchNamespace: ${schema.metadata.namespace}
                   envValueFrom:
                     GF_DATABASE_PASSWORD:
                       secretKeyRef:
@@ -418,3 +426,96 @@ spec:
                 type: prometheus
                 url: ${schema.spec.modules.metrics.backend == "mimir" ? "http://" + schema.metadata.name + "-mimir-nginx." + schema.metadata.namespace + ".svc:80" : "http://" + schema.metadata.name + "-prometheus-server." + schema.metadata.namespace + ".svc:80"}
                 editable: false
+
+    # ---------------------------------------------------------------------------
+    # Declarative dashboards — loaded by the Grafana dashboards sidecar
+    # (grafana_dashboard label convention). Panels use the default Prometheus
+    # datasource and cover metrics pushed by ObservabilityAgent instances.
+    # ---------------------------------------------------------------------------
+    - id: dashboards
+      includeWhen:
+        - ${schema.spec.modules.grafana.enabled}
+        - ${schema.spec.modules.grafana.dashboards}
+        - ${schema.spec.modules.metrics.enabled}
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${schema.metadata.name}-dashboards
+          namespace: ${schema.metadata.namespace}
+          labels:
+            grafana_dashboard: '1'
+        data:
+          kubernetes-cluster-overview.json: |
+            {
+              "title": "Kubernetes / Cluster Overview",
+              "tags": ["kubernetes", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "stat", "title": "Nodes Ready", "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+                 "targets": [{"expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})"}]},
+                {"id": 2, "type": "stat", "title": "Pods Running", "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+                 "targets": [{"expr": "count(kube_pod_status_phase{phase=\"Running\"} == 1)"}]},
+                {"id": 3, "type": "stat", "title": "Container Restarts (1h)", "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+                 "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total[1h]))"}]},
+                {"id": 4, "type": "stat", "title": "Deployments Available", "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+                 "targets": [{"expr": "sum(kube_deployment_status_replicas_available)"}]},
+                {"id": 5, "type": "timeseries", "title": "CPU Usage by Namespace (cores)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+                 "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])) by (namespace)", "legendFormat": "{{namespace}}"}]},
+                {"id": 6, "type": "timeseries", "title": "Memory Working Set by Namespace", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+                 "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+                 "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}) by (namespace)", "legendFormat": "{{namespace}}"}]}
+              ]
+            }
+          kubernetes-nodes.json: |
+            {
+              "title": "Kubernetes / Nodes",
+              "tags": ["kubernetes", "node-exporter", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "timeseries", "title": "CPU Usage %", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) by (instance) * 100)", "legendFormat": "{{instance}}"}]},
+                {"id": 2, "type": "timeseries", "title": "Memory Usage %", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "{{instance}}"}]},
+                {"id": 3, "type": "timeseries", "title": "Root Filesystem Usage %", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "percent", "max": 100}, "overrides": []},
+                 "targets": [{"expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})) * 100", "legendFormat": "{{instance}}"}]},
+                {"id": 4, "type": "timeseries", "title": "Network Throughput", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []},
+                 "targets": [
+                   {"expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "{{instance}} {{device}} rx"},
+                   {"expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "{{instance}} {{device}} tx"}
+                 ]}
+              ]
+            }
+          kubernetes-pods.json: |
+            {
+              "title": "Kubernetes / Pods",
+              "tags": ["kubernetes", "kube-state-metrics", "hiroba"],
+              "timezone": "browser",
+              "schemaVersion": 39,
+              "version": 1,
+              "refresh": "30s",
+              "time": {"from": "now-6h", "to": "now"},
+              "panels": [
+                {"id": 1, "type": "timeseries", "title": "Pods by Phase", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+                 "targets": [{"expr": "count(kube_pod_status_phase == 1) by (phase)", "legendFormat": "{{phase}}"}]},
+                {"id": 2, "type": "timeseries", "title": "Container Restarts by Namespace", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+                 "targets": [{"expr": "sum(increase(kube_pod_container_status_restarts_total[1h])) by (namespace)", "legendFormat": "{{namespace}}"}]},
+                {"id": 3, "type": "timeseries", "title": "CPU Usage per Pod (cores)", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+                 "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}"}]},
+                {"id": 4, "type": "timeseries", "title": "Memory Working Set per Pod", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+                 "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+                 "targets": [{"expr": "sum(container_memory_working_set_bytes{container!=\"\",container!=\"POD\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}"}]}
+              ]
+            }

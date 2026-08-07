@@ -75,6 +75,16 @@ spec:
   modules:
     logs: true
     metrics: true
+    kubeStateMetrics:
+      enabled: true
+    nodeExporter:
+      enabled: true
+    kubelet: true
+    kubeApiServer: true
+    dashboards:
+      enabled: true
+    rules:
+      enabled: false
 ```
 
 - `modules.logs` and `modules.metrics` are optional and default to `true`.
@@ -85,6 +95,35 @@ spec:
   value.
 - `logsEndpoint` and `metricsEndpoint` are provided by the platform team.
 - `mtls.certSecretName` must match the secret from step 1.
+
+### Metrics sources
+
+All metrics sources are gated by `modules.metrics` and can be toggled
+individually:
+
+| Module                     | Default | What it does                                                                                                                                                                             |
+| -------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kubeStateMetrics.enabled` | `true`  | Deploys the `kube-state-metrics` Helm chart via ArgoCD and scrapes it. Pin a different chart with `kubeStateMetrics.chartVersion`.                                                       |
+| `nodeExporter.enabled`     | `true`  | Deploys the `prometheus-node-exporter` DaemonSet via ArgoCD and scrapes it. Pin a different chart with `nodeExporter.chartVersion`.                                                      |
+| `kubelet`                  | `true`  | Scrapes kubelet `/metrics` and `/metrics/cadvisor` on every node. The RGD creates a `<name>-node-scrape` ClusterRole/Binding for this because the Alloy chart ships no node permissions. |
+| `kubeApiServer`            | `true`  | Scrapes the API server's `/metrics` endpoint.                                                                                                                                            |
+
+The pod scrape (`prometheus.scrape "kubernetes"`) is always included when
+`modules.metrics` is `true`.
+
+### Dashboards and alert rules
+
+- `modules.dashboards.enabled` (default `true`) creates a
+  `<name>-dashboards` ConfigMap labeled `grafana_dashboard: '1'` with
+  Kubernetes cluster/node/pod dashboards. Any Grafana running in the client
+  cluster with the dashboards sidecar enabled picks them up
+  (kube-prometheus-stack convention). Panels use the default Prometheus
+  datasource.
+- `modules.rules.enabled` (default `false`) creates a
+  `<name>-kubernetes-rules` PrometheusRule CR with common Kubernetes alerts
+  (node not ready, crash loops, replica mismatch, memory/filesystem pressure).
+  **Requires the prometheus-operator CRDs in the client cluster** — the agent
+  itself does not evaluate rules.
 
 ## 3. Verify
 
@@ -108,11 +147,21 @@ It should contain:
 - `loki.write "mgmt"` pointing at `logsEndpoint`.
 - `"X-Scope-OrgID" = "team-api"`.
 - `cert_file` and `key_file` under `tls_config`.
+- Scrape jobs for the enabled metrics sources: `kube_state_metrics`,
+  `node_exporter`, `kubelet`, `cadvisor`, `apiserver`.
 
-Check the ArgoCD Application:
+Check the ArgoCD Applications:
 
 ```bash
-kubectl -n team-api get application team-api-agent -o yaml
+kubectl -n team-api get applications
+```
+
+Expected (depending on enabled modules):
+
+```
+team-api-agent                      Synced   Healthy
+team-api-agent-kube-state-metrics   Synced   Healthy
+team-api-agent-node-exporter        Synced   Healthy
 ```
 
 Confirm that:
@@ -128,9 +177,16 @@ healthy.
 
 ## 4. Fast-lane overrides
 
-To tune chart values (resource limits, node selectors, tolerations), edit
-`clients/team-api/observability/alloy-agent.yaml` in the overrides repo. The
-platform wiring in the RGD cannot be overridden from that file.
+To tune chart values (resource limits, node selectors, tolerations), edit the
+per-module files in the overrides repo:
+
+```
+clients/team-api/observability/alloy-agent.yaml
+clients/team-api/observability/kube-state-metrics.yaml
+clients/team-api/observability/node-exporter.yaml
+```
+
+The platform wiring in the RGD cannot be overridden from those files.
 
 ## Troubleshooting
 
@@ -172,3 +228,24 @@ platform wiring in the RGD cannot be overridden from that file.
 - Confirm the management plane accepts the `X-Scope-OrgID` header value.
 - Confirm the mTLS certificate is signed by the issuer the management plane
   trusts.
+
+### kubelet/cAdvisor or API server metrics are missing
+
+- Confirm `modules.kubelet` / `modules.kubeApiServer` are `true`.
+- Confirm the `<name>-node-scrape` ClusterRole and ClusterRoleBinding exist:
+
+  ```bash
+  kubectl get clusterrole,clusterrolebinding team-api-agent-node-scrape
+  ```
+
+- Check Alloy logs for 403 errors against the kubelet — some managed
+  Kubernetes offerings restrict kubelet `/metrics` access.
+
+### PrometheusRule is not created
+
+- Confirm `modules.rules.enabled` is `true`.
+- Confirm the prometheus-operator CRDs are installed:
+
+  ```bash
+  kubectl get crd prometheusrules.monitoring.coreos.com
+  ```

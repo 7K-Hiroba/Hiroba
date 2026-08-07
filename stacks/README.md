@@ -6,11 +6,11 @@ them into GitOps-managed ArgoCD Applications.
 
 ## Included stacks
 
-| Directory              | RGD kind             | What it deploys                                                                   |
-| ---------------------- | -------------------- | --------------------------------------------------------------------------------- |
-| `observability/`       | `ObservabilityStack` | In-cluster Grafana + Loki + Mimir/Prometheus + Alloy.                             |
-| `observability-agent/` | `ObservabilityAgent` | Remote-pushing Grafana Alloy agent for client clusters.                           |
-| `inari-ai/`            | `InariAIStack`       | CAIPE AI platform (UI, agents, MCP servers, AgentGateway, OpenFGA, optional RAG). |
+| Directory              | RGD kind             | What it deploys                                                                                                            |
+| ---------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `observability/`       | `ObservabilityStack` | In-cluster Grafana + Loki + Mimir/Prometheus + Alloy.                                                                      |
+| `observability-agent/` | `ObservabilityAgent` | Remote-pushing Grafana Alloy agent + kube-state-metrics/node-exporter, dashboards and PrometheusRules for client clusters. |
+| `inari-ai/`            | `InariAIStack`       | CAIPE AI platform (UI, agents, MCP servers, AgentGateway, OpenFGA, optional RAG).                                          |
 
 ## Requirements
 

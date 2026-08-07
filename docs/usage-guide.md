@@ -55,6 +55,11 @@ npm run gen:contract              # regenerate TS + Go after editing contract/co
 
 ## Using Existing Platform Products
 
+See the dedicated runbooks for step-by-step instructions:
+
+- [Onboarding an ObservabilityStack](runbooks/onboarding-observability-stack.md)
+- [Onboarding an ObservabilityAgent](runbooks/onboarding-observability-agent.md)
+
 ### With kubectl
 
 ```yaml
