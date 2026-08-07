@@ -133,7 +133,7 @@ kubectl -n team-api get applications
 
 Expected:
 
-```
+```text
 team-api-obs-alloy        Synced   Healthy
 team-api-obs-grafana      Synced   Healthy
 team-api-obs-loki         Synced   Healthy
@@ -172,7 +172,7 @@ ConfigMaps in the same namespace.
 Static Helm configuration lives in the overrides repo. The default files are in
 `clients/platform/observability/`; copy/adjust them for the team:
 
-```
+```text
 clients/
   team-api/
     observability/

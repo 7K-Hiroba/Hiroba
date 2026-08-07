@@ -158,7 +158,7 @@ kubectl -n team-api get applications
 
 Expected (depending on enabled modules):
 
-```
+```text
 team-api-agent                      Synced   Healthy
 team-api-agent-kube-state-metrics   Synced   Healthy
 team-api-agent-node-exporter        Synced   Healthy
@@ -180,7 +180,7 @@ healthy.
 To tune chart values (resource limits, node selectors, tolerations), edit the
 per-module files in the overrides repo:
 
-```
+```text
 clients/team-api/observability/alloy-agent.yaml
 clients/team-api/observability/kube-state-metrics.yaml
 clients/team-api/observability/node-exporter.yaml
