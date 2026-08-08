@@ -28,8 +28,8 @@ jobs:
       primitives: ${{ steps.filter.outputs.primitives }}
       stacks: ${{ steps.filter.outputs.stacks }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
         id: filter
         with:
           filters: |
@@ -54,20 +54,20 @@ jobs:
 
   pr-title:
     if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
-    uses: 7K-Group/workflows-library/.github/workflows/ci-lint-pr-title.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-lint-pr-title.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     secrets: inherit
 
   cdk8s:
     needs: detect
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/ci-cdk8s.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-cdk8s.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: .
 
   function:
     needs: detect
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.function == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-go-function.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: functions/platform
       go-version: '1.25'
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: functions/platform
@@ -93,7 +93,7 @@ jobs:
   function-xpkg:
     needs: detect
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.function == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: functions/platform
       package-path: functions/platform/package
@@ -105,7 +105,7 @@ jobs:
   xpkg:
     needs: [detect, cdk8s]
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.primitives == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: packages/primitives
       prebuild: npm run build -w @7k-hiroba/shared && npm run synth -w @7k-hiroba/primitives
@@ -116,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.12'
@@ -126,7 +126,7 @@ jobs:
   e2e:
     needs: [detect, cdk8s, function]
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.cdk8s == 'true' || needs.detect.outputs.function == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/ci-e2e-kind.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-e2e-kind.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: .
       setup-script: scripts/e2e-setup.sh
@@ -137,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
@@ -158,7 +158,7 @@ jobs:
           chmod +x /tmp/crossplane
           sudo mv /tmp/crossplane /usr/local/bin/crossplane
       - name: Bootstrap kind cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
         with:
           cluster_name: platform-e2e
       - name: Run platform e2e setup
@@ -172,7 +172,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
@@ -193,7 +193,7 @@ jobs:
           chmod +x /tmp/crossplane
           sudo mv /tmp/crossplane /usr/local/bin/crossplane
       - name: Bootstrap kind cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
         with:
           cluster_name: platform-e2e
       - name: Run platform e2e setup
@@ -206,7 +206,7 @@ jobs:
   xpkg-e2e:
     needs: [detect, xpkg]
     if: ${{ github.event_name != 'pull_request' || needs.detect.outputs.primitives == 'true' }}
-    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane-e2e.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/ci-crossplane-e2e.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: packages/primitives
       image: platform-primitives

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   release-please:
-    uses: 7K-Group/workflows-library/.github/workflows/release-please.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-please.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     secrets: inherit
 
   resolve:
@@ -26,7 +26,7 @@ jobs:
     outputs:
       versions: ${{ steps.versions.outputs.versions }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Resolve released versions from tags
@@ -47,7 +47,7 @@ jobs:
   function:
     needs: [release-please, resolve]
     if: ${{ contains(needs.release-please.outputs.paths_released, 'functions/platform') }}
-    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: functions/platform
       package-path: functions/platform/package
@@ -65,7 +65,7 @@ jobs:
   primitives:
     needs: [release-please, resolve]
     if: ${{ contains(needs.release-please.outputs.paths_released, 'packages/primitives') }}
-    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: packages/primitives
       version: ${{ fromJson(needs.resolve.outputs.versions)['packages/primitives'] }}
@@ -87,7 +87,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build stacks artifact
         env:
           VERSION: ${{ fromJson(needs.resolve.outputs.versions)['stacks'] }}
@@ -111,7 +111,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           # npm trusted publishing (OIDC) requires Node >= 22.14 / npm >= 11.5.1.
