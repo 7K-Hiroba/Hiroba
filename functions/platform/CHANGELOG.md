@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/7K-Hiroba/Hiroba/compare/function-platform-v1.0.1...function-platform-v1.1.0) (2026-08-08)
+
+
+### Features
+
+* use kro to graphically wire configuration per stack ([#37](https://github.com/7K-Hiroba/Hiroba/issues/37)) ([8fa0072](https://github.com/7K-Hiroba/Hiroba/commit/8fa0072dbf3257fe4e54eb3ad5f9b6b07cba896e))
+
 ## [1.0.1](https://github.com/7K-Hiroba/Hiroba/compare/function-platform-v1.0.0...function-platform-v1.0.1) (2026-07-12)
 
 
