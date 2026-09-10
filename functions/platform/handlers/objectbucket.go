@@ -132,7 +132,7 @@ func bucketGarage(hc *platform.HandlerContext) (*platform.Result, error) {
 	platform.LabelOwnership(ko, oxr)
 
 	endpoint := fmt.Sprintf("http://%s.%s.svc:%d", clusterRef, clusterNs, garageS3Port)
-	return &platform.Result{
+	res := &platform.Result{
 		Desired: platform.Desired{
 			resource.Name("bucket"): {Resource: bucketObj},
 			resource.Name("key"):    {Resource: keyObj},
@@ -151,5 +151,13 @@ func bucketGarage(hc *platform.HandlerContext) (*platform.Result, error) {
 		Warnings: []string{
 			fmt.Sprintf("endpoint and credentials are issued by the Garage operator in the %q secret", credsSecret),
 		},
-	}, nil
+	}
+	// The Garage operators report readiness on the composed resources; the XR
+	// may only flip to Ready once both the bucket and its key credential exist.
+	platform.MarkReady(res, hc, resource.Name("bucket"))
+	platform.MarkReady(res, hc, resource.Name("key"))
+	if platform.ObservedReady(hc, resource.Name("bucket")) && platform.ObservedReady(hc, resource.Name("key")) {
+		res.Status["phase"] = "Ready"
+	}
+	return res, nil
 }

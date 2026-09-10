@@ -272,6 +272,58 @@ func TestObjectBucketGarageClusterRef(t *testing.T) {
 	}
 }
 
+func TestObjectBucketGarageReadyWhenObservedReady(t *testing.T) {
+	xr := newXR("ObjectBucket", "logs", "ns", "team-x")
+	setSpec(xr, map[string]any{"team": "team-x"})
+
+	ready := func(kind string) resource.ObservedComposed {
+		obj := composed.New()
+		obj.SetAPIVersion(garageAPIVersion)
+		obj.SetKind(kind)
+		_ = unstructured.SetNestedField(obj.Object, "Ready", "status", "phase")
+		return resource.ObservedComposed{Resource: obj}
+	}
+	bothReady := map[resource.Name]resource.ObservedComposed{
+		resource.Name("bucket"): ready("GarageBucket"),
+		resource.Name("key"):    ready("GarageKey"),
+	}
+
+	res, err := ObjectBucket(newHandlerContext(xr, bothReady))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := res.Status["phase"]; got != "Ready" {
+		t.Errorf("status.phase = %v, want Ready when bucket and key are observed ready", got)
+	}
+	if res.Desired[resource.Name("bucket")].Ready != resource.ReadyTrue {
+		t.Errorf("bucket desired readiness = %v, want ReadyTrue", res.Desired[resource.Name("bucket")].Ready)
+	}
+	if res.Desired[resource.Name("key")].Ready != resource.ReadyTrue {
+		t.Errorf("key desired readiness = %v, want ReadyTrue", res.Desired[resource.Name("key")].Ready)
+	}
+}
+
+func TestObjectBucketGarageProvisioningUntilKeyReady(t *testing.T) {
+	xr := newXR("ObjectBucket", "logs", "ns", "team-x")
+	setSpec(xr, map[string]any{"team": "team-x"})
+
+	bucket := composed.New()
+	bucket.SetAPIVersion(garageAPIVersion)
+	bucket.SetKind("GarageBucket")
+	_ = unstructured.SetNestedField(bucket.Object, "Ready", "status", "phase")
+	onlyBucket := map[resource.Name]resource.ObservedComposed{
+		resource.Name("bucket"): {Resource: bucket},
+	}
+
+	res, err := ObjectBucket(newHandlerContext(xr, onlyBucket))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := res.Status["phase"]; got != "Provisioning" {
+		t.Errorf("status.phase = %v, want Provisioning while key is unready", got)
+	}
+}
+
 func TestObjectBucketS3(t *testing.T) {
 	xr := newXR("ObjectBucket", "assets", "team-api", "team-api")
 	setSpec(xr, map[string]any{"provider": "s3", "region": "us-east-1", "team": "team-api", "bucket": "my-assets"})
