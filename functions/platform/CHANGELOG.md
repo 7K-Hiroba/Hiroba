@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/7K-Hiroba/Hiroba/compare/function-platform-v1.1.0...function-platform-v1.1.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **function:** flip garage ObjectBucket to Ready when bucket+key ready ([#96](https://github.com/7K-Hiroba/Hiroba/issues/96)) ([447ae35](https://github.com/7K-Hiroba/Hiroba/commit/447ae35dd98bc5d88aa2f6c47bc8eb03dff0b9f7))
+
 ## [1.1.0](https://github.com/7K-Hiroba/Hiroba/compare/function-platform-v1.0.1...function-platform-v1.1.0) (2026-09-10)
 
 
