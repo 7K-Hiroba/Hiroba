@@ -683,11 +683,11 @@ spec:
                     vpa:
                       enabled: false
                   image:
-                    repository: ghcr.io/cnoe-io/mcp-argocd
+                    repository: ghcr.io/caipe-io/mcp-argocd
                     pullPolicy: IfNotPresent
                   mcp:
                     image:
-                      repository: ghcr.io/cnoe-io/mcp-argocd
+                      repository: ghcr.io/caipe-io/mcp-argocd
                       pullPolicy: IfNotPresent
                     mode: http
                     port: 8000
@@ -739,11 +739,11 @@ spec:
                     vpa:
                       enabled: false
                   image:
-                    repository: ghcr.io/cnoe-io/mcp-backstage
+                    repository: ghcr.io/caipe-io/mcp-backstage
                     pullPolicy: IfNotPresent
                   mcp:
                     image:
-                      repository: ghcr.io/cnoe-io/mcp-backstage
+                      repository: ghcr.io/caipe-io/mcp-backstage
                       pullPolicy: IfNotPresent
                     mode: http
                     port: 8000
@@ -969,28 +969,42 @@ spec:
                   global:
                     rag:
                       enableGraphRag: false
+                      openfga:
+                        httpUrl: http://${schema.metadata.name}-openfga:8080
+                      ragServer:
+                        host: ${schema.metadata.name}-rag-server
+                        port: 9446
+                    # 1.0.0: llmSecrets lives under global (was rag-server.llmSecrets).
+                    llmSecrets:
+                      create: false
+                      secretName: ${schema.metadata.name}-llm-secret
                   rag-server:
                     enabled: true
                     enableGraphRag: false
                     fullnameOverride: ${schema.metadata.name}-rag-server
-                    llmSecrets:
-                      secretName: ${schema.metadata.name}-llm-secret
+                    # Local embeddings: the -huggingface image variant ships
+                    # PyTorch + sentence-transformers, so no external embedding
+                    # API is needed (Moonshot/Kimi has no embeddings endpoint).
+                    # Verified tag on ghcr.io/caipe-io/caipe-rag-server; the
+                    # README's "-hf" naming is stale.
+                    image:
+                      tag: ${schema.spec.version}-huggingface
                     env:
-                      EMBEDDINGS_PROVIDER: openai
-                      EMBEDDINGS_MODEL: text-embedding-3-small
-                  rag-webui:
-                    enabled: true
-                    ingress:
-                      enabled: false
-                  agent-rag:
-                    enabled: true
-                    config:
-                      RAG_AGENT_PORT: '8099'
+                      EMBEDDINGS_PROVIDER: huggingface
+                      EMBEDDINGS_MODEL: sentence-transformers/all-MiniLM-L6-v2
+                      EMBEDDINGS_DEVICE: cpu
+                      EMBEDDINGS_BATCH_SIZE: "32"
+                      LOG_LEVEL: INFO
+                      OIDC_ISSUER: ${schema.spec.identity.oidcIssuer}
+                      OIDC_CLIENT_ID: ${schema.spec.identity.oidcClientID}
+                  # 1.0.0 renamed/replaced modules: rag-webui (UI moved into
+                  # caipe-ui) and agent-rag (replaced by rag-ingestors) no
+                  # longer exist in the chart; keep them out of values.
+                  # Ingestors stay off until an OIDC client-credentials pair is
+                  # wired via global.rag.ingestorOidc.
+                  rag-ingestors:
+                    enabled: false
                   neo4j:
-                    enabled: false
-                  neo4j-ontology:
-                    enabled: false
-                  agent-ontology:
                     enabled: false
                   rag-redis:
                     enabled: true

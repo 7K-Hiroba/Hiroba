@@ -1,10 +1,10 @@
 {
-  "functions/platform": "1.0.1",
+  "functions/platform": "1.1.0",
   "packages/primitives": "2.0.0",
-  "stacks": "1.0.0",
+  "stacks": "1.1.0",
   "packages/shared": "3.1.0",
   "packages/postgres": "3.0.1",
-  "packages/object-storage": "3.0.1",
+  "packages/object-storage": "3.1.0",
   "tools/create-product": "3.0.0",
-  "consumer-sdk/typescript": "3.0.0"
+  "consumer-sdk/typescript": "3.1.0"
 }
