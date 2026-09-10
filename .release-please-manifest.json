@@ -6,5 +6,5 @@
   "packages/postgres": "3.0.1",
   "packages/object-storage": "3.0.1",
   "tools/create-product": "3.0.0",
-  "consumer-sdk/typescript": "3.0.0"
+  "consumer-sdk/typescript": "3.1.0"
 }
