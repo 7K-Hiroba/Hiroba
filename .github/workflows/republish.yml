@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   function:
-    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-function.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: functions/platform
       package-path: functions/platform/package
@@ -23,7 +23,7 @@ jobs:
       HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
 
   primitives:
-    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@v1
+    uses: 7K-Group/workflows-library/.github/workflows/release-crossplane.yml@8f3f1dd841f9f34fc74a5fdb76577119b251ec0c # v1
     with:
       path: packages/primitives
       version: '1.0.0'
