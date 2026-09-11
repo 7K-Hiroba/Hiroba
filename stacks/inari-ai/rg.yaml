@@ -444,6 +444,13 @@ spec:
                     CREDENTIAL_ALLOW_INSECURE_LOCAL_KEY_WRAP: '${schema.spec.profile == "production" ? "false" : "true"}'
                     CREDENTIAL_BOOTSTRAP_OAUTH_CONNECTORS: 'true'
                     OPENFGA_HTTP: http://${schema.metadata.name}-openfga:8080
+                    # UI backend proxies RAG calls server-side (/api/rag/*); the
+                    # browser never talks to the RAG server directly, so this
+                    # stays cluster-internal. Without RAG_URL the UI falls back
+                    # to the upstream default "http://rag-server:9446", which
+                    # does not resolve here (release-prefixed name).
+                    RAG_URL: http://${schema.metadata.name}-rag-server:9446
+                    RAG_ENABLED: '${schema.spec.modules.ragStack.enabled ? "true" : "false"}'
                     IDENTITY_SYNC_LOGIN_CLAIMS_ENABLED: 'true'
                     IDENTITY_SYNC_LOGIN_AUTO_CREATE_TEAMS: 'true'
                     BOOTSTRAP_ADMIN_EMAILS: ${schema.spec.ui.bootstrapAdminEmails}
