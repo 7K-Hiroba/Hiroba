@@ -448,10 +448,15 @@ spec:
                     # browser never talks to the RAG server directly, so this
                     # stays cluster-internal. The rag-server chart hardcodes
                     # its Service name to "rag-server" (ignoring
-                    # fullnameOverride), which happens to match the upstream
-                    # UI default; set it explicitly anyway so the integration
-                    # does not silently depend on that default.
+                    # fullnameOverride).
+                    # The BFF proxy (ui/src/app/api/rag/[...path]/route.ts,
+                    # getRagServerUrl) resolves the upstream from
+                    # RAG_SERVER_URL — it does NOT read RAG_URL. RAG_URL feeds
+                    # the client-side __APP_CONFIG__ banner only. Both must be
+                    # set; without RAG_SERVER_URL the proxy falls back to
+                    # localhost:9446 and every /api/rag/* call returns 502.
                     RAG_URL: http://rag-server:9446
+                    RAG_SERVER_URL: http://rag-server:9446
                     RAG_ENABLED: '${schema.spec.modules.ragStack.enabled ? "true" : "false"}'
                     IDENTITY_SYNC_LOGIN_CLAIMS_ENABLED: 'true'
                     IDENTITY_SYNC_LOGIN_AUTO_CREATE_TEAMS: 'true'
@@ -983,6 +988,21 @@ spec:
                       ragServer:
                         host: ${schema.metadata.name}-rag-server
                         port: 9446
+                      # Client-credentials identity shared by the standalone
+                      # RAG ingestors. Tokens are minted against the external
+                      # issuer but validated in-cluster, so discovery/JWKS use
+                      # the internal Keycloak URL+realm while issuer stays the
+                      # public URL (matches the token `iss`). The secret is
+                      # the platform client's, already synced into
+                      # <name>-caipe-ui-secret by the uiApp ExternalSecret.
+                      ingestorOidc:
+                        issuer: ${schema.spec.identity.oidcIssuer}
+                        discoveryUrl: ${schema.spec.identity.keycloakURL}/realms/${schema.spec.identity.keycloakRealm}/.well-known/openid-configuration
+                        jwksUrl: ${schema.spec.identity.keycloakURL}/realms/${schema.spec.identity.keycloakRealm}/protocol/openid-connect/certs
+                        clientId: ${schema.spec.identity.platformClientID}
+                        clientSecretRef:
+                          name: ${schema.metadata.name}-caipe-ui-secret
+                          key: KEYCLOAK_ADMIN_CLIENT_SECRET
                     # 1.0.0: llmSecrets lives under global (was rag-server.llmSecrets).
                     llmSecrets:
                       create: false
@@ -1009,10 +1029,19 @@ spec:
                   # 1.0.0 renamed/replaced modules: rag-webui (UI moved into
                   # caipe-ui) and agent-rag (replaced by rag-ingestors) no
                   # longer exist in the chart; keep them out of values.
-                  # Ingestors stay off until an OIDC client-credentials pair is
-                  # wired via global.rag.ingestorOidc.
+                  # The webloader ingestor needs no external credentials and
+                  # unlocks URL ingestion in the KB UI; its OIDC identity
+                  # comes from global.rag.ingestorOidc above. Custom pusher
+                  # jobs can reuse the same client-credentials pair to push
+                  # documents via POST /v1/ingest.
                   rag-ingestors:
-                    enabled: false
+                    enabled: true
+                    ingestors:
+                      - name: webloader
+                        type: webloader
+                        logLevel: INFO
+                        env:
+                          WEBLOADER_MAX_INGESTION_TASKS: '5'
                   # Ontology agent is only needed for GraphRAG (neo4j), which
                   # stays disabled; left enabled it crash-loops on LLM config.
                   agent-ontology:
