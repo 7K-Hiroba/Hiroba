@@ -1004,6 +1004,10 @@ spec:
                   # wired via global.rag.ingestorOidc.
                   rag-ingestors:
                     enabled: false
+                  # Ontology agent is only needed for GraphRAG (neo4j), which
+                  # stays disabled; left enabled it crash-loops on LLM config.
+                  agent-ontology:
+                    enabled: false
                   neo4j:
                     enabled: false
                   rag-redis:
